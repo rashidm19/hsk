@@ -383,33 +383,33 @@
   <h2 style="font-family:'Noto Serif SC',serif;font-size:22px;margin:32px 0 12px;">Vocabulary Quiz / 词汇练习</h2>
   <p style="color:var(--stone);font-size:14px;margin-bottom:12px;">Match the Chinese word to its English meaning.</p>
   <div id="topic-quiz">
+    <div class="tq-item" data-answer="candidate; examinee">
+      <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">考生 <span style="font-size:14px;color:var(--accent);font-weight:400;">kǎoshēng</span></div>
+      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" onclick="tqAnswer(this,false)">to explain; instructi ons</button><button class="q-opt" onclick="tqAnswer(this,false)">to translate; translator</button><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">candidate; examinee</button></div>
+      <div class="tq-feedback" style="display:none;margin-top:8px;font-size:13px;padding:8px 12px;border-radius:6px;"></div>
+    </div>
+
     <div class="tq-item" data-answer="to preview; to prepare for class">
       <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">预习 <span style="font-size:14px;color:var(--accent);font-weight:400;">yùxí</span></div>
-      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" onclick="tqAnswer(this,false)">grammar</button><button class="q-opt" onclick="tqAnswer(this,false)">candidate; examinee</button><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">to preview; to prepare for class</button></div>
+      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">to preview; to prepare for class</button><button class="q-opt" onclick="tqAnswer(this,false)">score; grade; marks</button><button class="q-opt" onclick="tqAnswer(this,false)">curriculum; course; program</button></div>
       <div class="tq-feedback" style="display:none;margin-top:8px;font-size:13px;padding:8px 12px;border-radius:6px;"></div>
     </div>
 
     <div class="tq-item" data-answer="grammar">
       <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">语法 <span style="font-size:14px;color:var(--accent);font-weight:400;">yǔfǎ</span></div>
-      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">grammar</button><button class="q-opt" onclick="tqAnswer(this,false)">to adapt; to adjust to</button><button class="q-opt" onclick="tqAnswer(this,false)">to register for an exam</button></div>
+      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" onclick="tqAnswer(this,false)">PhD; doctor</button><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">grammar</button><button class="q-opt" onclick="tqAnswer(this,false)">written exam</button></div>
       <div class="tq-feedback" style="display:none;margin-top:8px;font-size:13px;padding:8px 12px;border-radius:6px;"></div>
     </div>
 
-    <div class="tq-item" data-answer="to translate; translator">
-      <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">翻译 <span style="font-size:14px;color:var(--accent);font-weight:400;">fānyì</span></div>
-      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" onclick="tqAnswer(this,false)">teaching</button><button class="q-opt" onclick="tqAnswer(this,false)">college entrance exam (Gaokao)</button><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">to translate; translator</button></div>
+    <div class="tq-item" data-answer="composition; essay; to write">
+      <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">作文 <span style="font-size:14px;color:var(--accent);font-weight:400;">zuòwén</span></div>
+      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">composition; essay; to write</button><button class="q-opt" onclick="tqAnswer(this,false)">to translate; translator</button><button class="q-opt" onclick="tqAnswer(this,false)">listening comprehension; hearing</button></div>
       <div class="tq-feedback" style="display:none;margin-top:8px;font-size:13px;padding:8px 12px;border-radius:6px;"></div>
     </div>
 
-    <div class="tq-item" data-answer="to graduate">
-      <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">毕业 <span style="font-size:14px;color:var(--accent);font-weight:400;">bìyè</span></div>
-      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" onclick="tqAnswer(this,false)">to explain; instructi ons</button><button class="q-opt" onclick="tqAnswer(this,false)">mid-term</button><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">to graduate</button></div>
-      <div class="tq-feedback" style="display:none;margin-top:8px;font-size:13px;padding:8px 12px;border-radius:6px;"></div>
-    </div>
-
-    <div class="tq-item" data-answer="spoken language; oral Chinese">
-      <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">口语 <span style="font-size:14px;color:var(--accent);font-weight:400;">kǒuyǔ</span></div>
-      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" onclick="tqAnswer(this,false)">candidate; examinee</button><button class="q-opt" onclick="tqAnswer(this,false)">to teach oneself; self-study</button><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">spoken language; oral Chinese</button></div>
+    <div class="tq-item" data-answer="classroom">
+      <div class="tq-word chinese" style="font-size:22px;font-weight:600;margin-bottom:10px;">课堂 <span style="font-size:14px;color:var(--accent);font-weight:400;">kètáng</span></div>
+      <div class="tq-opts" style="display:flex;gap:8px;flex-wrap:wrap;"><button class="q-opt" onclick="tqAnswer(this,false)">to explain; instructi ons</button><button class="q-opt" onclick="tqAnswer(this,false)">knowledge</button><button class="q-opt" data-correct="1" onclick="tqAnswer(this,true)">classroom</button></div>
       <div class="tq-feedback" style="display:none;margin-top:8px;font-size:13px;padding:8px 12px;border-radius:6px;"></div>
     </div></div>
   <script>
