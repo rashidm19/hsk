@@ -116,6 +116,7 @@
       <a href="/grammar/" class="nav-link">Grammar</a>
       <a href="/sentences/" class="nav-link">Sentences</a>
       <a href="/strategies/" class="nav-link">Strategies</a>
+      <a href="/traps/" class="nav-link">Traps</a>
       <a href="/topics/" class="nav-link">Topics</a>
       <a href="/words/" class="nav-link" style="opacity:1;">Words</a>
       <a href="/compare/" class="nav-link">Compare</a>
@@ -157,7 +158,24 @@
   </div>
 
   <div class="tip-box">
-    <strong>Quick rule:</strong> 通过 + means/method ('via', 'by means of') OR + exam name ('to pass'). 经过 + place/time/process ('go through', 'after a period of'). KEY: 经过努力 (after effort) and 通过努力 (through effort) are both grammatical and slightly different in flavour — 经过 emphasizes the journey, 通过 emphasizes the method.
+    <strong>Quick rule:</strong> 通过 + means/method ('via', 'by means of') OR + exam name ('to pass'). 经过 + place/time/process ('go through', 'after a period of'). 经过努力 (after effort) and 通过努力 (through effort) are both grammatical and slightly different in flavour — 经过 emphasizes the journey, 通过 emphasizes the method.
+  </div>
+
+  <div style="background:#fff4f0;border:1px solid #f4cdc0;border-radius:8px;padding:14px 18px;margin:20px 0;font-size:14px;line-height:1.7;">
+    <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">⚠ Common Errors / 常见错误</div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <tr><td style="padding:6px 0;color:var(--accent);width:50%;">❌ 我每天上班通过那家咖啡店。</td><td style="padding:6px 0;color:var(--jade);">✓ 我每天上班<strong>经过</strong>那家咖啡店。 (physical place → 经过)</td></tr>
+      <tr><td style="padding:6px 0;color:var(--accent);">❌ 我经过电子邮件跟他联系。</td><td style="padding:6px 0;color:var(--jade);">✓ 我<strong>通过</strong>电子邮件跟他联系。 (channel / means → 通过)</td></tr>
+      <tr><td style="padding:6px 0;color:var(--accent);">❌ 通过三年的努力，公司有了变化。 (acceptable but less natural — 通过 here would mean "by means of 3 years," which is odd)</td><td style="padding:6px 0;color:var(--jade);">✓ <strong>经过</strong>三年的努力，公司有了变化。 (duration / process → 经过)</td></tr>
+      <tr><td style="padding:6px 0;color:var(--accent);">❌ 他经过了HSK4考试。</td><td style="padding:6px 0;color:var(--jade);">✓ 他<strong>通过</strong>了HSK4考试。 ("passed" an exam = 通过, never 经过)</td></tr>
+      <tr><td style="padding:6px 0;color:var(--accent);">❌ 通过医院，我看到一个朋友。 (would suggest "via the hospital as a channel")</td><td style="padding:6px 0;color:var(--jade);">✓ <strong>经过</strong>医院的时候，我看到一个朋友。 (passing by physically → 经过)</td></tr>
+    </table>
+    <div style="font-size:12px;color:var(--stone);margin-top:8px;font-style:italic;">Rule of thumb: if you could draw it on a map (a place) or on a timeline (a duration), it's <strong>经过</strong>. If it's an abstract method, channel, or test you "pass," it's <strong>通过</strong>. The overlap zone is 通过/经过 + 努力 — both work, with 经过 stressing the journey and 通过 stressing the method.</div>
+  </div>
+
+  <div style="background:var(--paper);border:1px solid var(--mist);border-radius:8px;padding:14px 18px;margin:20px 0;font-size:14px;line-height:1.7;">
+    <div style="font-size:11px;color:var(--stone);font-weight:700;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">💡 Why English speakers struggle with this pair</div>
+    <p style="margin:0;color:var(--ink);">English "through" is one of the most overloaded prepositions in the language. It covers physical paths ("walking through the park"), durations ("through the summer"), means ("through hard work"), and abstract passages ("through the exam"). One word does all four jobs. Chinese splits them along a single axis: <strong>concrete (physical path / time duration / experiential process) = 经过; abstract (method / channel / passing a test) = 通过</strong>. English-speaking learners reflexively reach for whichever 'through' word they learned first and use it for everything. <strong>The fix is to ask "concrete or abstract?" before producing the sentence:</strong> if you can point to it on a map or a clock, it's 经过; if it's a how-question (how did you contact him? how did he succeed?), it's 通过.</p>
   </div>
 
   
@@ -191,8 +209,8 @@
         <div class="q-item">
           <div class="q-stem chinese">我们<span class="blank"></span>电子邮件保持联系。</div>
           <div class="q-opts">
-            <button class="q-opt chinese" onclick="answer(this,false)">经过</button>
             <button class="q-opt chinese" data-correct="1" onclick="answer(this,true)">通过</button>
+            <button class="q-opt chinese" onclick="answer(this,false)">经过</button>
           </div>
           <div class="q-explain">By means of email = 通过. Email is a method/channel.</div>
         </div>
@@ -200,8 +218,8 @@
         <div class="q-item">
           <div class="q-stem chinese">他<span class="blank"></span>三年的努力，终于实现了梦想。</div>
           <div class="q-opts">
-            <button class="q-opt chinese" data-correct="1" onclick="answer(this,true)">经过</button>
             <button class="q-opt chinese" onclick="answer(this,false)">通过</button>
+            <button class="q-opt chinese" data-correct="1" onclick="answer(this,true)">经过</button>
           </div>
           <div class="q-explain">After three years (a duration) → 经过. Time periods take 经过.</div>
         </div>
@@ -209,8 +227,8 @@
         <div class="q-item">
           <div class="q-stem chinese">明天我们<span class="blank"></span>北京去上海。</div>
           <div class="q-opts">
-            <button class="q-opt chinese" onclick="answer(this,false)">通过</button>
             <button class="q-opt chinese" data-correct="1" onclick="answer(this,true)">经过</button>
+            <button class="q-opt chinese" onclick="answer(this,false)">通过</button>
           </div>
           <div class="q-explain">Pass through Beijing (a place) = 经过. 通过 doesn't fit travel routes.</div>
         </div>
