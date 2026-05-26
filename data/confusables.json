@@ -554,6 +554,91 @@
     ]
   },
   {
+    "slug": "jingran-juran",
+    "customHtml": true,
+    "category": "Adverbs / 副词",
+    "wordA": "竟然",
+    "pinyinA": "jìngrán",
+    "wordB": "居然",
+    "pinyinB": "jūrán",
+    "subtitle": "two ways to say 'unexpectedly' — neutral surprise vs incredulous surprise",
+    "rows": [
+      [
+        "Core meaning",
+        "Surprisingly, unexpectedly — neutral surprise",
+        "Surprisingly, unexpectedly — stronger, often disbelief or judgment"
+      ],
+      [
+        "Speaker stance",
+        "Reports the surprise",
+        "Reacts emotionally — disbelief, irony, or amazement"
+      ],
+      [
+        "Register",
+        "Written and spoken; works in essays and news",
+        "More colloquial; common in spoken complaints / amazed comments"
+      ],
+      [
+        "HSK level",
+        "Tested at HSK 4 (Test 05 Q57, Test 10 Q51)",
+        "HSK 5–6 vocabulary — appears in supplementary materials, not the HSK 4 core word list"
+      ],
+      [
+        "Position",
+        "Subject + 竟然 + V (also after 没想到)",
+        "Subject + 居然 + V (also after 没想到) — same slot"
+      ]
+    ],
+    "exA": {
+      "cn": "他平时不学习，竟然考了第一名。",
+      "py": "Tā píngshí bù xuéxí, jìngrán kǎo le dì-yī míng.",
+      "en": "He doesn't normally study, but unexpectedly came first. (neutral report of surprise)"
+    },
+    "exB": {
+      "cn": "你居然敢这样跟我说话！",
+      "py": "Nǐ jūrán gǎn zhèyàng gēn wǒ shuōhuà!",
+      "en": "How dare you talk to me like this! (incredulous, emotional)"
+    },
+    "tip": "Both translate as 'unexpectedly / actually'. 竟然 reports the surprise (neutral). 居然 reacts to it — often with disbelief, irritation, or strong amazement. On HSK 4, the answer is almost always 竟然 because 居然 isn't in the core vocab. The distinction matters most when you encounter 居然 in reading or want to use it in writing.",
+    "quiz": [
+      {
+        "stem": "天气预报说今天会下雨，结果___一滴雨也没下。",
+        "correct": "竟然",
+        "wrong": "居然",
+        "explain": "Neutral 'unexpectedly didn't rain' — reporting the surprise without strong emotion. 竟然 is the HSK 4 default; 居然 would also be acceptable but adds incredulous tone."
+      },
+      {
+        "stem": "你___把我的生日忘了，太过分了！",
+        "correct": "居然",
+        "wrong": "竟然",
+        "explain": "Strong emotional reaction (accusation, anger) → 居然 fits better. 竟然 would sound too detached for a complaint."
+      },
+      {
+        "stem": "我没想到他___一个人完成了这么难的任务。",
+        "correct": "竟然",
+        "wrong": "居然",
+        "explain": "After 没想到, both work, but 竟然 is the HSK 4-tested choice (compare Test 05 Q57). 居然 would be slightly more colloquial."
+      }
+    ],
+    "exercises": [
+      {
+        "sentence": "这么简单的问题，他___回答不出来。",
+        "answer": "竟然",
+        "context": "Neutral surprise at unexpected difficulty — 竟然 is the HSK 4 default."
+      },
+      {
+        "sentence": "你___骗我！我再也不相信你了。",
+        "answer": "居然",
+        "context": "Strong emotional outburst (betrayal, anger) → 居然 captures the disbelief."
+      },
+      {
+        "sentence": "她本来只是抱着试试的态度，没想到___得了第一名。",
+        "answer": "竟然",
+        "context": "Direct from Test 05 Q57 — 没想到 + 竟然 is the classic HSK 4 collocation."
+      }
+    ]
+  },
+  {
     "slug": "lianxi-practice",
     "category": "Verbs / 动词",
     "wordA": "联系",
