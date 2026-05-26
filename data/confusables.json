@@ -76,7 +76,8 @@
         "answer": "才",
         "context": "Only 2 pages = less than expected"
       }
-    ]
+    ],
+    "customHtml": true
   },
   {
     "slug": "you-zai",
@@ -235,7 +236,8 @@
         "answer": "已经",
         "context": "Already ate (result relevant now)"
       }
-    ]
+    ],
+    "customHtml": true
   },
   {
     "slug": "bijiao-bi",
@@ -2542,7 +2544,8 @@
         "answer": "关于",
         "context": "Modifying noun = topic"
       }
-    ]
+    ],
+    "customHtml": true
   },
   {
     "slug": "yinwei-youyu",
@@ -3096,7 +3099,8 @@
         "answer": "通过",
         "context": "By means of the trip"
       }
-    ]
+    ],
+    "customHtml": true
   },
   {
     "slug": "putong-pingchang-richang",
@@ -3333,7 +3337,8 @@
         "answer": "总是",
         "context": "Recurring trait"
       }
-    ]
+    ],
+    "customHtml": true
   },
   {
     "slug": "jingchang-changchang-wangwang",
