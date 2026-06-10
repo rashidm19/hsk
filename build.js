@@ -362,7 +362,7 @@ function buildTestPages() {
 
     // Standardized HSK 4 mock test title across all 12 tests
     const shortTitle = `HSK 4 Mock Test ${num}`;
-    const pageTitle = `${shortTitle} \u2014 ${meta.questions} Free Questions | HSK4 \u6A21\u62DF\u8BD5\u5377 ${num}`;
+    const pageTitle = `${shortTitle} \u2014 ${meta.questions} Free Questions \u00B7 \u6A21\u62DF\u8BD5\u5377 | Mandarin Zone`;
     // CTR-oriented copy: action verb ("Take") up front, "free" prominent,
     // concrete numbers, trust closer ("Mandarin Zone Beijing"). Targets
     // 130-155 chars to fill the SERP snippet without being clipped.
@@ -1845,13 +1845,10 @@ function buildTaskTopicPages() {
     }, null, 2);
 
 
-    // Keep title under 65 chars
-    let pageTitle = `HSK 4 ${task.task_en} \u2014 ${task.task_cn} | Vocabulary`;
-    if (pageTitle.length > 65) {
-      pageTitle = `HSK 4 ${task.task_en} \u2014 ${task.task_cn}`;
-    }
-    if (pageTitle.length > 65) {
-      pageTitle = `HSK 4: ${task.task_en} | ${task.task_cn}`;
+    // Front-load the keyword; brand suffix may truncate in SERPs, which is fine
+    let pageTitle = `HSK 4 ${task.task_en} Vocabulary \u2014 ${task.task_cn} | Mandarin Zone`;
+    if (pageTitle.length > 78) {
+      pageTitle = `HSK 4 ${task.task_en} \u2014 ${task.task_cn} | Mandarin Zone`;
     }
     const pageDesc = truncDesc(`${words.length} HSK 4 words for "${task.task_en}" (${task.task_cn}). Vocabulary with pinyin, meanings, examples from the official syllabus.`);
 
@@ -2862,7 +2859,7 @@ function buildGrammarPatternsHub() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>HSK 4 Sentence Patterns — ${patterns.length} Complex Patterns | 复句句型</title>
+<title>HSK 4 Sentence Patterns — ${patterns.length} 复句句型 Explained | Mandarin Zone</title>
 <meta name="description" content="All ${patterns.length} HSK 4 complex-sentence patterns (尽管…但是, 不管…都, 即使…也, 连…都/也 and more) with examples, common errors, and quizzes. From the official syllabus.">
 <link rel="canonical" href="https://hsk4.mandarinzone.com/grammar/patterns/">
 
@@ -3100,7 +3097,7 @@ function buildCharacterPages() {
       <span class="char-pinyin">${escHtml(c.pinyin)}</span>
     </a>`).join('');
 
-  const hubTitle = `HSK 4 Required Characters — Stroke Order & Writing Practice | HSK 4 必写汉字`;
+  const hubTitle = `HSK 4 Characters \u2014 150 \u4E66\u5199\u5B57 + 441 \u8BA4\u8BFB\u5B57 Stroke Order | Mandarin Zone`;
   const hubDesc = `Learn to write all ${chars.length} HSK 4 required characters with animated stroke order and interactive handwriting practice. Free, by Mandarin Zone Beijing.`;
 
   const hubHtml = `<!DOCTYPE html>
@@ -3458,7 +3455,7 @@ ${renderFooter()}
       }))
     };
 
-    const detailTitle = `${c.char} (${pinyinList.join('/')}) — Stroke Order, Radical & Practice | HSK 4 汉字 ${c.char}`;
+    const detailTitle = `${c.char} (${pinyinList.join('/')}) Stroke Order, Radical & Practice \u2014 HSK 4 \u6C49\u5B57 | Mandarin Zone`;
     const detailDesc = truncDesc(`Learn the HSK 4 character ${c.char} (${pinyinList.join('/')}, ${meanings.slice(0, 2).join(', ') || c.meaning}): ${strokes ? strokes + ' strokes, ' : ''}${radical ? 'radical ' + radical + ', ' : ''}decomposition, common words and animated practice. Free, by Mandarin Zone.`);
 
     return `<!DOCTYPE html>
@@ -3658,8 +3655,8 @@ window.addEventListener('load', function(){
     }
 
     const detailTitle = isRecognition
-      ? `${c.char} (${c.pinyin}) — Meaning, Pinyin & Stroke Order | HSK 4 认读字 ${c.char}`
-      : `${c.char} (${c.pinyin}) — Stroke Order & Writing Practice | HSK 4 汉字 ${c.char}`;
+      ? `${c.char} (${c.pinyin}) Meaning, Pinyin & Stroke Order \u2014 HSK 4 \u8BA4\u8BFB\u5B57 | Mandarin Zone`
+      : `${c.char} (${c.pinyin}) Stroke Order & Writing Practice \u2014 HSK 4 \u6C49\u5B57 | Mandarin Zone`;
     const detailDesc = truncDesc(isRecognition
       ? `${c.char} (${c.pinyin}) means "${c.meaning}" — an HSK 4 recognition character (认读字). See its meaning, pinyin, stroke order animation, and the HSK 4 words that use it. By Mandarin Zone.`
       : `Learn how to write the HSK 4 character ${c.char} (${c.pinyin}, ${c.meaning}) with animated stroke order and interactive handwriting practice. Free practice tool by Mandarin Zone.`);
@@ -3964,14 +3961,14 @@ function buildSentenceCategoryPages() {
     ).join('');
 
     const title = `${cat.name_en} in Chinese — 10 HSK 4 ${cat.name_cn} Sentences`;
-    const desc = `10 ready-to-use HSK 4 sentences for ${cat.name_en.toLowerCase()} (${cat.name_cn}) with pinyin, English, usage notes, and active-recall practice. ${cat.desc}`;
+    const desc = truncDesc(`10 ready-to-use HSK 4 sentences for ${cat.name_en.toLowerCase()} (${cat.name_cn}) with pinyin, English, usage notes, and active-recall practice. ${cat.desc}`, 158);
 
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${escHtml(title)} | HSK 4 Sentences</title>
+<title>${escHtml(title)} | Mandarin Zone</title>
 <meta name="description" content="${escHtml(desc)}">
 <link rel="canonical" href="https://hsk4.mandarinzone.com/sentences/${cat.slug}/">
 <meta property="og:title" content="${escHtml(title)}">
@@ -4091,36 +4088,50 @@ function recallAll(show) {
 // Per-category intros for trap drill-down pages.
 const TRAP_CAT_META = {
   'adverb-polarity': {
+    seo_title: 'HSK 4 Adverb Traps: 差点儿(没) Polarity & 千万 Rules',
+    seo_desc: '差点儿 vs 差点儿没 polarity and why 千万 needs 要/别 — the two adverb traps HSK 4 listening and 排词成句 test most, with examples and a quiz.',
     grammar: ['/grammar/adverbs/'],
     intro: 'Mood adverbs are tiny words with outsized exam weight. These two traps — 差点儿 polarity and 千万’s mandatory imperative partner — appear in listening comprehension and 排词成句 every single session.',
     related: [['/words/cai-jiu/', '才 vs 就'], ['/sentences/time-expressions/', 'Time expression sentences']],
   },
   'passive': {
+    seo_title: 'HSK 4 Passive Traps: 被/让/叫 Mistakes to Avoid',
+    seo_desc: '让/叫 passives need an explicit agent and a result complement — three 被/让/叫 traps with wrong-vs-right examples and a focused quiz.',
     grammar: ['/grammar/passive/'],
     intro: '被/让/叫 passives look interchangeable but follow different rules about subjects, agents, and complements. HSK 4 tests exactly the differences.',
     related: [['/words/shi-rang-jiao-bei/', '使 vs 让 vs 叫 vs 被'], ['/grammar/pivotal-sentences/', '兼语句 — pivotal sentences']],
   },
   'ba-sentence': {
+    seo_title: 'HSK 4 把字句 Traps: When 把 Is Mandatory',
+    seo_desc: '把 is mandatory with verb+在+place, imperatives still need a subject, and double-object verbs change order — three 把字句 traps with quiz.',
     grammar: ['/grammar/ba-sentence/'],
     intro: 'The 把 construction is mandatory in specific structures — not optional stylistic flair. These three traps cover the cases 排词成句 (Q86-95) tests most.',
     related: [['/grammar/patterns/', '8 sentence patterns'], ['/strategies/writing-construction/', 'Writing Q86-95 strategy']],
   },
   'comparison': {
+    seo_title: 'HSK 4 比 Sentence Traps: 很/非常 Ban & 不如 Rules',
+    seo_desc: 'Never put 很/非常/真 before the adjective in a 比 sentence, and never combine 不如 with 比 — two comparison traps with examples and quiz.',
     grammar: ['/grammar/comparison/'],
     intro: '比 sentences have one iron rule (no 很/非常/真 before the adjective) and one common illegal hybrid (不如 + 比). Both are free points if you know them.',
     related: [['/words/bijiao-bi/', '比较 vs 比'], ['/sentences/comparison/', 'Comparison sentences']],
   },
   'connectors': {
+    seo_title: 'HSK 4 Connector Traps: 即使 vs 尽管, 不管 vs 无论',
+    seo_desc: '即使 (hypothetical) vs 尽管 (factual), 不管 (spoken) vs 无论 (written) — the connector distinctions HSK 4 reading tests most, with quiz.',
     grammar: ['/grammar/complex-sentences/'],
     intro: 'Connector pairs like 即使/尽管 and 不管/无论 differ by hypothetical-vs-factual and register — distinctions reading Part 1 (选词填空) loves.',
     related: [['/words/jishi-jinguan/', '即使 vs 尽管'], ['/words/buguan-wulun/', '不管 vs 无论'], ['/sentences/contrast-concession/', 'Contrast sentences']],
   },
   'rhetorical': {
+    seo_title: 'HSK 4 反问句 Traps: Rhetorical Questions in Listening',
+    seo_desc: 'A rhetorical question means the opposite of its literal form — flip the polarity to find what the speaker really means. Examples + quiz.',
     grammar: ['/grammar/rhetorical/'],
     intro: 'A rhetorical question states the opposite of its literal form. Listening loves asking what the speaker actually means — flip the polarity and you have the answer.',
     related: [['/grammar/adverbs/', '难道 and mood adverbs'], ['/strategies/listening-dialog/', 'Listening dialog strategy']],
   },
   'time-adverbs': {
+    seo_title: 'HSK 4 Time Adverb Traps: 才 vs 就, 已经 vs 曾经',
+    seo_desc: '才 = later than expected, 就 = earlier; 已经 = still true now, 曾经 = past experience. Two top-10 HSK 4 confusable pairs with quiz.',
     grammar: ['/grammar/adverbs/'],
     intro: '才 vs 就 and 已经 vs 曾经 encode whether something happened earlier or later than expected, and whether it still matters now. Both pairs are top-10 HSK 4 confusables.',
     related: [['/words/cai-jiu/', '才 vs 就'], ['/words/yijing-cengjing/', '已经 vs 曾经'], ['/sentences/time-expressions/', 'Time expression sentences']],
@@ -4142,16 +4153,15 @@ function buildTrapCategoryPages() {
       `<a href="${href}" style="background:white;border:1px solid var(--mist);border-radius:8px;padding:12px 16px;text-decoration:none;color:var(--ink);display:block;"><div style="font-size:14px;font-weight:600;">${label}</div></a>`
     ).join('');
 
-    const trapWord = cat.traps.length === 1 ? 'Trap' : 'Traps';
-    const title = `HSK 4 ${cat.name_en} — ${cat.traps.length} ${trapWord} + Quiz`;
-    const desc = `${cat.name_cn}：${meta.intro.slice(0, 120)}`;
+    const title = meta.seo_title || `HSK 4 ${cat.name_en} \u2014 ${cat.traps.length} Traps + Quiz`;
+    const desc = truncDesc(meta.seo_desc || `${cat.name_cn}\uFF1A${meta.intro}`, 158);
 
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${escHtml(title)} | HSK 4 Traps</title>
+<title>${escHtml(title)} | Mandarin Zone</title>
 <meta name="description" content="${escHtml(desc)}">
 <link rel="canonical" href="https://hsk4.mandarinzone.com/traps/${cat.slug}/">
 <meta property="og:title" content="${escHtml(title)}">
