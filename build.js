@@ -137,19 +137,8 @@ function buildVocabulary() {
   const htmlPath = path.join(ROOT, 'vocabulary', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
 
-  // Word -> task page mapping: topic_words assigns words to topics, TASKS
-  // assigns topics to task pages. First task to claim a topic wins.
-  const topicsData = readJSON('topics.json');
-  const topicToTask = {};
-  TASKS.forEach(t => (t.topic_ids || []).forEach(tid => {
-    if (!topicToTask[tid]) topicToTask[tid] = t;
-  }));
-  const wordTask = {};
-  Object.entries(topicsData.topic_words).forEach(([tid, ids]) => {
-    const task = topicToTask[tid];
-    if (!task) return;
-    ids.forEach(id => { if (!wordTask[id]) wordTask[id] = task; });
-  });
+  // Word -> task page mapping (shared helper; first task to claim a topic wins)
+  const wordTask = buildWordTaskMap();
   const taskChip = w => {
     const t = wordTask[w.id];
     if (!t) return '';
@@ -1692,6 +1681,24 @@ const TASKS = [
   },
 ];
 
+// Word id -> primary task page, derived from topics.json topic_words and
+// TASKS topic_ids. Used by buildVocabulary (per-word task chips) and
+// buildCharacterPages (character -> task reverse lookup).
+function buildWordTaskMap() {
+  const topicsData = readJSON('topics.json');
+  const topicToTask = {};
+  TASKS.forEach(t => (t.topic_ids || []).forEach(tid => {
+    if (!topicToTask[tid]) topicToTask[tid] = t;
+  }));
+  const wordTask = {};
+  Object.entries(topicsData.topic_words).forEach(([tid, ids]) => {
+    const task = topicToTask[tid];
+    if (!task) return;
+    ids.forEach(id => { if (!wordTask[id]) wordTask[id] = task; });
+  });
+  return wordTask;
+}
+
 function buildTaskTopicPages() {
   console.log('[task-topics] Generating 30 task topic pages...');
   const topics = readJSON('topics.json');
@@ -3019,6 +3026,33 @@ function buildCharacterPages() {
   const charsDir = path.join(ROOT, 'characters');
   ensureDir(charsDir);
 
+  // Reverse lookup: character -> task pages, via the words containing it.
+  const wordTaskMap = buildWordTaskMap();
+  const charTaskLinksHtml = (c) => {
+    const hits = {};
+    (charToWords[c.char] || []).forEach(w => {
+      const t = wordTaskMap[w.id];
+      if (!t) return;
+      if (!hits[t.slug]) hits[t.slug] = { task: t, words: [] };
+      hits[t.slug].words.push(w.word);
+    });
+    const ranked = Object.values(hits)
+      .sort((a, b) => b.words.length - a.words.length || a.task.slug.localeCompare(b.task.slug))
+      .slice(0, 4);
+    if (ranked.length === 0) return '';
+    const chips = ranked.map(({ task, words }) => `
+    <a href="/topics/${task.slug}/" style="background:white;border:1px solid var(--mist);border-radius:8px;padding:12px 16px;text-decoration:none;color:var(--ink);display:block;">
+      <div class="chinese" style="font-size:14px;font-weight:600;">\u{1F4DA} ${escHtml(task.task_cn)}</div>
+      <div style="font-size:12px;color:var(--stone);margin-top:3px;">${escHtml(task.task_en)} \u00B7 <span class="chinese">${escHtml(words.slice(0, 3).join('\u3001'))}</span></div>
+    </a>`).join('');
+    return `<section>
+    <h2 style="font-family:'Noto Serif SC',serif;font-size:22px;margin:32px 0 8px;">Tasks Featuring ${escHtml(c.char)} / \u76F8\u5173\u4EFB\u52A1</h2>
+    <p style="color:var(--stone);font-size:14px;margin-bottom:12px;">Words containing <span class="chinese">${escHtml(c.char)}</span> appear in these official HSK 4 task scenarios \u2014 study the character in context:</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));gap:12px;">${chips}
+    </div>
+  </section>`;
+  };
+
   // Shared header/footer renderer (avoids duplicating nav across pages)
   const renderNav = (active) => `
 <header>
@@ -3521,6 +3555,8 @@ ${renderNav('characters')}
     ${wordsHtml}
   </div>
 
+  ${charTaskLinksHtml(c)}
+
   ${faqHtml}
 
   <div class="char-pager">
@@ -3709,6 +3745,8 @@ ${renderNav('characters')}
   <div class="char-vocab-list">
     ${wordsHtml}
   </div>
+
+  ${charTaskLinksHtml(c)}
 
   <div class="char-pager">
     <a href="/characters/${encodeURIComponent(prev.char)}/" class="btn btn-ghost">&larr; <span class="chinese">${escHtml(prev.char)}</span> ${escHtml(prev.pinyin)}</a>
