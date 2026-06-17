@@ -644,7 +644,7 @@ function buildTestPages() {
       ${isComplete ? '<a href="/strategies/writing-construction/" style="background:var(--surface);border:1px solid var(--mist);border-radius:8px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;">书写排词 (Q86-95) →</a><a href="/strategies/picture-templates/" style="background:var(--surface);border:1px solid var(--mist);border-radius:8px;padding:10px 14px;text-decoration:none;color:var(--ink);font-size:13px;">看图造句 (Q96-100) →</a>' : ''}
     </div>
     <p style="margin-top:14px;color:var(--stone);font-size:13px;">
-      Or jump to the <a href="/strategies/" style="color:var(--accent);font-weight:600;">complete HSK 4 strategy hub</a> &middot; <a href="/sentences/" style="color:var(--accent);font-weight:600;">100 essential sentences</a> &middot; <a href="/grammar/measure-words/" style="color:var(--accent);font-weight:600;">HSK 4 measure words (量词)</a> &middot; <a href="/words/" style="color:var(--accent);font-weight:600;">43 confusable pairs</a>.
+      Or jump to the <a href="/strategies/" style="color:var(--accent);font-weight:600;">complete HSK 4 strategy hub</a> &middot; <a href="/practice/" style="color:var(--accent);font-weight:600;">选词填空 mixed practice</a> &middot; <a href="/sentences/" style="color:var(--accent);font-weight:600;">100 essential sentences</a> &middot; <a href="/writing/complete-sentence/" style="color:var(--accent);font-weight:600;">完成句子 writing drill</a> &middot; <a href="/grammar/measure-words/" style="color:var(--accent);font-weight:600;">HSK 4 measure words (量词)</a> &middot; <a href="/words/" style="color:var(--accent);font-weight:600;">43 confusable pairs</a>.
     </p>
   </section>
 
@@ -2546,6 +2546,51 @@ document.querySelectorAll('.fill-input').forEach(function(inp) {
     fs.writeFileSync(path.join(dir, 'index.html'), pageHtml, 'utf8');
   });
 
+  // Hub directory: link every dedicated pair page from the /words/ hub. The
+  // hub previously inlined only 10 featured pairs and linked none of the 44
+  // per-pair pages, leaving most of them with almost no inbound links.
+  const wordsHubPath = path.join(ROOT, 'words', 'index.html');
+  if (fs.existsSync(wordsHubPath)) {
+    let hub = fs.readFileSync(wordsHubPath, 'utf8');
+    const CAT_ORDER = ['Adverbs', 'Conjunctions', 'Verbs', 'Adjectives', 'Prepositions', 'Modal Verbs', 'Comparison', 'Aspect Markers', 'Particles', 'Time Words', 'Nouns', 'Passive & Causative'];
+    const norm = c => (c || 'Other').split('/')[0].trim();
+    const groups = {};
+    pairs.forEach(p => { const k = norm(p.category); (groups[k] = groups[k] || []).push(p); });
+    const cats = Object.keys(groups).sort((a, b) => {
+      const ia = CAT_ORDER.indexOf(a), ib = CAT_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+    });
+    const dirHtml = cats.map(c => {
+      const links = groups[c].sort((a, b) => a.slug.localeCompare(b.slug)).map(p =>
+        `<a href="/words/${p.slug}/" class="pair-dir-link"><span class="chinese">${escHtml([p.wordA, p.wordB, p.wordC].filter(Boolean).join('/'))}</span></a>`
+      ).join('');
+      return `<div class="pair-dir-group"><h3 class="pair-dir-cat">${escHtml(c)}</h3><div class="pair-dir-links">${links}</div></div>`;
+    }).join('\n      ');
+    const section = `<!-- ALL PAIRS DIRECTORY -->
+  <section style="margin-top:40px;">
+    <h2 style="font-family:'Noto Serif SC',serif;font-size:22px;margin-bottom:6px;">All ${pairs.length} Confusable Pairs / 全部${pairs.length}组易混词</h2>
+    <p style="color:var(--stone);font-size:14px;margin-bottom:16px;">Each pair has its own page with a comparison table, examples, a quiz, and fill-in exercises.</p>
+    <style>
+      .pair-dir-group { margin-bottom:18px; }
+      .pair-dir-cat { font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:var(--stone); margin-bottom:8px; }
+      .pair-dir-links { display:flex; flex-wrap:wrap; gap:8px; }
+      .pair-dir-link { background:var(--surface); border:1px solid var(--mist); border-radius:8px; padding:8px 14px; text-decoration:none; color:var(--ink); font-size:15px; transition:border-color .15s; }
+      .pair-dir-link:hover { border-color:var(--accent); }
+    </style>
+    <div>
+      ${dirHtml}
+    </div>
+  </section>
+  <!-- /ALL PAIRS DIRECTORY -->`;
+    hub = hub.replace(/\s*<!-- ALL PAIRS DIRECTORY -->[\s\S]*?<!-- \/ALL PAIRS DIRECTORY -->/g, '');
+    if (hub.includes('<!-- SEO CONTENT -->')) {
+      hub = hub.replace('<!-- SEO CONTENT -->', section + '\n\n  <!-- SEO CONTENT -->');
+    }
+    hub = hub.replace('covers 10 of the most commonly confused HSK 4 word pairs', `links all ${pairs.length} commonly confused HSK 4 word pairs`);
+    fs.writeFileSync(wordsHubPath, hub, 'utf8');
+    console.log(`[confusables] Linked all ${pairs.length} pairs from the /words/ hub`);
+  }
+
   console.log(`[confusables] Generated ${pairs.length} confusable word pair pages under /words/`);
   return pairs.map(p => p.slug);
 }
@@ -3158,7 +3203,7 @@ function buildCharacterPages() {
       <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
     </div>
   </div>
-  <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> · <a href="/vocabulary/">Vocabulary</a> · <a href="/characters/">Characters</a> · <a href="/grammar/">Grammar</a> · <a href="/writing/">Writing</a> · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
+  <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> · <a href="/vocabulary/">Vocabulary</a> · <a href="/characters/">Characters</a> · <a href="/grammar/">Grammar</a> · <a href="/strategies/">Strategies</a> · <a href="/traps/">Traps</a> · <a href="/practice/">Practice</a> · <a href="/compare/">Compare</a> · <a href="/writing/">Writing</a> · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
 </footer>`;
 
   // ---- Hub page: /characters/index.html ----
