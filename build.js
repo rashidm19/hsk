@@ -4357,6 +4357,159 @@ window.trapAnswer = function(btn, isCorrect, qNum) {
 }
 
 // ============================================================
+// COMPLETE-THE-SENTENCE — a 完成句子 production drill. Splits the 100
+// essential sentences at their comma so the learner produces the second
+// clause from the first (the exact HSK 4 写作 task), then self-checks
+// against the verbatim answer. Reveal-based because free Chinese writing
+// can't be auto-graded.
+// ============================================================
+function buildCompleteSentence() {
+  console.log('[complete] Building 完成句子 production drill...');
+  const sentences = readJSON('sentences.json');
+  const items = [];
+  sentences.forEach(cat => (cat.sentences || []).forEach(x => {
+    const parts = x.cn.split(/[，,]/);
+    if (parts.length < 2) return;
+    const given = parts[0].trim();
+    const answer = parts.slice(1).join('，').trim();
+    if (given.length < 3 || answer.replace(/[。！？.]/g, '').length < 3) return;
+    items.push({ given, answer, py: x.py || '', en: x.en || '', use: x.use || '', cat: cat.name_cn || '' });
+  }));
+
+  const dir = path.join(ROOT, 'writing', 'complete-sentence');
+  ensureDir(dir);
+  const title = 'HSK 4 完成句子 Practice — Complete-the-Sentence Writing Drill | Mandarin Zone';
+  const desc = truncDesc(`Free HSK 4 writing drill: ${items.length} 完成句子 (complete-the-sentence) exercises built from real HSK 4 sentence patterns. Produce the second clause, then self-check against the answer with pinyin.`);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/writing/complete-sentence/">
+<meta property="og:title" content="HSK 4 完成句子 — Complete-the-Sentence Writing Drill">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/writing/complete-sentence/">
+<meta property="og:site_name" content="Mandarin Zone">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/common.css">
+<style>
+  .cs-hero { text-align:center; padding:32px 0 18px; }
+  .cs-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:10px; }
+  .cs-hero p { color:var(--stone); max-width:600px; margin:0 auto; line-height:1.7; }
+  .cs-card { background:var(--surface); border:1px solid var(--mist); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); margin-bottom:16px; }
+  .cs-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+  .cs-tag { font-size:12px; font-weight:600; padding:3px 10px; border-radius:6px; background:var(--gold-soft); color:var(--gold); }
+  .cs-progress { font-size:13px; color:var(--stone); font-weight:500; }
+  .cs-en { color:var(--stone); font-size:14px; margin-bottom:10px; }
+  .cs-prompt { font-family:'Noto Sans SC',sans-serif; font-size:21px; line-height:1.9; margin-bottom:6px; }
+  .cs-blank { display:inline-block; min-width:120px; border-bottom:2px dashed var(--accent); }
+  .cs-hint { font-size:13px; color:var(--stone); margin-bottom:16px; }
+  .cs-answer { margin-top:8px; padding:14px 16px; background:var(--ok-bg); border-left:3px solid var(--correct); border-radius:6px; }
+  .cs-answer-cn { font-family:'Noto Sans SC',sans-serif; font-size:19px; line-height:1.7; }
+  .cs-answer-cn .ans { color:var(--ok-ink); font-weight:700; }
+  .cs-answer-py { font-size:13px; color:var(--stone); margin-top:4px; }
+  .cs-answer-note { font-size:13px; color:var(--stone); margin-top:8px; padding-top:8px; border-top:1px dashed var(--mist); }
+  .cs-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .cs-bar { height:6px; background:var(--mist); border-radius:3px; overflow:hidden; margin-bottom:16px; }
+  .cs-bar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width .3s; }
+  .cs-result { text-align:center; }
+  .cs-score { font-size:44px; font-weight:700; font-family:'Noto Serif SC',serif; }
+</style>
+</head>
+<body>
+${DRILL_HEADER('')}
+<main>
+  <nav class="breadcrumb" aria-label="Breadcrumb" style="font-size:13px;color:var(--stone);margin-bottom:8px;">
+    <a href="/" style="color:var(--accent);text-decoration:none;">Home</a> &rsaquo; <a href="/writing/" style="color:var(--accent);text-decoration:none;">Writing</a> &rsaquo; 完成句子
+  </nav>
+  <div class="cs-hero">
+    <h1>完成句子 <span style="color:var(--accent);font-family:'Noto Serif SC',serif;">Complete the Sentence</span></h1>
+    <p>The HSK 4 writing section gives you the start of a sentence and asks you to finish it. This drill uses ${items.length} real HSK 4 sentence patterns: read the opening clause, <strong>write the rest yourself</strong>, then reveal the model answer to check.</p>
+  </div>
+  <div id="cs-quiz"></div>
+</main>
+<footer>
+  <p class="footer-links" style="text-align:center;"><a href="/writing/">Writing Hub</a> · <a href="/writing/sentence-order/">Sentence Ordering</a> · <a href="/writing/paragraph/">Paragraph Writing</a> · <a href="/sentences/">100 Sentences</a> · <a href="/practice/">Mixed Practice</a></p>
+</footer>
+<script>
+const CS_ITEMS = ${JSON.stringify(items)};
+const CS_ROUND = 12;
+let csRound = [], csIdx = 0, csScore = 0, csRevealed = false;
+
+function csEsc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+function csShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function csStart(){
+  csRound = csShuffle(CS_ITEMS).slice(0, Math.min(CS_ROUND, CS_ITEMS.length));
+  csIdx = 0; csScore = 0;
+  csRender();
+}
+function csRender(){
+  const q = csRound[csIdx];
+  csRevealed = false;
+  document.getElementById('cs-quiz').innerHTML = \`
+    <div class="cs-bar"><div class="cs-bar-fill" style="width:\${Math.round(csIdx/csRound.length*100)}%"></div></div>
+    <div class="cs-card">
+      <div class="cs-top"><span class="cs-tag">\${csEsc(q.cat)}</span><span class="cs-progress">\${csIdx+1} / \${csRound.length}</span></div>
+      <div class="cs-en">\${csEsc(q.en)}</div>
+      <div class="cs-prompt chinese">\${csEsc(q.given)}，<span class="cs-blank"></span>。</div>
+      <div class="cs-hint">Write the second half in Chinese, then reveal the model answer.</div>
+      <div id="cs-reveal"></div>
+      <div class="cs-actions" id="cs-actions">
+        <button class="btn btn-primary" onclick="csReveal()">Show answer</button>
+      </div>
+    </div>\`;
+  window.scrollTo(0,0);
+}
+function csReveal(){
+  if(csRevealed) return;
+  csRevealed = true;
+  const q = csRound[csIdx];
+  document.getElementById('cs-reveal').innerHTML = \`
+    <div class="cs-answer">
+      <div class="cs-answer-cn chinese">\${csEsc(q.given)}，<span class="ans">\${csEsc(q.answer)}</span></div>
+      <div class="cs-answer-py">\${csEsc(q.py)}</div>
+      \${q.use ? \`<div class="cs-answer-note">\${csEsc(q.use)}</div>\` : ''}
+    </div>\`;
+  document.getElementById('cs-actions').innerHTML = \`
+    <span style="align-self:center;color:var(--stone);font-size:14px;">How did you do?</span>
+    <button class="btn btn-secondary" onclick="csMark(true)">I got it ✓</button>
+    <button class="btn btn-ghost" onclick="csMark(false)">Review ✗</button>\`;
+}
+function csMark(ok){
+  if(ok) csScore++;
+  if(csIdx < csRound.length-1){ csIdx++; csRender(); }
+  else csResult();
+}
+function csResult(){
+  const pct = Math.round(csScore/csRound.length*100);
+  document.getElementById('cs-quiz').innerHTML = \`
+    <div class="cs-card cs-result">
+      <div class="cs-score" style="color:\${pct>=60?'var(--correct)':'var(--accent)'}">\${csScore}/\${csRound.length}</div>
+      <p style="color:var(--stone);">You self-marked \${pct}% correct. Honest self-assessment is how writing improves — revisit the ones you missed.</p>
+      <div class="cs-actions" style="justify-content:center;margin-top:18px;">
+        <button class="btn btn-primary" onclick="csStart()">New set</button>
+        <a class="btn btn-ghost" href="/sentences/">Study the 100 sentences</a>
+        <a class="btn btn-ghost" href="/writing/paragraph/">Paragraph writing →</a>
+      </div>
+    </div>\`;
+  window.scrollTo(0,0);
+}
+csStart();
+</script>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+  console.log(`[complete] Generated /writing/complete-sentence/ with ${items.length} items`);
+  return items.length;
+}
+
+// ============================================================
 // MIXED PRACTICE — exam-style drill that shuffles grammar + confusable
 // items together, the way the real reading section mixes them. Reuses the
 // {stem, correct, wrong, explain} quiz items already authored in the data.
@@ -4603,7 +4756,8 @@ const characterList = buildCharacterPages();
 const sentenceCatPages = buildSentenceCategoryPages();
 const trapCatPages = buildTrapCategoryPages();
 buildMixedPractice();
+buildCompleteSentence();
 addTestLinksToHubs();
-buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, { loc: '/practice/', priority: '0.8' }]);
+buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, { loc: '/practice/', priority: '0.8' }, { loc: '/writing/complete-sentence/', priority: '0.8' }]);
 injectTheme();
 console.log('\nDone! All static content pre-rendered.');
