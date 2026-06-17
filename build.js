@@ -131,9 +131,49 @@ function generateTopicQuiz(words, seed) {
 // 1. PRE-RENDER VOCABULARY INTO vocabulary/index.html
 // ============================================================
 
+// Count how often each multi-character HSK 4 word appears across the 12 real
+// mock-test papers, so learners can prioritise high-yield vocabulary. Single
+// characters are excluded — substring counts overcount them inside compounds
+// — and a stoplist removes exam-instruction boilerplate (阅读/顺序/正确…) that
+// repeats in every paper and would otherwise dominate the ranking.
+const EXAM_BOILERPLATE = new Set('阅读 理解 选择 选词 填空 正确 答案 顺序 排列 词语 完成 句子 根据 短文 问题 例如 部分 听力 录音 对话 说话 下面 关于 内容 表示 意思'.split(/\s+/));
+function computeExamFrequency(words) {
+  const index = readJSON('index.json');
+  let corpus = '';
+  index.forEach(meta => {
+    const test = readJSON(meta.file);
+    test.questions.forEach(q => {
+      if (q.text) corpus += ' ' + q.text;
+      if (q.options) q.options.forEach(o => { corpus += ' ' + String(o).replace(/^[A-F]\s+/, ''); });
+      if (q.explanation) corpus += ' ' + q.explanation;
+    });
+  });
+  const clean = corpus.replace(/[^一-鿿]/g, ' ');
+  const wordSet = new Set(words.filter(w => w.word && w.word.length >= 2).map(w => w.word));
+  const maxLen = Math.max(2, ...[...wordSet].map(w => w.length));
+  const byWord = {};
+  for (const seg of clean.split(/\s+/)) {
+    let i = 0;
+    while (i < seg.length) {
+      let match = null;
+      for (let L = Math.min(maxLen, seg.length - i); L >= 2; L--) {
+        const cand = seg.substr(i, L);
+        if (wordSet.has(cand)) { match = cand; break; }
+      }
+      if (match) { if (!EXAM_BOILERPLATE.has(match)) byWord[match] = (byWord[match] || 0) + 1; i += match.length; }
+      else i++;
+    }
+  }
+  // Map id -> count, keeping only words tested at least twice (signal, not noise)
+  const byId = {};
+  words.forEach(w => { const n = byWord[w.word]; if (n >= 2) byId[w.id] = n; });
+  return byId;
+}
+
 function buildVocabulary() {
   console.log('[vocab] Pre-rendering vocabulary...');
   const words = readJSON('vocabulary.json');
+  const examFreq = computeExamFrequency(words);
   const htmlPath = path.join(ROOT, 'vocabulary', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
 
@@ -144,6 +184,14 @@ function buildVocabulary() {
     if (!t) return '';
     return `\n      <a class="vocab-task-link" href="/topics/${t.slug}/">\u{1F4DA} ${escHtml(t.task_cn)} \u2192</a>`;
   };
+  // "Frequently tested" badge, driven by real mock-exam appearances.
+  const freqBadge = w => {
+    const n = examFreq[w.id];
+    if (!n || n < 6) return '';
+    const tier = n >= 20 ? 'high' : 'mid';
+    const label = n >= 20 ? '\u9ad8\u9891' : '\u5e38\u8003';
+    return `<span class="freq-badge freq-${tier}" title="Appears ${n} times across the 12 mock exams">${label} ${n}\u00d7</span>`;
+  };
 
   // Build a static word list that crawlers can index
   // The JS will replace this on load, but crawlers see the full list
@@ -153,7 +201,7 @@ function buildVocabulary() {
   <div class="vocab-collapsed">
     <span class="vocab-word chinese">${escHtml(w.word)}</span>
     <span class="vocab-pinyin">${escHtml(w.pinyin)}</span>
-    <span class="pos-badge">${escHtml(w.pos || '')}</span>
+    <span class="pos-badge">${escHtml(w.pos || '')}</span>${freqBadge(w)}
     <span class="vocab-meaning">${escHtml(w.meaning || '')}</span>
   </div>
   <div class="vocab-expanded">
@@ -171,7 +219,7 @@ function buildVocabulary() {
     Object.entries(wordTask).map(([id, t]) => [id, [t.slug, t.task_cn]])
   ));
   html = html.replace(/\s*<!-- WORD TASKS MAP -->[\s\S]*?<!-- \/WORD TASKS MAP -->/g, '');
-  html = html.replace(/<script>\s*\/\/ === STATE ===/, `<!-- WORD TASKS MAP -->\n<script>window.WORD_TASKS = ${wordTasksJson};</script>\n<!-- /WORD TASKS MAP -->\n<script>\n// === STATE ===`);
+  html = html.replace(/<script>\s*\/\/ === STATE ===/, `<!-- WORD TASKS MAP -->\n<script>window.WORD_TASKS = ${wordTasksJson};\nwindow.WORD_FREQ = ${JSON.stringify(examFreq)};</script>\n<!-- /WORD TASKS MAP -->\n<script>\n// === STATE ===`);
 
   // Replace the #vocab-list container with freshly pre-rendered content.
   // Walk div depth instead of regexing, so this works whether the container
@@ -221,7 +269,7 @@ function buildVocabulary() {
     </ul>
 
     <p style="color:var(--stone);line-height:1.8;margin-bottom:16px;">
-      All ${words.length} words below include pinyin, English translations, and example sentences in context. Use the flashcard and quiz modes above to practice active recall. Your progress is saved locally so you can pick up where you left off.
+      All ${words.length} words below include pinyin, English translations, and example sentences in context. Words that recur in our 12 mock exams are tagged <span class="freq-badge freq-high">高频</span> (appears 20+ times) or <span class="freq-badge freq-mid">常考</span> (6+ times) — switch the sort to <strong>Most tested first</strong> to study the highest-yield vocabulary before exam day. Use the flashcard and quiz modes above to practice active recall; your progress is saved locally so you can pick up where you left off.
     </p>
 
     <p style="color:var(--stone);line-height:1.8;">
@@ -727,6 +775,11 @@ ${testLinks}
             <div class="toolkit-card-tag">Writing Drill</div>
             <h4>Sentence Ordering</h4>
             <p>Targeted drills for the trickiest reading question type. Templates + answer keys.</p>
+          </a>
+          <a href="/practice/" class="toolkit-card">
+            <div class="toolkit-card-tag">Mixed Drill</div>
+            <h4>选词填空 Mixed Practice</h4>
+            <p>156 grammar + confusable-word questions shuffled like the real reading section, with instant scoring.</p>
           </a>
         </div>
       </div>
@@ -4304,6 +4357,347 @@ window.trapAnswer = function(btn, isCorrect, qNum) {
 }
 
 // ============================================================
+// COMPLETE-THE-SENTENCE — a 完成句子 production drill. Splits the 100
+// essential sentences at their comma so the learner produces the second
+// clause from the first (the exact HSK 4 写作 task), then self-checks
+// against the verbatim answer. Reveal-based because free Chinese writing
+// can't be auto-graded.
+// ============================================================
+function buildCompleteSentence() {
+  console.log('[complete] Building 完成句子 production drill...');
+  const sentences = readJSON('sentences.json');
+  const items = [];
+  sentences.forEach(cat => (cat.sentences || []).forEach(x => {
+    const parts = x.cn.split(/[，,]/);
+    if (parts.length < 2) return;
+    const given = parts[0].trim();
+    const answer = parts.slice(1).join('，').trim();
+    if (given.length < 3 || answer.replace(/[。！？.]/g, '').length < 3) return;
+    items.push({ given, answer, py: x.py || '', en: x.en || '', use: x.use || '', cat: cat.name_cn || '' });
+  }));
+
+  const dir = path.join(ROOT, 'writing', 'complete-sentence');
+  ensureDir(dir);
+  const title = 'HSK 4 完成句子 Practice — Complete-the-Sentence Writing Drill | Mandarin Zone';
+  const desc = truncDesc(`Free HSK 4 writing drill: ${items.length} 完成句子 (complete-the-sentence) exercises built from real HSK 4 sentence patterns. Produce the second clause, then self-check against the answer with pinyin.`);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/writing/complete-sentence/">
+<meta property="og:title" content="HSK 4 完成句子 — Complete-the-Sentence Writing Drill">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/writing/complete-sentence/">
+<meta property="og:site_name" content="Mandarin Zone">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/common.css">
+<style>
+  .cs-hero { text-align:center; padding:32px 0 18px; }
+  .cs-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:10px; }
+  .cs-hero p { color:var(--stone); max-width:600px; margin:0 auto; line-height:1.7; }
+  .cs-card { background:var(--surface); border:1px solid var(--mist); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); margin-bottom:16px; }
+  .cs-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+  .cs-tag { font-size:12px; font-weight:600; padding:3px 10px; border-radius:6px; background:var(--gold-soft); color:var(--gold); }
+  .cs-progress { font-size:13px; color:var(--stone); font-weight:500; }
+  .cs-en { color:var(--stone); font-size:14px; margin-bottom:10px; }
+  .cs-prompt { font-family:'Noto Sans SC',sans-serif; font-size:21px; line-height:1.9; margin-bottom:6px; }
+  .cs-blank { display:inline-block; min-width:120px; border-bottom:2px dashed var(--accent); }
+  .cs-hint { font-size:13px; color:var(--stone); margin-bottom:16px; }
+  .cs-answer { margin-top:8px; padding:14px 16px; background:var(--ok-bg); border-left:3px solid var(--correct); border-radius:6px; }
+  .cs-answer-cn { font-family:'Noto Sans SC',sans-serif; font-size:19px; line-height:1.7; }
+  .cs-answer-cn .ans { color:var(--ok-ink); font-weight:700; }
+  .cs-answer-py { font-size:13px; color:var(--stone); margin-top:4px; }
+  .cs-answer-note { font-size:13px; color:var(--stone); margin-top:8px; padding-top:8px; border-top:1px dashed var(--mist); }
+  .cs-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .cs-bar { height:6px; background:var(--mist); border-radius:3px; overflow:hidden; margin-bottom:16px; }
+  .cs-bar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width .3s; }
+  .cs-result { text-align:center; }
+  .cs-score { font-size:44px; font-weight:700; font-family:'Noto Serif SC',serif; }
+</style>
+</head>
+<body>
+${DRILL_HEADER('')}
+<main>
+  <nav class="breadcrumb" aria-label="Breadcrumb" style="font-size:13px;color:var(--stone);margin-bottom:8px;">
+    <a href="/" style="color:var(--accent);text-decoration:none;">Home</a> &rsaquo; <a href="/writing/" style="color:var(--accent);text-decoration:none;">Writing</a> &rsaquo; 完成句子
+  </nav>
+  <div class="cs-hero">
+    <h1>完成句子 <span style="color:var(--accent);font-family:'Noto Serif SC',serif;">Complete the Sentence</span></h1>
+    <p>The HSK 4 writing section gives you the start of a sentence and asks you to finish it. This drill uses ${items.length} real HSK 4 sentence patterns: read the opening clause, <strong>write the rest yourself</strong>, then reveal the model answer to check.</p>
+  </div>
+  <div id="cs-quiz"></div>
+</main>
+<footer>
+  <p class="footer-links" style="text-align:center;"><a href="/writing/">Writing Hub</a> · <a href="/writing/sentence-order/">Sentence Ordering</a> · <a href="/writing/paragraph/">Paragraph Writing</a> · <a href="/sentences/">100 Sentences</a> · <a href="/practice/">Mixed Practice</a></p>
+</footer>
+<script>
+const CS_ITEMS = ${JSON.stringify(items)};
+const CS_ROUND = 12;
+let csRound = [], csIdx = 0, csScore = 0, csRevealed = false;
+
+function csEsc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+function csShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function csStart(){
+  csRound = csShuffle(CS_ITEMS).slice(0, Math.min(CS_ROUND, CS_ITEMS.length));
+  csIdx = 0; csScore = 0;
+  csRender();
+}
+function csRender(){
+  const q = csRound[csIdx];
+  csRevealed = false;
+  document.getElementById('cs-quiz').innerHTML = \`
+    <div class="cs-bar"><div class="cs-bar-fill" style="width:\${Math.round(csIdx/csRound.length*100)}%"></div></div>
+    <div class="cs-card">
+      <div class="cs-top"><span class="cs-tag">\${csEsc(q.cat)}</span><span class="cs-progress">\${csIdx+1} / \${csRound.length}</span></div>
+      <div class="cs-en">\${csEsc(q.en)}</div>
+      <div class="cs-prompt chinese">\${csEsc(q.given)}，<span class="cs-blank"></span>。</div>
+      <div class="cs-hint">Write the second half in Chinese, then reveal the model answer.</div>
+      <div id="cs-reveal"></div>
+      <div class="cs-actions" id="cs-actions">
+        <button class="btn btn-primary" onclick="csReveal()">Show answer</button>
+      </div>
+    </div>\`;
+  window.scrollTo(0,0);
+}
+function csReveal(){
+  if(csRevealed) return;
+  csRevealed = true;
+  const q = csRound[csIdx];
+  document.getElementById('cs-reveal').innerHTML = \`
+    <div class="cs-answer">
+      <div class="cs-answer-cn chinese">\${csEsc(q.given)}，<span class="ans">\${csEsc(q.answer)}</span></div>
+      <div class="cs-answer-py">\${csEsc(q.py)}</div>
+      \${q.use ? \`<div class="cs-answer-note">\${csEsc(q.use)}</div>\` : ''}
+    </div>\`;
+  document.getElementById('cs-actions').innerHTML = \`
+    <span style="align-self:center;color:var(--stone);font-size:14px;">How did you do?</span>
+    <button class="btn btn-secondary" onclick="csMark(true)">I got it ✓</button>
+    <button class="btn btn-ghost" onclick="csMark(false)">Review ✗</button>\`;
+}
+function csMark(ok){
+  if(ok) csScore++;
+  if(csIdx < csRound.length-1){ csIdx++; csRender(); }
+  else csResult();
+}
+function csResult(){
+  const pct = Math.round(csScore/csRound.length*100);
+  document.getElementById('cs-quiz').innerHTML = \`
+    <div class="cs-card cs-result">
+      <div class="cs-score" style="color:\${pct>=60?'var(--correct)':'var(--accent)'}">\${csScore}/\${csRound.length}</div>
+      <p style="color:var(--stone);">You self-marked \${pct}% correct. Honest self-assessment is how writing improves — revisit the ones you missed.</p>
+      <div class="cs-actions" style="justify-content:center;margin-top:18px;">
+        <button class="btn btn-primary" onclick="csStart()">New set</button>
+        <a class="btn btn-ghost" href="/sentences/">Study the 100 sentences</a>
+        <a class="btn btn-ghost" href="/writing/paragraph/">Paragraph writing →</a>
+      </div>
+    </div>\`;
+  window.scrollTo(0,0);
+}
+csStart();
+</script>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+  console.log(`[complete] Generated /writing/complete-sentence/ with ${items.length} items`);
+  return items.length;
+}
+
+// ============================================================
+// MIXED PRACTICE — exam-style drill that shuffles grammar + confusable
+// items together, the way the real reading section mixes them. Reuses the
+// {stem, correct, wrong, explain} quiz items already authored in the data.
+// ============================================================
+function buildMixedPractice() {
+  console.log('[practice] Building mixed exam-style practice page...');
+  const grammar = readJSON('grammar-patterns.json');
+  const confusables = readJSON('confusables.json');
+  const gArr = Array.isArray(grammar) ? grammar : (grammar.patterns || Object.values(grammar)[0]);
+  const cArr = Array.isArray(confusables) ? confusables : (confusables.pairs || Object.values(confusables)[0]);
+
+  const items = [];
+  gArr.forEach(p => (p.quiz || []).forEach(q => {
+    if (q.stem && q.correct && q.wrong) items.push({ stem: q.stem, correct: q.correct, wrong: q.wrong, explain: q.explain || '', tag: p.pattern_cn || 'Grammar', cat: 'grammar', href: `/grammar/patterns/${p.slug}/` });
+  }));
+  cArr.forEach(p => (p.quiz || []).forEach(q => {
+    if (q.stem && q.correct && q.wrong) items.push({ stem: q.stem, correct: q.correct, wrong: q.wrong, explain: q.explain || '', tag: `${p.wordA}/${p.wordB}`, cat: 'confusable', href: `/words/${p.slug}/` });
+  }));
+
+  const dir = path.join(ROOT, 'practice');
+  ensureDir(dir);
+  const title = 'HSK 4 Mixed Practice — 选词填空 Drill (Grammar + Confusable Words) | Mandarin Zone';
+  const desc = truncDesc(`Free HSK 4 mixed practice drill: ${items.length} fill-in-the-blank questions on grammar connectors and confusable words, shuffled like the real reading section. Instant scoring + explanations.`);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/practice/">
+<meta property="og:title" content="HSK 4 Mixed Practice — Grammar + Confusable Words Drill">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/practice/">
+<meta property="og:site_name" content="Mandarin Zone">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/common.css">
+<style>
+  .pr-hero { text-align:center; padding:32px 0 20px; }
+  .pr-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:10px; }
+  .pr-hero p { color:var(--stone); max-width:600px; margin:0 auto; line-height:1.7; }
+  .pr-filters { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:18px 0; }
+  .pr-filter { background:var(--surface); border:1px solid var(--mist); border-radius:999px; padding:8px 16px; font-size:14px; font-weight:600; color:var(--stone); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .pr-filter.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .pr-card { background:var(--surface); border:1px solid var(--mist); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); margin-bottom:16px; }
+  .pr-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+  .pr-tag { font-size:12px; font-weight:600; padding:3px 10px; border-radius:6px; background:var(--jade-soft); color:var(--jade); }
+  .pr-tag.grammar { background:var(--accent-soft); color:var(--accent); }
+  .pr-progress { font-size:13px; color:var(--stone); font-weight:500; }
+  .pr-stem { font-family:'Noto Sans SC',sans-serif; font-size:19px; line-height:1.9; margin-bottom:18px; }
+  .pr-blank { display:inline-block; min-width:64px; border-bottom:2px solid var(--accent); text-align:center; font-weight:700; color:var(--accent); }
+  .pr-opts { display:flex; flex-direction:column; gap:10px; }
+  .pr-opt { display:flex; align-items:center; gap:10px; padding:12px 16px; border:2px solid var(--mist); border-radius:10px; background:var(--surface); cursor:pointer; font-family:'Noto Sans SC',sans-serif; font-size:16px; text-align:left; width:100%; transition:border-color .15s, background .15s; -webkit-tap-highlight-color:transparent; }
+  .pr-opt:hover:not(.done) { border-color:var(--accent); }
+  .pr-opt.correct { border-color:var(--correct); background:var(--ok-bg); color:var(--ok-ink); font-weight:600; }
+  .pr-opt.wrong { border-color:var(--wrong); background:var(--bad-bg); color:var(--bad-ink); }
+  .pr-opt.done { cursor:default; }
+  .pr-explain { margin-top:14px; padding:12px 16px; background:var(--surface-sunken); border-left:3px solid var(--jade); border-radius:6px; font-size:14px; line-height:1.7; color:var(--ink); }
+  .pr-explain a { color:var(--accent); }
+  .pr-nav { display:flex; justify-content:flex-end; }
+  .pr-bar { height:6px; background:var(--mist); border-radius:3px; overflow:hidden; margin-bottom:16px; }
+  .pr-bar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width .3s; }
+  .pr-result { text-align:center; }
+  .pr-score { font-size:48px; font-weight:700; font-family:'Noto Serif SC',serif; }
+  .pr-result-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:18px; }
+</style>
+</head>
+<body>
+${DRILL_HEADER('')}
+<main>
+  <nav class="breadcrumb" aria-label="Breadcrumb" style="font-size:13px;color:var(--stone);margin-bottom:8px;">
+    <a href="/" style="color:var(--accent);text-decoration:none;">Home</a> &rsaquo; Mixed Practice
+  </nav>
+  <div class="pr-hero">
+    <h1>HSK 4 Mixed Practice <span class="chinese" style="color:var(--accent);">选词填空</span></h1>
+    <p>The real reading section never tests one grammar point at a time. This drill <strong>shuffles ${items.length} grammar-connector and confusable-word questions together</strong>, just like exam day. Pick the word that fits, get instant feedback, and see why.</p>
+  </div>
+
+  <div class="pr-filters" id="pr-filters">
+    <button class="pr-filter active" data-cat="all">All mixed</button>
+    <button class="pr-filter" data-cat="grammar">Grammar only</button>
+    <button class="pr-filter" data-cat="confusable">Confusable words</button>
+  </div>
+
+  <div id="pr-quiz"></div>
+</main>
+
+<footer>
+  <p class="footer-links" style="text-align:center;"><a href="/">Mock Exams</a> · <a href="/grammar/">Grammar</a> · <a href="/words/">Confusable Words</a> · <a href="/traps/">Traps</a> · <a href="/guide/">Study Guide</a></p>
+</footer>
+
+<script>
+const ALL_ITEMS = ${JSON.stringify(items)};
+const ROUND = 15;
+let pool = [], round = [], idx = 0, score = 0, answered = false, cat = 'all';
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function startRound(){
+  pool = cat==='all' ? ALL_ITEMS : ALL_ITEMS.filter(x=>x.cat===cat);
+  round = shuffle(pool).slice(0, Math.min(ROUND, pool.length));
+  idx = 0; score = 0; answered = false;
+  renderQ();
+}
+
+function renderQ(){
+  const q = round[idx];
+  const opts = shuffle([q.correct, q.wrong]);
+  const stem = esc(q.stem).replace(/___/g, '<span class="pr-blank">？</span>');
+  document.getElementById('pr-quiz').innerHTML = \`
+    <div class="pr-bar"><div class="pr-bar-fill" style="width:\${Math.round(idx/round.length*100)}%"></div></div>
+    <div class="pr-card">
+      <div class="pr-top">
+        <span class="pr-tag \${q.cat}">\${esc(q.tag)}</span>
+        <span class="pr-progress">\${idx+1} / \${round.length}</span>
+      </div>
+      <div class="pr-stem chinese">\${stem}</div>
+      <div class="pr-opts" id="pr-opts">
+        \${opts.map(o=>\`<button class="pr-opt" onclick="answer(this, '\${esc(o).replace(/'/g,"\\\\'")}')"><span class="chinese">\${esc(o)}</span></button>\`).join('')}
+      </div>
+      <div id="pr-feedback"></div>
+      <div class="pr-nav" id="pr-nav"></div>
+    </div>\`;
+  answered = false;
+}
+
+function answer(btn, choice){
+  if(answered) return;
+  answered = true;
+  const q = round[idx];
+  document.querySelectorAll('#pr-opts .pr-opt').forEach(b=>{
+    b.classList.add('done');
+    const t = b.textContent.trim();
+    if(t===q.correct) b.classList.add('correct');
+    else if(b===btn) b.classList.add('wrong');
+  });
+  const ok = choice===q.correct;
+  if(ok) score++;
+  document.getElementById('pr-feedback').innerHTML =
+    \`<div class="pr-explain">\${ok?'✓ ':'✗ '}<strong>\${esc(q.correct)}</strong> — \${esc(q.explain)} <a href="\${q.href}">Full notes →</a></div>\`;
+  document.getElementById('pr-nav').innerHTML =
+    \`<button class="btn btn-primary" onclick="next()">\${idx<round.length-1?'Next →':'See score'}</button>\`;
+}
+
+function next(){
+  if(idx<round.length-1){ idx++; renderQ(); window.scrollTo(0,0); }
+  else showResult();
+}
+
+function showResult(){
+  const pct = Math.round(score/round.length*100);
+  document.getElementById('pr-quiz').innerHTML = \`
+    <div class="pr-card pr-result">
+      <div class="pr-score" style="color:\${pct>=60?'var(--correct)':'var(--accent)'}">\${pct}%</div>
+      <p style="color:var(--stone);margin-bottom:4px;">You got <strong>\${score} / \${round.length}</strong> correct.</p>
+      <p style="color:var(--stone);font-size:14px;">\${pct>=80?'Excellent — you can tell these apart under pressure.':pct>=60?'Solid. Re-run to drill the ones you missed.':'Keep going — mixed recall is exactly what the exam tests.'}</p>
+      <div class="pr-result-actions">
+        <button class="btn btn-primary" onclick="startRound()">New set</button>
+        <a class="btn btn-ghost" href="/grammar/">Study grammar</a>
+        <a class="btn btn-ghost" href="/words/">Study confusables</a>
+      </div>
+    </div>\`;
+  window.scrollTo(0,0);
+}
+
+document.getElementById('pr-filters').addEventListener('click', function(e){
+  const b = e.target.closest('.pr-filter');
+  if(!b) return;
+  document.querySelectorAll('.pr-filter').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  cat = b.dataset.cat;
+  startRound();
+});
+
+startRound();
+</script>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+  console.log(`[practice] Generated /practice/ with ${items.length} mixed items`);
+  return items.length;
+}
+
+// ============================================================
 // DARK MODE — inject the no-flash theme loader + floating toggle
 // into every generated page. Runs last so it covers all pages.
 // Idempotent: re-running the build won't duplicate the snippets.
@@ -4361,7 +4755,9 @@ buildGrammarPatternsHub();
 const characterList = buildCharacterPages();
 const sentenceCatPages = buildSentenceCategoryPages();
 const trapCatPages = buildTrapCategoryPages();
+buildMixedPractice();
+buildCompleteSentence();
 addTestLinksToHubs();
-buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages]);
+buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, { loc: '/practice/', priority: '0.8' }, { loc: '/writing/complete-sentence/', priority: '0.8' }]);
 injectTheme();
 console.log('\nDone! All static content pre-rendered.');
