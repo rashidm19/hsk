@@ -170,10 +170,43 @@ function computeExamFrequency(words) {
   return byId;
 }
 
+// Pull one authentic example sentence per word straight from the 12 mock-test
+// papers, so learners see how a word is actually used on the exam (not just a
+// single hand-written gloss). Strips question numbers and test markers
+// (★, 问题：, 录音：…) and prefers complete declarative sentences.
+const EXAM_SENT_PREFIX = /^(★|☆|问题[:：]|阅读短文[:：]|短文[:：]|例如[:：]|录音[:：]|对话[:：]|男[:：]|女[:：])\s*/;
+function extractExamSentences(words) {
+  const index = readJSON('index.json');
+  const sentences = [];
+  index.forEach(meta => {
+    readJSON(meta.file).questions.forEach(q => {
+      if (!q.text) return;
+      const txt = q.text.replace(/^\s*\d+[.、]\s*/, '');
+      txt.split(/(?<=[。！？])/).forEach(raw => {
+        let s = raw.trim(), prev;
+        do { prev = s; s = s.replace(EXAM_SENT_PREFIX, '').trim(); } while (s !== prev);
+        if (s.length >= 8 && s.length <= 34 && /[。！？]$/.test(s) && !/[（）_A-Za-zＡ-Ｚａ-ｚ0-9★☆:：]/.test(s)) {
+          sentences.push(s);
+        }
+      });
+    });
+  });
+  const byId = {};
+  words.forEach(w => {
+    if (!w.word || w.word.length < 2) return;
+    const hits = sentences.filter(s => s.includes(w.word));
+    if (!hits.length) return;
+    hits.sort((a, b) => (a.endsWith('。') ? 0 : 1) - (b.endsWith('。') ? 0 : 1) || a.length - b.length);
+    byId[w.id] = hits[0];
+  });
+  return byId;
+}
+
 function buildVocabulary() {
   console.log('[vocab] Pre-rendering vocabulary...');
   const words = readJSON('vocabulary.json');
   const examFreq = computeExamFrequency(words);
+  const examEx = extractExamSentences(words);
   const htmlPath = path.join(ROOT, 'vocabulary', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
 
@@ -192,6 +225,10 @@ function buildVocabulary() {
     const label = n >= 20 ? '\u9ad8\u9891' : '\u5e38\u8003';
     return `<span class="freq-badge freq-${tier}" title="Appears ${n} times across the 12 mock exams">${label} ${n}\u00d7</span>`;
   };
+  // Authentic example pulled from a real mock-test paper.
+  const examBlock = w => examEx[w.id]
+    ? `\n      <div class="exam-example"><span class="exam-example-label">\u771f\u9898\u4f8b\u53e5 \u00b7 from a mock exam</span> <span class="chinese">${escHtml(examEx[w.id])}</span></div>`
+    : '';
 
   // Build a static word list that crawlers can index
   // The JS will replace this on load, but crawlers see the full list
@@ -209,7 +246,7 @@ function buildVocabulary() {
       <div class="example-cn chinese">${escHtml(w.example_cn || '')}</div>
       <div class="example-pinyin">${escHtml(w.example_pinyin || '')}</div>
       <div class="example-en">${escHtml(w.example_en || '')}</div>${taskChip(w)}
-    </div>
+    </div>${examBlock(w)}
   </div>
 </div>`;
   }).join('\n');
@@ -219,7 +256,7 @@ function buildVocabulary() {
     Object.entries(wordTask).map(([id, t]) => [id, [t.slug, t.task_cn]])
   ));
   html = html.replace(/\s*<!-- WORD TASKS MAP -->[\s\S]*?<!-- \/WORD TASKS MAP -->/g, '');
-  html = html.replace(/<script>\s*\/\/ === STATE ===/, `<!-- WORD TASKS MAP -->\n<script>window.WORD_TASKS = ${wordTasksJson};\nwindow.WORD_FREQ = ${JSON.stringify(examFreq)};</script>\n<!-- /WORD TASKS MAP -->\n<script>\n// === STATE ===`);
+  html = html.replace(/<script>\s*\/\/ === STATE ===/, `<!-- WORD TASKS MAP -->\n<script>window.WORD_TASKS = ${wordTasksJson};\nwindow.WORD_FREQ = ${JSON.stringify(examFreq)};\nwindow.WORD_EXAMPLES = ${JSON.stringify(examEx)};</script>\n<!-- /WORD TASKS MAP -->\n<script>\n// === STATE ===`);
 
   // Replace the #vocab-list container with freshly pre-rendered content.
   // Walk div depth instead of regexing, so this works whether the container
