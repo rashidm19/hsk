@@ -4105,6 +4105,22 @@ const SENTENCE_CAT_RELATED = {
   'summary-conclusion':  [['/strategies/writing-construction/', 'Writing strategy'], ['/writing/paragraph/', 'Paragraph writing practice']],
 };
 
+// Heuristic difficulty for a sentence: length + complex connectors + clauses.
+// Used to order each category easy→hard (the audit flagged the lack of a
+// progression) and to star each sentence.
+const SENTENCE_COMPLEX = ['虽然', '但是', '即使', '不管', '无论', '只有', '只要', '不但', '而且', '因为', '所以', '如果', '要是', '尽管', '既然', '除非', '不仅', '并且', '否则', '于是', '然而', '不过', '反而', '何况', '宁可', '与其', '哪怕', '不如', '越来越', '对于', '关于'];
+const DIFF_LABEL = { 1: 'Easy', 2: 'Medium', 3: 'Harder' };
+function sentenceDifficulty(cn) {
+  cn = cn || '';
+  const len = cn.replace(/[，。！？、；：]/g, '').length;
+  const conn = SENTENCE_COMPLEX.filter(c => cn.includes(c)).length;
+  const commas = (cn.match(/[，；]/g) || []).length;
+  const score = len + conn * 6 + commas * 3;
+  if (score >= 28 || (conn >= 1 && len >= 15)) return 3;
+  if (score >= 17) return 2;
+  return 1;
+}
+
 function buildSentenceCategoryPages() {
   console.log('[sentence-cats] Generating sentence category drill-down pages...');
   const cats = readJSON('sentences.json');
@@ -4120,18 +4136,22 @@ function buildSentenceCategoryPages() {
       .map(p => `<a href="${p.href}" style="display:inline-block;background:var(--surface);border:1px solid var(--mist);border-radius:6px;padding:6px 12px;font-size:13px;text-decoration:none;color:var(--ink);margin:0 6px 6px 0;">${p.label} →</a>`)
       .join('');
 
-    const sentencesHtml = cat.sentences.map((s, i) => `
+    // Order each category easy → hard so learners build up a progression.
+    const sorted = cat.sentences.map(s => ({ s, d: sentenceDifficulty(s.cn) }))
+      .sort((a, b) => a.d - b.d).map(x => Object.assign({ _d: x.d }, x.s));
+
+    const sentencesHtml = sorted.map((s, i) => `
     <div class="sentence-row" id="s${i + 1}">
       <div class="sent-num">${i + 1}</div>
       <div class="sent-content">
-        <div class="sent-cn chinese">${escHtml(s.cn)}</div>
+        <div class="sent-cn chinese">${escHtml(s.cn)} <span class="sent-diff sent-diff-${s._d}" title="${DIFF_LABEL[s._d]}">${'★'.repeat(s._d)}</span></div>
         <div class="sent-py">${escHtml(s.py)}</div>
         <div class="sent-en">${escHtml(s.en)}</div>
         ${s.use ? `<div class="sent-use">\u{1F4CB} ${escHtml(s.use)}</div>` : ''}
       </div>
     </div>`).join('');
 
-    const recallCards = cat.sentences.map((s, i) => `
+    const recallCards = sorted.map((s, i) => `
       <div class="recall-card" data-i="${i}">
         <div class="recall-en">${escHtml(s.en)}</div>
         <div class="recall-cn chinese" style="display:none;">${escHtml(s.cn)}<div class="recall-py">${escHtml(s.py)}</div></div>
@@ -4172,6 +4192,10 @@ ${JSON.stringify({
   .sentence-row { display:flex; gap:14px; background:var(--surface); border:1px solid var(--mist); border-radius:var(--radius-sm); padding:16px 18px; margin-bottom:10px; }
   .sent-num { flex:0 0 28px; height:28px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; }
   .sent-cn { font-size:17px; font-weight:600; line-height:1.7; }
+  .sent-diff { font-size:12px; letter-spacing:1px; vertical-align:middle; white-space:nowrap; }
+  .sent-diff-1 { color:var(--jade); }
+  .sent-diff-2 { color:var(--gold); }
+  .sent-diff-3 { color:var(--accent); }
   .sent-py { color:var(--accent); font-size:13px; margin-top:2px; }
   .sent-en { color:var(--stone); font-size:14px; margin-top:4px; line-height:1.6; }
   .sent-use { color:var(--stone); font-size:12px; margin-top:6px; background:var(--paper); display:inline-block; padding:3px 8px; border-radius:4px; }
@@ -4199,7 +4223,8 @@ ${DRILL_HEADER('sentences')}
     ${patternChips}
   </section>` : ''}
 
-  <h2 style="font-family:'Noto Serif SC',serif;font-size:22px;margin:24px 0 14px;">The 10 sentences / 句子清单</h2>
+  <h2 style="font-family:'Noto Serif SC',serif;font-size:22px;margin:24px 0 6px;">The 10 sentences / 句子清单</h2>
+  <p style="color:var(--stone);font-size:13px;margin-bottom:14px;">Ordered easiest first. Difficulty: <span class="sent-diff sent-diff-1">★</span> simple · <span class="sent-diff sent-diff-2">★★</span> one clause/connector · <span class="sent-diff sent-diff-3">★★★</span> complex sentence (虽然…但是, 因为…所以…).</p>
   ${sentencesHtml}
 
   <h2 style="font-family:'Noto Serif SC',serif;font-size:22px;margin:36px 0 8px;">Active Recall Practice / 回忆练习</h2>
