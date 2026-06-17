@@ -776,6 +776,11 @@ ${testLinks}
             <h4>Sentence Ordering</h4>
             <p>Targeted drills for the trickiest reading question type. Templates + answer keys.</p>
           </a>
+          <a href="/practice/" class="toolkit-card">
+            <div class="toolkit-card-tag">Mixed Drill</div>
+            <h4>选词填空 Mixed Practice</h4>
+            <p>156 grammar + confusable-word questions shuffled like the real reading section, with instant scoring.</p>
+          </a>
         </div>
       </div>
 
@@ -4352,6 +4357,194 @@ window.trapAnswer = function(btn, isCorrect, qNum) {
 }
 
 // ============================================================
+// MIXED PRACTICE — exam-style drill that shuffles grammar + confusable
+// items together, the way the real reading section mixes them. Reuses the
+// {stem, correct, wrong, explain} quiz items already authored in the data.
+// ============================================================
+function buildMixedPractice() {
+  console.log('[practice] Building mixed exam-style practice page...');
+  const grammar = readJSON('grammar-patterns.json');
+  const confusables = readJSON('confusables.json');
+  const gArr = Array.isArray(grammar) ? grammar : (grammar.patterns || Object.values(grammar)[0]);
+  const cArr = Array.isArray(confusables) ? confusables : (confusables.pairs || Object.values(confusables)[0]);
+
+  const items = [];
+  gArr.forEach(p => (p.quiz || []).forEach(q => {
+    if (q.stem && q.correct && q.wrong) items.push({ stem: q.stem, correct: q.correct, wrong: q.wrong, explain: q.explain || '', tag: p.pattern_cn || 'Grammar', cat: 'grammar', href: `/grammar/patterns/${p.slug}/` });
+  }));
+  cArr.forEach(p => (p.quiz || []).forEach(q => {
+    if (q.stem && q.correct && q.wrong) items.push({ stem: q.stem, correct: q.correct, wrong: q.wrong, explain: q.explain || '', tag: `${p.wordA}/${p.wordB}`, cat: 'confusable', href: `/words/${p.slug}/` });
+  }));
+
+  const dir = path.join(ROOT, 'practice');
+  ensureDir(dir);
+  const title = 'HSK 4 Mixed Practice — 选词填空 Drill (Grammar + Confusable Words) | Mandarin Zone';
+  const desc = truncDesc(`Free HSK 4 mixed practice drill: ${items.length} fill-in-the-blank questions on grammar connectors and confusable words, shuffled like the real reading section. Instant scoring + explanations.`);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/practice/">
+<meta property="og:title" content="HSK 4 Mixed Practice — Grammar + Confusable Words Drill">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/practice/">
+<meta property="og:site_name" content="Mandarin Zone">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/common.css">
+<style>
+  .pr-hero { text-align:center; padding:32px 0 20px; }
+  .pr-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:10px; }
+  .pr-hero p { color:var(--stone); max-width:600px; margin:0 auto; line-height:1.7; }
+  .pr-filters { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:18px 0; }
+  .pr-filter { background:var(--surface); border:1px solid var(--mist); border-radius:999px; padding:8px 16px; font-size:14px; font-weight:600; color:var(--stone); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .pr-filter.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .pr-card { background:var(--surface); border:1px solid var(--mist); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); margin-bottom:16px; }
+  .pr-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+  .pr-tag { font-size:12px; font-weight:600; padding:3px 10px; border-radius:6px; background:var(--jade-soft); color:var(--jade); }
+  .pr-tag.grammar { background:var(--accent-soft); color:var(--accent); }
+  .pr-progress { font-size:13px; color:var(--stone); font-weight:500; }
+  .pr-stem { font-family:'Noto Sans SC',sans-serif; font-size:19px; line-height:1.9; margin-bottom:18px; }
+  .pr-blank { display:inline-block; min-width:64px; border-bottom:2px solid var(--accent); text-align:center; font-weight:700; color:var(--accent); }
+  .pr-opts { display:flex; flex-direction:column; gap:10px; }
+  .pr-opt { display:flex; align-items:center; gap:10px; padding:12px 16px; border:2px solid var(--mist); border-radius:10px; background:var(--surface); cursor:pointer; font-family:'Noto Sans SC',sans-serif; font-size:16px; text-align:left; width:100%; transition:border-color .15s, background .15s; -webkit-tap-highlight-color:transparent; }
+  .pr-opt:hover:not(.done) { border-color:var(--accent); }
+  .pr-opt.correct { border-color:var(--correct); background:var(--ok-bg); color:var(--ok-ink); font-weight:600; }
+  .pr-opt.wrong { border-color:var(--wrong); background:var(--bad-bg); color:var(--bad-ink); }
+  .pr-opt.done { cursor:default; }
+  .pr-explain { margin-top:14px; padding:12px 16px; background:var(--surface-sunken); border-left:3px solid var(--jade); border-radius:6px; font-size:14px; line-height:1.7; color:var(--ink); }
+  .pr-explain a { color:var(--accent); }
+  .pr-nav { display:flex; justify-content:flex-end; }
+  .pr-bar { height:6px; background:var(--mist); border-radius:3px; overflow:hidden; margin-bottom:16px; }
+  .pr-bar-fill { height:100%; background:var(--accent); border-radius:3px; transition:width .3s; }
+  .pr-result { text-align:center; }
+  .pr-score { font-size:48px; font-weight:700; font-family:'Noto Serif SC',serif; }
+  .pr-result-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:18px; }
+</style>
+</head>
+<body>
+${DRILL_HEADER('')}
+<main>
+  <nav class="breadcrumb" aria-label="Breadcrumb" style="font-size:13px;color:var(--stone);margin-bottom:8px;">
+    <a href="/" style="color:var(--accent);text-decoration:none;">Home</a> &rsaquo; Mixed Practice
+  </nav>
+  <div class="pr-hero">
+    <h1>HSK 4 Mixed Practice <span class="chinese" style="color:var(--accent);">选词填空</span></h1>
+    <p>The real reading section never tests one grammar point at a time. This drill <strong>shuffles ${items.length} grammar-connector and confusable-word questions together</strong>, just like exam day. Pick the word that fits, get instant feedback, and see why.</p>
+  </div>
+
+  <div class="pr-filters" id="pr-filters">
+    <button class="pr-filter active" data-cat="all">All mixed</button>
+    <button class="pr-filter" data-cat="grammar">Grammar only</button>
+    <button class="pr-filter" data-cat="confusable">Confusable words</button>
+  </div>
+
+  <div id="pr-quiz"></div>
+</main>
+
+<footer>
+  <p class="footer-links" style="text-align:center;"><a href="/">Mock Exams</a> · <a href="/grammar/">Grammar</a> · <a href="/words/">Confusable Words</a> · <a href="/traps/">Traps</a> · <a href="/guide/">Study Guide</a></p>
+</footer>
+
+<script>
+const ALL_ITEMS = ${JSON.stringify(items)};
+const ROUND = 15;
+let pool = [], round = [], idx = 0, score = 0, answered = false, cat = 'all';
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function startRound(){
+  pool = cat==='all' ? ALL_ITEMS : ALL_ITEMS.filter(x=>x.cat===cat);
+  round = shuffle(pool).slice(0, Math.min(ROUND, pool.length));
+  idx = 0; score = 0; answered = false;
+  renderQ();
+}
+
+function renderQ(){
+  const q = round[idx];
+  const opts = shuffle([q.correct, q.wrong]);
+  const stem = esc(q.stem).replace(/___/g, '<span class="pr-blank">？</span>');
+  document.getElementById('pr-quiz').innerHTML = \`
+    <div class="pr-bar"><div class="pr-bar-fill" style="width:\${Math.round(idx/round.length*100)}%"></div></div>
+    <div class="pr-card">
+      <div class="pr-top">
+        <span class="pr-tag \${q.cat}">\${esc(q.tag)}</span>
+        <span class="pr-progress">\${idx+1} / \${round.length}</span>
+      </div>
+      <div class="pr-stem chinese">\${stem}</div>
+      <div class="pr-opts" id="pr-opts">
+        \${opts.map(o=>\`<button class="pr-opt" onclick="answer(this, '\${esc(o).replace(/'/g,"\\\\'")}')"><span class="chinese">\${esc(o)}</span></button>\`).join('')}
+      </div>
+      <div id="pr-feedback"></div>
+      <div class="pr-nav" id="pr-nav"></div>
+    </div>\`;
+  answered = false;
+}
+
+function answer(btn, choice){
+  if(answered) return;
+  answered = true;
+  const q = round[idx];
+  document.querySelectorAll('#pr-opts .pr-opt').forEach(b=>{
+    b.classList.add('done');
+    const t = b.textContent.trim();
+    if(t===q.correct) b.classList.add('correct');
+    else if(b===btn) b.classList.add('wrong');
+  });
+  const ok = choice===q.correct;
+  if(ok) score++;
+  document.getElementById('pr-feedback').innerHTML =
+    \`<div class="pr-explain">\${ok?'✓ ':'✗ '}<strong>\${esc(q.correct)}</strong> — \${esc(q.explain)} <a href="\${q.href}">Full notes →</a></div>\`;
+  document.getElementById('pr-nav').innerHTML =
+    \`<button class="btn btn-primary" onclick="next()">\${idx<round.length-1?'Next →':'See score'}</button>\`;
+}
+
+function next(){
+  if(idx<round.length-1){ idx++; renderQ(); window.scrollTo(0,0); }
+  else showResult();
+}
+
+function showResult(){
+  const pct = Math.round(score/round.length*100);
+  document.getElementById('pr-quiz').innerHTML = \`
+    <div class="pr-card pr-result">
+      <div class="pr-score" style="color:\${pct>=60?'var(--correct)':'var(--accent)'}">\${pct}%</div>
+      <p style="color:var(--stone);margin-bottom:4px;">You got <strong>\${score} / \${round.length}</strong> correct.</p>
+      <p style="color:var(--stone);font-size:14px;">\${pct>=80?'Excellent — you can tell these apart under pressure.':pct>=60?'Solid. Re-run to drill the ones you missed.':'Keep going — mixed recall is exactly what the exam tests.'}</p>
+      <div class="pr-result-actions">
+        <button class="btn btn-primary" onclick="startRound()">New set</button>
+        <a class="btn btn-ghost" href="/grammar/">Study grammar</a>
+        <a class="btn btn-ghost" href="/words/">Study confusables</a>
+      </div>
+    </div>\`;
+  window.scrollTo(0,0);
+}
+
+document.getElementById('pr-filters').addEventListener('click', function(e){
+  const b = e.target.closest('.pr-filter');
+  if(!b) return;
+  document.querySelectorAll('.pr-filter').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  cat = b.dataset.cat;
+  startRound();
+});
+
+startRound();
+</script>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+  console.log(`[practice] Generated /practice/ with ${items.length} mixed items`);
+  return items.length;
+}
+
+// ============================================================
 // DARK MODE — inject the no-flash theme loader + floating toggle
 // into every generated page. Runs last so it covers all pages.
 // Idempotent: re-running the build won't duplicate the snippets.
@@ -4409,7 +4602,8 @@ buildGrammarPatternsHub();
 const characterList = buildCharacterPages();
 const sentenceCatPages = buildSentenceCategoryPages();
 const trapCatPages = buildTrapCategoryPages();
+buildMixedPractice();
 addTestLinksToHubs();
-buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages]);
+buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, { loc: '/practice/', priority: '0.8' }]);
 injectTheme();
 console.log('\nDone! All static content pre-rendered.');
