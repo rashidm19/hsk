@@ -202,20 +202,23 @@ function extractExamSentences(words) {
   return byId;
 }
 
-// How often each character appears across the 12 mock papers, minus the
-// exam-instruction characters (列排序阅读…) that would otherwise dominate.
-// Lets the character hub surface the highest-exposure characters first.
-const CHAR_BOILERPLATE = new Set('列排序阅读选择确答案顺词语题问根据短文部分听力录音对话例如完成填空表示意思正'.split(''));
+// How often each character appears in actual exam CONTENT across the 12 mock
+// papers. Rather than blacklisting characters (which would zero dual-use ones
+// like 确 — 正确答案 vs 确定 — or 部 — 第一部分 vs 部门), we strip the rubric
+// phrases and skip our own answer commentary, then count what's left. Longest
+// phrases first so compounds are removed before their parts.
+const CHAR_BOILERPLATE_PHRASES = ['阅读短文', '排列顺序', '完成句子', '正确答案', '选择正确', '根据短文', '根据录音', '根据对话', '下列', '正确', '排列', '顺序', '阅读', '选择', '填空', '例如', '听力', '录音', '词语', '根据'].sort((a, b) => b.length - a.length);
 function computeCharFrequency() {
   const index = readJSON('index.json');
   let corpus = '';
   index.forEach(meta => readJSON(meta.file).questions.forEach(q => {
     if (q.text) corpus += q.text;
     if (q.options) q.options.forEach(o => corpus += String(o).replace(/^[A-F]\s+/, ''));
-    if (q.explanation) corpus += q.explanation;
+    // q.explanation is our own commentary (full of 正确/答案/因为…), not exam content — skip it.
   }));
+  CHAR_BOILERPLATE_PHRASES.forEach(p => { corpus = corpus.split(p).join(''); });
   const cf = {};
-  for (const ch of corpus) if (ch >= '一' && ch <= '鿿' && !CHAR_BOILERPLATE.has(ch)) cf[ch] = (cf[ch] || 0) + 1;
+  for (const ch of corpus) if (ch >= '一' && ch <= '鿿') cf[ch] = (cf[ch] || 0) + 1;
   return cf;
 }
 
@@ -4648,6 +4651,13 @@ function buildPracticeHub() {
   const index = readJSON('index.json');
   const dir = path.join(ROOT, 'train');
   ensureDir(dir);
+  // Single source of truth for the study-path total: count the steps the guide
+  // actually renders, so the "x/N" denominator can't drift from the guide.
+  let pathSteps = 8;
+  try {
+    const steps = new Set(fs.readFileSync(path.join(ROOT, 'guide', 'index.html'), 'utf8').match(/data-step="[^"]+"/g) || []);
+    if (steps.size) pathSteps = steps.size;
+  } catch (e) { /* guide not built yet — fall back to 8 */ }
   const testCards = index.map((m, i) => `<a class="pc-test" href="/test/${String(i + 1).padStart(2, '0')}/" data-test="${i}"><span class="pc-test-num">Test ${String(i + 1).padStart(2, '0')}</span><span class="pc-test-score" data-score="${i}"></span></a>`).join('\n        ');
 
   const drill = (href, tag, title, desc) => `<a class="pc-card" href="${href}"><div class="pc-card-tag">${tag}</div><h3>${title}</h3><p>${desc}</p></a>`;
@@ -4711,7 +4721,7 @@ ${DRILL_HEADER('')}
     <div class="pc-stat"><div class="pc-stat-num" id="pc-tests-taken">0</div><div class="pc-stat-label">Mocks taken</div></div>
     <div class="pc-stat"><div class="pc-stat-num" id="pc-best">—</div><div class="pc-stat-label">Best score</div></div>
     <div class="pc-stat"><div class="pc-stat-num" id="pc-vocab">0</div><div class="pc-stat-label">Words mastered</div></div>
-    <div class="pc-stat"><div class="pc-stat-num" id="pc-path">0/8</div><div class="pc-stat-label">Study steps</div></div>
+    <div class="pc-stat"><div class="pc-stat-num" id="pc-path">0/${pathSteps}</div><div class="pc-stat-label">Study steps</div></div>
   </div>
 
   <h2 class="pc-section-title">🎯 Mock exams</h2>
@@ -4767,7 +4777,7 @@ ${DRILL_HEADER('')}
   var mastered=0; try{ var m=JSON.parse(ls('hsk4-vocab-mastered')||'[]'); mastered=Array.isArray(m)?m.length:0; }catch(e){}
   document.getElementById('pc-vocab').textContent=mastered;
   var steps=0; try{ var p=JSON.parse(ls('hsk4-guide-path')||'{}'); steps=Object.keys(p).filter(function(k){return p[k];}).length; }catch(e){}
-  document.getElementById('pc-path').textContent=steps+'/8';
+  document.getElementById('pc-path').textContent=steps+'/${pathSteps}';
 })();
 </script>
 </body>
