@@ -14,6 +14,7 @@ const path = require('path');
 
 const ROOT = __dirname;
 const DATA = path.join(ROOT, 'data');
+const { renderAppShellOpen, renderAppShellClose } = require('./scripts/app-shell');
 
 // --- Helpers ---
 
@@ -621,6 +622,7 @@ function buildTestPages() {
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .test-hero { text-align: center; padding: 40px 0 32px; }
   .test-hero h1 { font-family: 'Noto Serif SC', serif; font-size: clamp(22px, 4vw, 32px); margin-bottom: 12px; }
@@ -688,31 +690,8 @@ function buildTestPages() {
   }
 </style>
 </head>
-<body>
-
-<header>
-  <div class="header-inner">
-    <a href="/" class="logo">
-      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
-    </a>
-    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
-    <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
-    <nav class="site-nav" aria-label="Primary">
-      <a href="/exams/" class="nav-link">Mock Exams</a>
-      <a href="/vocabulary/" class="nav-link">Vocabulary</a>
-      <a href="/characters/" class="nav-link">Characters</a>
-      <a href="/grammar/" class="nav-link">Grammar</a>
-      <a href="/sentences/" class="nav-link">Sentences</a>
-      <a href="/strategies/" class="nav-link">Strategies</a>
-      <a href="/traps/" class="nav-link">Traps</a>
-      <a href="/topics/" class="nav-link">Topics</a>
-      <a href="/words/" class="nav-link">Words</a>
-      <a href="/compare/" class="nav-link">Compare</a>
-      <a href="/guide/" class="nav-link">Guide</a>
-    </nav>
-  </div>
-</header>
-
+<body class="app">
+${renderAppShellOpen('exams')}
 <main>
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="/">Home</a> &rsaquo; <a href="/exams/">Mock Exams</a> &rsaquo; Test ${num}
@@ -803,6 +782,7 @@ function buildTestPages() {
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> \u00B7 <a href="/vocabulary/">Vocabulary</a> \u00B7 <a href="/grammar/">Grammar</a> \u00B7 <a href="/writing/">Writing</a> \u00B7 <a href="/guide/">Study Guide</a> \u00B7 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
 </footer>
+${renderAppShellClose()}
 
 </body>
 </html>`;
@@ -2162,6 +2142,7 @@ ${faqJsonLd}
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .task-badge { display:inline-block; background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:600; padding:4px 12px; border-radius:6px; margin-bottom:16px; text-transform:uppercase; letter-spacing:0.5px; }
   .syllabus-box { background:var(--paper); border:1px solid var(--mist); border-radius:var(--radius); padding:20px 24px; margin:20px 0; }
@@ -2556,6 +2537,7 @@ ${pairFaqJsonLd}
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .cmp-table { width:100%; border-collapse:collapse; margin:20px 0; font-size:14px; }
   .cmp-table th { padding:10px 14px; text-align:left; font-weight:600; border-bottom:2px solid var(--mist); font-size:16px; }
@@ -2958,6 +2940,7 @@ ${patFaqJsonLd}
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .pattern-box { background:var(--invert-bg); color:var(--invert-fg); border-radius:var(--radius); padding:24px 28px; margin:20px 0; text-align:center; }
   .pattern-formula { font-family:'Noto Sans SC',sans-serif; font-size:22px; font-weight:600; letter-spacing:1px; }
@@ -3202,6 +3185,7 @@ ${itemListJsonLd}
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .hero { text-align:center; padding:40px 0 24px; }
   .hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(24px,4vw,34px); margin-bottom:10px; }
@@ -3381,28 +3365,9 @@ function buildCharacterPages() {
   </section>`;
   };
 
-  // Shared header/footer renderer (avoids duplicating nav across pages)
-  const renderNav = (active) => `
-<header>
-  <div class="header-inner">
-    <a href="/" class="logo">
-      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
-    </a>
-    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
-    <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
-    <nav class="site-nav" aria-label="Primary">
-      <a href="/" class="nav-link${active==='home'?' is-active':''}">Mock Exams</a>
-      <a href="/vocabulary/" class="nav-link${active==='vocab'?' is-active':''}">Vocabulary</a>
-      <a href="/characters/" class="nav-link${active==='characters'?' is-active':''}">Characters</a>
-      <a href="/grammar/" class="nav-link${active==='grammar'?' is-active':''}">Grammar</a>
-      <a href="/sentences/" class="nav-link${active==='sentences'?' is-active':''}">Sentences</a>
-      <a href="/topics/" class="nav-link${active==='topics'?' is-active':''}">Topics</a>
-      <a href="/writing/" class="nav-link${active==='writing'?' is-active':''}">Writing</a>
-      <a href="/words/" class="nav-link${active==='words'?' is-active':''}">Words</a>
-      <a href="/guide/" class="nav-link${active==='guide'?' is-active':''}">Guide</a>
-    </nav>
-  </div>
-</header>`;
+  // Shared app shell (sidebar + top bar)
+  const renderNav = (active) => renderAppShellOpen(active);
+  const renderShellEnd = () => renderAppShellClose();
 
   const renderFooter = () => `
 <footer>
@@ -3464,8 +3429,9 @@ function buildCharacterPages() {
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 </head>
-<body>
+<body class="app">
 ${renderNav('characters')}
 <main>
   <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -3537,6 +3503,7 @@ ${renderNav('characters')}
   </section>
 </main>
 ${renderFooter()}
+${renderShellEnd()}
 <script>
 (function(){
   var input = document.getElementById('char-search');
@@ -3898,6 +3865,7 @@ ${renderNav('characters')}
   </div>
 </main>
 ${renderFooter()}
+${renderShellEnd()}
 <script>
 window.addEventListener('load', function(){
   if (typeof HanziWriter === 'undefined') {
@@ -4095,6 +4063,7 @@ ${renderNav('characters')}
   </section>
 </main>
 ${renderFooter()}
+${renderShellEnd()}
 <script>
 window.addEventListener('load', function(){
   if (typeof HanziWriter === 'undefined') {
@@ -4346,6 +4315,7 @@ ${JSON.stringify({
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .sentence-row { display:flex; gap:14px; background:var(--surface); border:1px solid var(--mist); border-radius:var(--radius-sm); padding:16px 18px; margin-bottom:10px; }
   .sent-num { flex:0 0 28px; height:28px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; }
@@ -4535,6 +4505,7 @@ function buildTrapCategoryPages() {
 <meta property="og:url" content="https://hsk4.mandarinzone.com/traps/${cat.slug}/">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .trap-card { background:var(--surface); border:1px solid var(--mist); border-left:4px solid var(--accent); border-radius:var(--radius); padding:22px 26px; margin-bottom:18px; }
   .trap-card h3 { font-family:'Noto Serif SC',serif; font-size:20px; font-weight:700; margin-bottom:6px; color:var(--ink); }
@@ -4683,6 +4654,7 @@ function buildCompleteSentence() {
 <meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .cs-hero { text-align:center; padding:32px 0 18px; }
   .cs-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:10px; }
@@ -4834,6 +4806,7 @@ function buildPracticeHub() {
 <meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .pc-hero { text-align:center; padding:32px 0 14px; }
   .pc-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:8px; }
@@ -4982,6 +4955,7 @@ function buildMixedPractice() {
 <meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .pr-hero { text-align:center; padding:32px 0 20px; }
   .pr-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:10px; }
@@ -5232,6 +5206,7 @@ function buildTranscriptPages() {
 <meta name="twitter:card" content="summary_large_image">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <style>
   .ts-hero { text-align:center; padding:40px 0 24px; }
   .ts-hero h1 { font-family:'Noto Serif SC',serif; font-size:clamp(22px,4vw,30px); margin-bottom:10px; }
@@ -5333,5 +5308,7 @@ buildPracticeHub();
 addTestLinksToHubs();
 buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, ...transcriptPages, { loc: '/practice/', priority: '0.8' }, { loc: '/writing/complete-sentence/', priority: '0.8' }, { loc: '/train/', priority: '0.9' }]);
 injectTheme();
+const { injectAppShell } = require('./scripts/app-shell');
+injectAppShell();
 syncCounts();
 console.log('\nDone! All static content pre-rendered.');

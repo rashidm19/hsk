@@ -32,30 +32,97 @@
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/dashboard.css">
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.7/dist/hanzi-writer.min.js" defer></script>
 </head>
-<body>
+<body class="app">
 
-<header>
-  <div class="header-inner">
-    <a href="/" class="logo">
-      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
+<div class="app-layout">
+  <aside class="app-sidebar" id="app-sidebar" aria-label="Main navigation">
+    <a href="/exams/" class="app-brand">
+      <img src="/logo.svg" alt="" width="84" height="28">
+      <span>HSK Prep</span>
     </a>
-    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
-    <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
-    <nav class="site-nav" aria-label="Primary">
-      <a href="/" class="nav-link">Mock Exams</a>
-      <a href="/vocabulary/" class="nav-link">Vocabulary</a>
-      <a href="/characters/" class="nav-link is-active">Characters</a>
-      <a href="/grammar/" class="nav-link">Grammar</a>
-      <a href="/sentences/" class="nav-link">Sentences</a>
-      <a href="/topics/" class="nav-link">Topics</a>
-      <a href="/writing/" class="nav-link">Writing</a>
-      <a href="/words/" class="nav-link">Words</a>
-      <a href="/guide/" class="nav-link">Guide</a>
+    <div class="app-nav-label">Workspace</div>
+    <nav class="app-nav">
+      <a href="/exams/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Mock Exams
+      </a>
+      <a href="/vocabulary/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        Vocabulary
+      </a>
+      <a href="/characters/" class="app-nav-link is-active" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Characters
+      </a>
+      <a href="/grammar/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        Grammar
+      </a>
+      <a href="/sentences/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Sentences
+      </a>
+      <a href="/strategies/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        Strategies
+      </a>
+      <a href="/topics/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Topics
+      </a>
+      <a href="/words/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 3h5v5M8 3H3v5M3 16v5h5M21 16v5h-5"/><path d="M4 4l16 16"/></svg>
+        Words
+      </a>
+      <a href="/compare/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        Compare
+      </a>
+      <a href="/traps/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        Traps
+      </a>
+      <a href="/guide/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+        Guide
+      </a>
     </nav>
-  </div>
-</header>
+    <div class="app-sidebar-foot">
+      <a href="/" class="app-nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        Home
+      </a>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="app-topbar">
+      <button type="button" class="app-menu-btn" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="app-sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <div class="app-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="search" placeholder="Search tests, vocabulary…" aria-label="Search" disabled>
+      </div>
+      <div class="app-topbar-actions">
+        <button type="button" class="app-icon-btn app-theme-btn" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)">
+          <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <div class="app-profile" title="Sign in coming soon">
+          <div class="app-profile-info">
+            <span class="app-profile-name">Alex Chen</span>
+            <span class="app-profile-email">student@example.com</span>
+          </div>
+          <div class="app-profile-avatar" aria-hidden="true">AC</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-content">
 <main>
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="/">Home</a> &rsaquo; <a href="/characters/">Characters</a> &rsaquo; <span class="chinese">扔</span>
@@ -138,6 +205,12 @@
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> · <a href="/train/">Practice Center</a> · <a href="/vocabulary/">Vocabulary</a> · <a href="/characters/">Characters</a> · <a href="/grammar/">Grammar</a> · <a href="/strategies/">Strategies</a> · <a href="/traps/">Traps</a> · <a href="/practice/">Practice</a> · <a href="/compare/">Compare</a> · <a href="/writing/">Writing</a> · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
 </footer>
+    </div><!-- .app-content -->
+  </div><!-- .app-main -->
+</div><!-- .app-layout -->
+
+<div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+<script src="/shell.js"></script>
 <script>
 window.addEventListener('load', function(){
   if (typeof HanziWriter === 'undefined') {

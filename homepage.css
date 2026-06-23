@@ -43,7 +43,8 @@
   --border-subtle: rgba(255, 255, 255, 0.1);
 }
 
-body { color-scheme: light; }
+/* App shell — header rules below are overridden by dashboard.css */
+body:not(.app) { color-scheme: light; }
 [data-theme="dark"] body { color-scheme: dark; }
 
 /* Light header — same feel as the marketing landing page */
