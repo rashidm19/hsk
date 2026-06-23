@@ -1,9 +1,10 @@
 /* ===================================================
-   HSK4 Mandarin Zone — Homepage CSS
+   HSK4 HSK Prep — Homepage CSS
    homepage.css
 
-   Loaded only by the homepage (index.html). Layered on top of
-   common.css. Contains:
+   Loaded by the exams hub (/exams/). Layered on top of common.css.
+   Contains:
+     - Bright landing-page palette overrides
      - Three "screens" (home / quiz / results) and their state CSS
      - Quiz UI (question card, options, progress bar, audio)
      - Results UI (score circle, breakdown)
@@ -16,6 +17,138 @@
    the rules can be cached across visits and not re-shipped on every
    page load.
    =================================================== */
+
+/* === BRIGHT PALETTE (matches landing.css) === */
+:root {
+  --paper: #fffdf9;
+  --accent-soft: #fde8e4;
+  --mist: #ebe6df;
+  --stone: #5c5c6a;
+  --surface-sunken: #f5f0e8;
+  --accent-tint: #fff8f6;
+  --shadow: 0 8px 32px rgba(26, 26, 46, 0.08);
+  --shadow-lg: 0 16px 48px rgba(26, 26, 46, 0.1);
+  --border-subtle: rgba(26, 26, 46, 0.1);
+}
+
+[data-theme="dark"] {
+  --paper: #0c0c10;
+  --accent-soft: #3a241f;
+  --mist: rgba(255, 255, 255, 0.1);
+  --stone: #9b9aa8;
+  --surface-sunken: #1e1e26;
+  --accent-tint: #2a1d1a;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 32px 96px rgba(0, 0, 0, 0.35);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+}
+
+body { color-scheme: light; }
+[data-theme="dark"] body { color-scheme: dark; }
+
+/* Light header — same feel as the marketing landing page */
+header {
+  background: rgba(255, 253, 249, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--ink);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: none;
+}
+[data-theme="dark"] header {
+  background: color-mix(in srgb, var(--paper) 85%, transparent);
+}
+
+.logo { color: var(--ink); }
+
+.nav-link,
+.gh-link {
+  color: var(--stone);
+  opacity: 1;
+}
+.nav-link:hover,
+.gh-link:hover { color: var(--ink); }
+.nav-link[aria-current="page"],
+.nav-link.is-active { color: var(--ink); }
+
+header :focus-visible { outline-color: var(--accent); }
+
+@media (max-width: 767px) {
+  .nav-burger-bar,
+  .nav-burger-bar::before,
+  .nav-burger-bar::after { background: var(--ink); }
+
+  .site-nav {
+    background: var(--surface);
+    border-top: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow);
+  }
+  .nav-link {
+    color: var(--stone);
+    padding: 12px var(--space-4);
+  }
+  .nav-link:hover,
+  .nav-toggle:checked ~ .site-nav .nav-link:hover {
+    color: var(--ink);
+    background: var(--surface-sunken);
+  }
+}
+
+/* Hero — soft radial washes like the landing page */
+.hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(194, 59, 34, 0.07), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 90% 20%, rgba(45, 106, 79, 0.06), transparent 55%),
+    radial-gradient(ellipse 40% 35% at 10% 80%, rgba(254, 243, 205, 0.5), transparent 50%);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-4);
+}
+[data-theme="dark"] .hero {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(232, 93, 74, 0.1), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 100%, rgba(62, 207, 142, 0.06), transparent 60%);
+}
+
+.hero-badge {
+  background: var(--jade-soft);
+  color: var(--jade);
+  border: 1px solid rgba(45, 106, 79, 0.15);
+}
+
+.btn-ghost {
+  border-color: var(--border-subtle);
+  color: var(--ink);
+}
+.btn-ghost:hover {
+  background: var(--surface);
+  border-color: var(--stone);
+}
+
+/* Cards — lighter elevation */
+.test-card,
+.path-card,
+.toolkit-card,
+.tip-card,
+.plan-phase,
+.topics-cluster,
+.question-card,
+.quiz-header,
+.qnav-toggle,
+.modal-card {
+  box-shadow: 0 2px 12px rgba(26, 26, 46, 0.04);
+}
+.test-card:hover,
+.path-card:hover,
+.path-card:focus-visible,
+.toolkit-card:hover,
+.toolkit-card:focus-visible {
+  box-shadow: var(--shadow);
+}
+
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border-subtle);
+}
 
 /* === SCREENS === */
 .screen { display: none; }
@@ -1042,18 +1175,18 @@
 }
 
 /* === GRAMMAR CALLOUT ===
-   Dark inverse panel for the new-grammar-points list. Inverse contrast
-   pulls the eye and signals "important syllabus update". */
+   Bright accent panel for the new-grammar-points list. */
 .grammar-callout {
-  background: var(--invert-bg);
-  color: var(--invert-fg);
+  background: linear-gradient(135deg, var(--accent-soft), var(--surface));
+  color: var(--ink);
+  border: 1px solid rgba(194, 59, 34, 0.12);
   border-radius: var(--radius);
   padding: var(--space-5) var(--space-6);
   margin-top: var(--space-4);
 }
 .grammar-callout > p {
   line-height: 1.7;
-  opacity: 0.85;
+  color: var(--stone);
   margin-bottom: var(--space-3);
   font-size: var(--fs-sm);
 }
@@ -1064,20 +1197,19 @@
 }
 .grammar-points li {
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--border-subtle);
   font-size: var(--fs-sm);
   line-height: 1.6;
-  opacity: 0.9;
+  color: var(--stone);
 }
 .grammar-points li:last-child { border-bottom: none; }
 .grammar-points strong {
-  color: white;
-  opacity: 1;
+  color: var(--ink);
   font-family: 'Noto Sans SC', sans-serif;
   margin-right: 6px;
 }
 .grammar-callout .learn-more {
-  color: white;
+  color: var(--accent);
   font-weight: 600;
   text-decoration: none;
   font-size: var(--fs-sm);
@@ -1191,7 +1323,7 @@
   line-height: 1.7;
 }
 
-/* === ABOUT MANDARIN ZONE ===
+/* === ABOUT HSK Prep ===
    Trust block. Slightly more prominent than the previous version —
    larger logo, clearer hierarchy, two-button row. */
 .about-section { margin: var(--space-10) 0; }
@@ -1236,6 +1368,57 @@
   gap: var(--space-2);
   flex-wrap: wrap;
 }
+
+/* Lead capture form in the about section */
+.lead-form { margin-top: var(--space-1); }
+.lead-form-fields {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+@media (min-width: 640px) {
+  .lead-form-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.lead-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lead-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--stone);
+}
+.lead-field input {
+  width: 100%;
+  padding: 10px 12px;
+  min-height: var(--tap);
+  border: 1px solid var(--mist);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: var(--fs-base);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.lead-field input::placeholder { color: var(--stone); opacity: 0.65; }
+.lead-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.lead-field input:invalid:not(:placeholder-shown) { border-color: #c44; }
+.lead-form-msg {
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+.lead-form-msg.is-success { color: var(--jade); }
+.lead-form-msg.is-error { color: #a83220; }
+.lead-form.is-submitting .lead-field input,
+.lead-form.is-submitting .btn { opacity: 0.7; pointer-events: none; }
 
 /* Tighter section spacing inside the redesigned home screen.
    The default .section-title margin-top is 40px which compounds when

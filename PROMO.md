@@ -8,7 +8,7 @@
 
 **Body:**
 
-Hey everyone! I run a Chinese language school in Beijing (Mandarin Zone, since 2008), and I've been creating HSK mock exams for our students for years.
+Hey everyone! I run a Chinese language school in Beijing (HSK Prep, since 2008), and I've been creating HSK mock exams for our students for years.
 
 I decided to open-source all of our HSK 4 practice tests — **12 complete exams with 1,176 questions** covering:
 
@@ -64,7 +64,7 @@ I hope this helps fellow Chinese learners! If there's interest, I'll add more le
 
 **Body:**
 
-大家好! I'm sharing 12 complete HSK 4 mock exams that I created for my students at Mandarin Zone (my Chinese school in Beijing).
+大家好! I'm sharing 12 complete HSK 4 mock exams that I created for my students at HSK Prep (my Chinese school in Beijing).
 
 All 1,176 questions are available for free in JSON format on GitHub, with an online demo where you can take the tests directly in your browser.
 
@@ -88,7 +88,7 @@ Good luck with your HSK prep! 祝你们考试顺利！
 
 **Body:**
 
-I run [Mandarin Zone](https://mandarinzone.com), a Chinese language school in Beijing. Over the years, I built 12 complete HSK 4 mock exams using the AYS Quiz Maker WordPress plugin for our students to practice online.
+I run [HSK Prep](https://hsk4.mandarinzone.com), a Chinese language school in Beijing. Over the years, I built 12 complete HSK 4 mock exams using the AYS Quiz Maker WordPress plugin for our students to practice online.
 
 Recently, I decided to open-source all of this content. Here's how I extracted 1,176 questions from a WordPress database and turned them into a clean, developer-friendly GitHub repository.
 
@@ -174,7 +174,7 @@ Hi! I'd like to add [HSK 4 Mock Exam](https://github.com/Make-dream-clear/hsk4-m
 
 It's a collection of 12 complete HSK 4 practice tests (1,176 questions) in structured JSON format, with an online demo. Covers listening, reading, and writing sections with answer keys.
 
-Created by [Mandarin Zone](https://mandarinzone.com), a Chinese language school in Beijing since 2008.
+Created by [HSK Prep](https://hsk4.mandarinzone.com), a free HSK 4 study platform.
 
 **Suggested addition to the README** (under a "Practice Tests" or "HSK" section):
 

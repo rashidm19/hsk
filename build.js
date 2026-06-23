@@ -364,7 +364,7 @@ function buildVocabulary() {
     </p>
 
     <p style="color:var(--stone);line-height:1.8;">
-      Created by <a href="https://mandarinzone.com" style="color:var(--accent);">Mandarin Zone</a>, a Chinese language school in Beijing since 2008.
+      Created by <a href="/" style="color:var(--accent);">HSK Prep</a>, a free HSK 4 study platform.
     </p>
   </section>`;
 
@@ -533,14 +533,14 @@ function buildTestPages() {
 
     // Standardized HSK 4 mock test title across all 12 tests
     const shortTitle = `HSK 4 Mock Test ${num}`;
-    const pageTitle = `${shortTitle} \u2014 ${meta.questions} Free Questions \u00B7 \u6A21\u62DF\u8BD5\u5377 | Mandarin Zone`;
+    const pageTitle = `${shortTitle} \u2014 ${meta.questions} Free Questions \u00B7 \u6A21\u62DF\u8BD5\u5377 | HSK Prep`;
     // CTR-oriented copy: action verb ("Take") up front, "free" prominent,
-    // concrete numbers, trust closer ("Mandarin Zone Beijing"). Targets
+    // concrete numbers, trust closer ("HSK Prep Beijing"). Targets
     // 130-155 chars to fill the SERP snippet without being clipped.
     const totalQ = listeningCount + readingCount + writingCount;
     const pageDesc = truncDesc(isComplete
-      ? `Take HSK 4 mock test #${num} free — ${totalQ} questions (${listeningCount} listening + ${readingCount} reading + ${writingCount} writing), auto-scored with full answer keys. 2026 syllabus, by Mandarin Zone.`
-      : `Take HSK 4 mock test #${num} free — ${totalQ} questions (${listeningCount} listening + ${readingCount} reading), auto-scored with full answer keys. 2026 syllabus, by Mandarin Zone Beijing.`);
+      ? `Take HSK 4 mock test #${num} free — ${totalQ} questions (${listeningCount} listening + ${readingCount} reading + ${writingCount} writing), auto-scored with full answer keys. 2026 syllabus, by HSK Prep.`
+      : `Take HSK 4 mock test #${num} free — ${totalQ} questions (${listeningCount} listening + ${readingCount} reading), auto-scored with full answer keys. 2026 syllabus, by HSK Prep.`);
 
     // Extract sample reading passages for this test (unique content per page)
     const readingQs = test.questions.filter(q => q.text && q.text.length > 50);
@@ -572,7 +572,7 @@ function buildTestPages() {
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/test/${num}/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="zh_CN">
 
@@ -592,8 +592,8 @@ function buildTestPages() {
   "isAccessibleForFree": true,
   "author": {
     "@type": "Organization",
-    "name": "Mandarin Zone",
-    "url": "https://mandarinzone.com"
+    "name": "HSK Prep",
+    "url": "https://hsk4.mandarinzone.com"
   },
   "about": {
     "@type": "Thing",
@@ -693,13 +693,12 @@ function buildTestPages() {
 <header>
   <div class="header-inner">
     <a href="/" class="logo">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager">
-      <div class="logo-text">HSK 4 <span>Mock Exam</span></div>
+      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
     </a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
     <nav class="site-nav" aria-label="Primary">
-      <a href="/" class="nav-link">Mock Exams</a>
+      <a href="/exams/" class="nav-link">Mock Exams</a>
       <a href="/vocabulary/" class="nav-link">Vocabulary</a>
       <a href="/characters/" class="nav-link">Characters</a>
       <a href="/grammar/" class="nav-link">Grammar</a>
@@ -716,7 +715,7 @@ function buildTestPages() {
 
 <main>
   <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/">Home</a> &rsaquo; <a href="/">Mock Exams</a> &rsaquo; Test ${num}
+    <a href="/">Home</a> &rsaquo; <a href="/exams/">Mock Exams</a> &rsaquo; Test ${num}
   </nav>
 
   <div class="test-hero">
@@ -734,7 +733,7 @@ function buildTestPages() {
       Take this HSK 4 practice test interactively with instant scoring, or scroll down to review all ${meta.questions} questions.
     </p>
     <div class="start-btn-wrap">
-      <a href="/?start=${i}" class="btn btn-primary" style="padding:14px 36px;font-size:16px;">Start Interactive Test</a>
+      <a href="/exams/?start=${i}" class="btn btn-primary" style="padding:14px 36px;font-size:16px;">Start Interactive Test</a>
     </div>
   </div>
 
@@ -743,20 +742,20 @@ function buildTestPages() {
 
   <div class="test-nav">
     ${i > 0 ? `<a href="/test/${String(i).padStart(2, '0')}/" class="btn btn-ghost">&larr; Test ${String(i).padStart(2, '0')}</a>` : '<span></span>'}
-    <a href="/" class="btn btn-secondary">All Tests</a>
+    <a href="/exams/" class="btn btn-secondary">All Tests</a>
     ${i < index.length - 1 ? `<a href="/test/${String(i + 2).padStart(2, '0')}/" class="btn btn-ghost">Test ${String(i + 2).padStart(2, '0')} &rarr;</a>` : '<span></span>'}
   </div>
 
   <section style="margin-top:40px;">
     <h2 style="font-family:'Noto Serif SC',serif;font-size:22px;margin-bottom:14px;">About Test ${num}</h2>
     <p style="color:var(--stone);line-height:1.8;margin-bottom:14px;">
-      Test ${num} contains ${meta.questions} questions: ${typeBreakdown}. ${isComplete ? 'This is a complete mock covering all three sections of the HSK 4 exam.' : 'This test covers the listening and reading sections. The writing section (sentence construction from given words) is not included because it requires manual scoring that cannot be automated online.'} You can <a href="/?start=${i}" style="color:var(--accent);">take it interactively</a> with automatic scoring. The pass mark for the real HSK 4 exam is 180/300 (60%).
+      Test ${num} contains ${meta.questions} questions: ${typeBreakdown}. ${isComplete ? 'This is a complete mock covering all three sections of the HSK 4 exam.' : 'This test covers the listening and reading sections. The writing section (sentence construction from given words) is not included because it requires manual scoring that cannot be automated online.'} You can <a href="/exams/?start=${i}" style="color:var(--accent);">take it interactively</a> with automatic scoring. The pass mark for the real HSK 4 exam is 180/300 (60%).
     </p>
     ${sampleTopics.length > 0 ? `<p style="color:var(--stone);line-height:1.8;margin-bottom:14px;">
       Reading passages in this test cover topics such as: ${sampleTopics.map(t => '\u201c' + escHtml(t) + '\u2026\u201d').join(', ')}. These reflect the HSK 4 syllabus requirement to handle real-world topics with a certain level of complexity.
     </p>` : ''}
     <p style="color:var(--stone);line-height:1.8;">
-      Browse all ${TEST_COUNT} HSK 4 mock tests on the <a href="/" style="color:var(--accent);">free HSK 4 practice test homepage</a>, or study with our <a href="/vocabulary/" style="color:var(--accent);">1000-word HSK 4 vocabulary list</a>, <a href="/grammar/" style="color:var(--accent);">HSK 4 grammar guide</a>, <a href="/sentences/" style="color:var(--accent);">100 essential HSK 4 sentence patterns</a>, <a href="/writing/" style="color:var(--accent);">HSK 4 writing exercises</a>, or compare difficulty levels with our <a href="/compare/hsk4-vs-hsk3/" style="color:var(--accent);">HSK 4 vs HSK 3</a> and <a href="/compare/hsk4-vs-hsk5/" style="color:var(--accent);">HSK 4 vs HSK 5</a> guides.
+      Browse all ${TEST_COUNT} HSK 4 mock tests on the <a href="/exams/" style="color:var(--accent);">free HSK 4 mock exam page</a>, or study with our <a href="/vocabulary/" style="color:var(--accent);">1000-word HSK 4 vocabulary list</a>, <a href="/grammar/" style="color:var(--accent);">HSK 4 grammar guide</a>, <a href="/sentences/" style="color:var(--accent);">100 essential HSK 4 sentence patterns</a>, <a href="/writing/" style="color:var(--accent);">HSK 4 writing exercises</a>, or compare difficulty levels with our <a href="/compare/hsk4-vs-hsk3/" style="color:var(--accent);">HSK 4 vs HSK 3</a> and <a href="/compare/hsk4-vs-hsk5/" style="color:var(--accent);">HSK 4 vs HSK 5</a> guides.
     </p>
   </section>
 
@@ -782,25 +781,24 @@ function buildTestPages() {
 
   <div class="cta-banner">
     <h3 class="chinese">\u60F3\u8981\u66F4\u7CFB\u7EDF\u5730\u5B66\u4E2D\u6587\uFF1F</h3>
-    <p>Mandarin Zone \u2014 Learn Chinese in Beijing & Online since 2008</p>
-    <a href="https://mandarinzone.com" target="_blank" rel="noopener" class="btn btn-primary">Visit Mandarin Zone</a>
-    <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="cta-link">Have questions? Contact us &rarr;</a>
+    <p>HSK Prep \u2014 Free HSK 4 practice tests & study tools</p>
+    <a href="/" target="_blank" rel="noopener" class="btn btn-primary">Start practicing</a>
+    <a href="/guide/" target="_blank" rel="noopener" class="cta-link">Have questions? Contact us &rarr;</a>
   </div>
 </main>
 
 <footer>
   <div class="footer-brand">
-    <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="footer-logo" loading="lazy">
+    <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
       <div>
-        <div class="footer-brand-name">Mandarin Zone</div>
+        <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
       </div>
     </a>
     <div class="footer-cta">
-      <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="btn btn-ghost">Visit Website</a>
-      <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="btn btn-ghost">Contact Us</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
+      <a href="/exams/" class="btn btn-ghost">Mock Exams</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
     </div>
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> \u00B7 <a href="/vocabulary/">Vocabulary</a> \u00B7 <a href="/grammar/">Grammar</a> \u00B7 <a href="/writing/">Writing</a> \u00B7 <a href="/guide/">Study Guide</a> \u00B7 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
@@ -819,8 +817,8 @@ function buildTestPages() {
 // ============================================================
 
 function buildHomepage() {
-  console.log('[home] Rewriting homepage SEO content...');
-  const htmlPath = path.join(ROOT, 'index.html');
+  console.log('[home] Rewriting exams page SEO content...');
+  const htmlPath = path.join(ROOT, 'exams', 'index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
 
   // Add links to static test pages in the test grid's noscript fallback
@@ -1115,6 +1113,7 @@ function buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, character
 
   const existingPages = [
     { loc: '/', priority: '1.0' },
+    { loc: '/exams/', priority: '0.95' },
     { loc: '/vocabulary/', priority: '0.9' },
     { loc: '/characters/', priority: '0.9' },
     { loc: '/grammar/', priority: '0.8' },
@@ -2124,9 +2123,9 @@ function buildTaskTopicPages() {
 
 
     // Front-load the keyword; brand suffix may truncate in SERPs, which is fine
-    let pageTitle = `HSK 4 ${task.task_en} Vocabulary \u2014 ${task.task_cn} | Mandarin Zone`;
+    let pageTitle = `HSK 4 ${task.task_en} Vocabulary \u2014 ${task.task_cn} | HSK Prep`;
     if (pageTitle.length > 78) {
-      pageTitle = `HSK 4 ${task.task_en} \u2014 ${task.task_cn} | Mandarin Zone`;
+      pageTitle = `HSK 4 ${task.task_en} \u2014 ${task.task_cn} | HSK Prep`;
     }
     const pageDesc = truncDesc(`${words.length} HSK 4 words for "${task.task_en}" (${task.task_cn}). Vocabulary with pinyin, meanings, examples from the official syllabus.`);
 
@@ -2143,7 +2142,7 @@ function buildTaskTopicPages() {
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/topics/${task.slug}/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
 {
@@ -2152,7 +2151,7 @@ function buildTaskTopicPages() {
   "headline": "HSK 4 ${escHtml(task.task_en)} Vocabulary (${escHtml(task.task_cn)})",
   "description": "${escHtml(pageDesc)}",
   "url": "https://hsk4.mandarinzone.com/topics/${task.slug}/",
-  "author": { "@type": "Organization", "name": "Mandarin Zone", "url": "https://mandarinzone.com" },
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
   "inLanguage": ["en", "zh-CN"],
   "educationalLevel": "Intermediate"
 }
@@ -2190,8 +2189,7 @@ ${faqJsonLd}
 <header>
   <div class="header-inner">
     <a href="/" class="logo">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager">
-      <div class="logo-text">HSK 4 <span>Mock Exam</span></div>
+      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
     </a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
@@ -2306,17 +2304,16 @@ ${faqJsonLd}
 
 <footer>
   <div class="footer-brand">
-    <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="footer-logo" loading="lazy">
+    <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
       <div>
-        <div class="footer-brand-name">Mandarin Zone</div>
+        <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
       </div>
     </a>
     <div class="footer-cta">
-      <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="btn btn-ghost">Visit Website</a>
-      <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="btn btn-ghost">Contact Us</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
+      <a href="/exams/" class="btn btn-ghost">Mock Exams</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
     </div>
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> \u00B7 <a href="/vocabulary/">Vocabulary</a> \u00B7 <a href="/grammar/">Grammar</a> \u00B7 <a href="/topics/">Topics</a> \u00B7 <a href="/writing/">Writing</a> \u00B7 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
@@ -2539,7 +2536,7 @@ function buildConfusablePages() {
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/words/${pair.slug}/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
 {
@@ -2548,7 +2545,7 @@ function buildConfusablePages() {
   "headline": "${escHtml(pair.wordA)} vs ${escHtml(pair.wordB)} \u2014 HSK 4 Confusable Words",
   "description": "${escHtml(pageDesc)}",
   "url": "https://hsk4.mandarinzone.com/words/${pair.slug}/",
-  "author": { "@type": "Organization", "name": "Mandarin Zone", "url": "https://mandarinzone.com" },
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
   "inLanguage": ["en", "zh-CN"],
   "educationalLevel": "Intermediate"
 }
@@ -2607,7 +2604,7 @@ ${pairFaqJsonLd}
 
 <header>
   <div class="header-inner">
-    <a href="/" class="logo"><img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager"><div class="logo-text">HSK 4 <span>Mock Exam</span></div></a>
+    <a href="/" class="logo"><img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager"></a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
     <nav class="site-nav" aria-label="Primary">
@@ -2703,17 +2700,16 @@ ${pairFaqHtml}
 
 <footer>
   <div class="footer-brand">
-    <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="footer-logo" loading="lazy">
+    <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
       <div>
-        <div class="footer-brand-name">Mandarin Zone</div>
+        <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
       </div>
     </a>
     <div class="footer-cta">
-      <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="btn btn-ghost">Visit Website</a>
-      <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="btn btn-ghost">Contact Us</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
+      <a href="/exams/" class="btn btn-ghost">Mock Exams</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
     </div>
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> \u00B7 <a href="/vocabulary/">Vocabulary</a> \u00B7 <a href="/grammar/">Grammar</a> \u00B7 <a href="/sentences/">Sentences</a> \u00B7 <a href="/strategies/">Strategies</a> \u00B7 <a href="/words/">Confusable Words</a> \u00B7 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
@@ -2942,7 +2938,7 @@ function buildGrammarPatternPages() {
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/grammar/patterns/${pat.slug}/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
 {
@@ -2951,7 +2947,7 @@ function buildGrammarPatternPages() {
   "headline": "${escHtml(pat.pattern_cn)} \u2014 HSK 4 Grammar Pattern",
   "description": "${escHtml(pageDesc)}",
   "url": "https://hsk4.mandarinzone.com/grammar/patterns/${pat.slug}/",
-  "author": { "@type": "Organization", "name": "Mandarin Zone", "url": "https://mandarinzone.com" },
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
   "inLanguage": ["en", "zh-CN"],
   "educationalLevel": "Intermediate"
 }
@@ -3012,7 +3008,7 @@ ${patFaqJsonLd}
 
 <header>
   <div class="header-inner">
-    <a href="/" class="logo"><img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager"><div class="logo-text">HSK 4 <span>Mock Exam</span></div></a>
+    <a href="/" class="logo"><img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager"></a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
     <nav class="site-nav" aria-label="Primary">
@@ -3082,17 +3078,16 @@ ${patFaqHtml}
 
 <footer>
   <div class="footer-brand">
-    <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="footer-logo" loading="lazy">
+    <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
       <div>
-        <div class="footer-brand-name">Mandarin Zone</div>
+        <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
       </div>
     </a>
     <div class="footer-cta">
-      <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="btn btn-ghost">Visit Website</a>
-      <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="btn btn-ghost">Contact Us</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
+      <a href="/exams/" class="btn btn-ghost">Mock Exams</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
     </div>
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> \u00B7 <a href="/vocabulary/">Vocabulary</a> \u00B7 <a href="/grammar/">Grammar</a> \u00B7 <a href="/words/">Confusable Words</a> \u00B7 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
@@ -3191,7 +3186,7 @@ function buildGrammarPatternsHub() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>HSK 4 Sentence Patterns — ${patterns.length} 复句句型 Explained | Mandarin Zone</title>
+<title>HSK 4 Sentence Patterns — ${patterns.length} 复句句型 Explained | HSK Prep</title>
 <meta name="description" content="All ${patterns.length} HSK 4 complex-sentence patterns (尽管…但是, 不管…都, 即使…也, 连…都/也 and more) with examples, common errors, and quizzes. From the official syllabus.">
 <link rel="canonical" href="https://hsk4.mandarinzone.com/grammar/patterns/">
 
@@ -3199,7 +3194,7 @@ function buildGrammarPatternsHub() {
 <meta property="og:description" content="All ${patterns.length} HSK 4 complex-sentence patterns with examples, common errors, and quizzes.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/grammar/patterns/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
 ${itemListJsonLd}
@@ -3226,7 +3221,7 @@ ${itemListJsonLd}
 
 <header>
   <div class="header-inner">
-    <a href="/" class="logo"><img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager"><div class="logo-text">HSK 4 <span>Mock Exam</span></div></a>
+    <a href="/" class="logo"><img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager"></a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
     <nav class="site-nav" aria-label="Primary">
@@ -3266,17 +3261,16 @@ ${cards}
 
 <footer>
   <div class="footer-brand">
-    <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="footer-logo" loading="lazy">
+    <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
       <div>
-        <div class="footer-brand-name">Mandarin Zone</div>
-        <div class="footer-tagline">Learn Chinese in Beijing &amp; Online · Since 2008</div>
+        <div class="footer-brand-name">HSK Prep</div>
+        <div class="footer-tagline">Free HSK 4 practice tests & study tools</div>
       </div>
     </a>
     <div class="footer-cta">
-      <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="btn btn-ghost">Visit Website</a>
-      <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="btn btn-ghost">Contact Us</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
+      <a href="/exams/" class="btn btn-ghost">Mock Exams</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
     </div>
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> · <a href="/vocabulary/">Vocabulary</a> · <a href="/grammar/">Grammar</a> · <a href="/writing/">Writing</a> · <a href="/guide/">Study Guide</a> · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
@@ -3392,8 +3386,7 @@ function buildCharacterPages() {
 <header>
   <div class="header-inner">
     <a href="/" class="logo">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager">
-      <div class="logo-text">HSK 4 <span>Mock Exam</span></div>
+      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
     </a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
@@ -3414,17 +3407,16 @@ function buildCharacterPages() {
   const renderFooter = () => `
 <footer>
   <div class="footer-brand">
-    <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="footer-logo" loading="lazy">
+    <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
       <div>
-        <div class="footer-brand-name">Mandarin Zone</div>
-        <div class="footer-tagline">Learn Chinese in Beijing &amp; Online · Since 2008</div>
+        <div class="footer-brand-name">HSK Prep</div>
+        <div class="footer-tagline">Free HSK 4 practice tests & study tools</div>
       </div>
     </a>
     <div class="footer-cta">
-      <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="btn btn-ghost">Visit Website</a>
-      <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="btn btn-ghost">Contact Us</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
+      <a href="/exams/" class="btn btn-ghost">Mock Exams</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
     </div>
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> · <a href="/train/">Practice Center</a> · <a href="/vocabulary/">Vocabulary</a> · <a href="/characters/">Characters</a> · <a href="/grammar/">Grammar</a> · <a href="/strategies/">Strategies</a> · <a href="/traps/">Traps</a> · <a href="/practice/">Practice</a> · <a href="/compare/">Compare</a> · <a href="/writing/">Writing</a> · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
@@ -3437,8 +3429,8 @@ function buildCharacterPages() {
       <span class="char-pinyin">${escHtml(c.pinyin)}</span>
     </a>`).join('');
 
-  const hubTitle = `HSK 4 Characters \u2014 150 \u4E66\u5199\u5B57 + 441 \u8BA4\u8BFB\u5B57 Stroke Order | Mandarin Zone`;
-  const hubDesc = `Learn to write all ${chars.length} HSK 4 required characters with animated stroke order and interactive handwriting practice. Free, by Mandarin Zone Beijing.`;
+  const hubTitle = `HSK 4 Characters \u2014 150 \u4E66\u5199\u5B57 + 441 \u8BA4\u8BFB\u5B57 Stroke Order | HSK Prep`;
+  const hubDesc = `Learn to write all ${chars.length} HSK 4 required characters with animated stroke order and interactive handwriting practice. Free, by HSK Prep.`;
 
   const hubHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -3452,11 +3444,11 @@ function buildCharacterPages() {
 <meta property="og:description" content="${escHtml(hubDesc)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/characters/">
-<meta property="og:site_name" content="Mandarin Zone">
-<meta property="og:image" content="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png">
-<meta property="og:image:alt" content="Mandarin Zone — HSK 4 character writing practice">
+<meta property="og:site_name" content="HSK Prep">
+<meta property="og:image" content="https://hsk4.mandarinzone.com/logo.svg">
+<meta property="og:image:alt" content="HSK Prep — HSK 4 character writing practice">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png">
+<meta name="twitter:image" content="/logo-light.svg">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -3798,8 +3790,8 @@ ${renderFooter()}
       }))
     };
 
-    const detailTitle = `${c.char} (${pinyinList.join('/')}) Stroke Order, Radical & Practice \u2014 HSK 4 \u6C49\u5B57 | Mandarin Zone`;
-    const detailDesc = truncDesc(`Learn the HSK 4 character ${c.char} (${pinyinList.join('/')}, ${meanings.slice(0, 2).join(', ') || c.meaning}): ${strokes ? strokes + ' strokes, ' : ''}${radical ? 'radical ' + radical + ', ' : ''}decomposition, common words and animated practice. Free, by Mandarin Zone.`);
+    const detailTitle = `${c.char} (${pinyinList.join('/')}) Stroke Order, Radical & Practice \u2014 HSK 4 \u6C49\u5B57 | HSK Prep`;
+    const detailDesc = truncDesc(`Learn the HSK 4 character ${c.char} (${pinyinList.join('/')}, ${meanings.slice(0, 2).join(', ') || c.meaning}): ${strokes ? strokes + ' strokes, ' : ''}${radical ? 'radical ' + radical + ', ' : ''}decomposition, common words and animated practice. Free, by HSK Prep.`);
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -3813,11 +3805,11 @@ ${renderFooter()}
 <meta property="og:description" content="${escHtml(detailDesc)}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/">
-<meta property="og:site_name" content="Mandarin Zone">
-<meta property="og:image" content="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png">
-<meta property="og:image:alt" content="Mandarin Zone — HSK 4 character writing practice">
+<meta property="og:site_name" content="HSK Prep">
+<meta property="og:image" content="https://hsk4.mandarinzone.com/logo.svg">
+<meta property="og:image:alt" content="HSK Prep — HSK 4 character writing practice">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png">
+<meta name="twitter:image" content="/logo-light.svg">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -3999,11 +3991,11 @@ window.addEventListener('load', function(){
     }
 
     const detailTitle = isRecognition
-      ? `${c.char} (${c.pinyin}) Meaning, Pinyin & Stroke Order \u2014 HSK 4 \u8BA4\u8BFB\u5B57 | Mandarin Zone`
-      : `${c.char} (${c.pinyin}) Stroke Order & Writing Practice \u2014 HSK 4 \u6C49\u5B57 | Mandarin Zone`;
+      ? `${c.char} (${c.pinyin}) Meaning, Pinyin & Stroke Order \u2014 HSK 4 \u8BA4\u8BFB\u5B57 | HSK Prep`
+      : `${c.char} (${c.pinyin}) Stroke Order & Writing Practice \u2014 HSK 4 \u6C49\u5B57 | HSK Prep`;
     const detailDesc = truncDesc(isRecognition
-      ? `${c.char} (${c.pinyin}) means "${c.meaning}" — an HSK 4 recognition character (认读字). See its meaning, pinyin, stroke order animation, and the HSK 4 words that use it. By Mandarin Zone.`
-      : `Learn how to write the HSK 4 character ${c.char} (${c.pinyin}, ${c.meaning}) with animated stroke order and interactive handwriting practice. Free practice tool by Mandarin Zone.`);
+      ? `${c.char} (${c.pinyin}) means "${c.meaning}" — an HSK 4 recognition character (认读字). See its meaning, pinyin, stroke order animation, and the HSK 4 words that use it. By HSK Prep.`
+      : `Learn how to write the HSK 4 character ${c.char} (${c.pinyin}, ${c.meaning}) with animated stroke order and interactive handwriting practice. Free practice tool by HSK Prep.`);
 
     const detailHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -4017,11 +4009,11 @@ window.addEventListener('load', function(){
 <meta property="og:description" content="${escHtml(detailDesc)}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/">
-<meta property="og:site_name" content="Mandarin Zone">
-<meta property="og:image" content="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png">
-<meta property="og:image:alt" content="Mandarin Zone — HSK 4 character writing practice">
+<meta property="og:site_name" content="HSK Prep">
+<meta property="og:image" content="https://hsk4.mandarinzone.com/logo.svg">
+<meta property="og:image:alt" content="HSK Prep — HSK 4 character writing practice">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png">
+<meta name="twitter:image" content="/logo-light.svg">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -4185,8 +4177,7 @@ console.log('=== HSK4 SEO Build ===\n');
 const DRILL_HEADER = (active) => `<header>
   <div class="header-inner">
     <a href="/" class="logo">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager">
-      <div class="logo-text">HSK 4 <span>Mock Exam</span></div>
+      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
     </a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
@@ -4208,18 +4199,17 @@ const DRILL_HEADER = (active) => `<header>
 
 const DRILL_FOOTER = `<footer>
   <div class="footer-brand">
-    <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="footer-logo" loading="lazy">
+    <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
       <div>
-        <div class="footer-brand-name">Mandarin Zone</div>
-        <div class="footer-tagline">Learn Chinese in Beijing &amp; Online · Since 2008</div>
+        <div class="footer-brand-name">HSK Prep</div>
+        <div class="footer-tagline">Free HSK 4 practice tests & study tools</div>
       </div>
     </a>
     <div class="footer-cta">
-      <a href="https://www.mandarinzone.com/" target="_blank" rel="noopener" class="btn btn-ghost">Visit Website</a>
-      <a href="https://www.mandarinzone.com/contact-us/" target="_blank" rel="noopener" class="btn btn-ghost">Contact Us</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
-      <a href="mailto:info@mandarinzone.com" class="btn btn-ghost">info@mandarinzone.com</a>
+      <a href="/exams/" class="btn btn-ghost">Mock Exams</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
+      <a href="https://github.com/Make-dream-clear/hsk4-mock-exam" target="_blank" rel="noopener" class="btn btn-ghost">GitHub</a>
     </div>
   </div>
   <p class="footer-links" style="margin-top:4px;"><a href="/">Mock Exams</a> · <a href="/vocabulary/">Vocabulary</a> · <a href="/grammar/">Grammar</a> · <a href="/sentences/">Sentences</a> · <a href="/strategies/">Strategies</a> · <a href="/words/">Confusable Words</a> · <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></p>
@@ -4338,7 +4328,7 @@ function buildSentenceCategoryPages() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${escHtml(title)} | Mandarin Zone</title>
+<title>${escHtml(title)} | HSK Prep</title>
 <meta name="description" content="${escHtml(desc)}">
 <link rel="canonical" href="https://hsk4.mandarinzone.com/sentences/${cat.slug}/">
 <meta property="og:title" content="${escHtml(title)}">
@@ -4536,7 +4526,7 @@ function buildTrapCategoryPages() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${escHtml(title)} | Mandarin Zone</title>
+<title>${escHtml(title)} | HSK Prep</title>
 <meta name="description" content="${escHtml(desc)}">
 <link rel="canonical" href="https://hsk4.mandarinzone.com/traps/${cat.slug}/">
 <meta property="og:title" content="${escHtml(title)}">
@@ -4675,7 +4665,7 @@ function buildCompleteSentence() {
 
   const dir = path.join(ROOT, 'writing', 'complete-sentence');
   ensureDir(dir);
-  const title = 'HSK 4 完成句子 Practice — Complete-the-Sentence Writing Drill | Mandarin Zone';
+  const title = 'HSK 4 完成句子 Practice — Complete-the-Sentence Writing Drill | HSK Prep';
   const desc = truncDesc(`Free HSK 4 writing drill: ${items.length} 完成句子 (complete-the-sentence) exercises built from real HSK 4 sentence patterns. Produce the second clause, then self-check against the answer with pinyin.`);
 
   const html = `<!DOCTYPE html>
@@ -4690,7 +4680,7 @@ function buildCompleteSentence() {
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/writing/complete-sentence/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
 <style>
@@ -4826,7 +4816,7 @@ function buildPracticeHub() {
   const testCards = index.map((m, i) => `<a class="pc-test" href="/test/${String(i + 1).padStart(2, '0')}/" data-test="${i}"><span class="pc-test-num">Test ${String(i + 1).padStart(2, '0')}</span><span class="pc-test-score" data-score="${i}"></span></a>`).join('\n        ');
 
   const drill = (href, tag, title, desc) => `<a class="pc-card" href="${href}"><div class="pc-card-tag">${tag}</div><h3>${title}</h3><p>${desc}</p></a>`;
-  const title = 'HSK 4 Practice Center — All Drills + Progress | 练习中心 | Mandarin Zone';
+  const title = 'HSK 4 Practice Center — All Drills + Progress | 练习中心 | HSK Prep';
   const desc = truncDesc('Your HSK 4 practice hub: ' + TEST_COUNT + ' mock exams, mixed 选词填空 drills, 完成句子 writing, sentence ordering, vocab flashcards, confusable-word and grammar quizzes — all in one place, with your progress saved.');
 
   const html = `<!DOCTYPE html>
@@ -4841,7 +4831,7 @@ function buildPracticeHub() {
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/train/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
 <style>
@@ -4974,7 +4964,7 @@ function buildMixedPractice() {
 
   const dir = path.join(ROOT, 'practice');
   ensureDir(dir);
-  const title = 'HSK 4 Mixed Practice — 选词填空 Drill (Grammar + Confusable Words) | Mandarin Zone';
+  const title = 'HSK 4 Mixed Practice — 选词填空 Drill (Grammar + Confusable Words) | HSK Prep';
   const desc = truncDesc(`Free HSK 4 mixed practice drill: ${items.length} fill-in-the-blank questions on grammar connectors and confusable words, shuffled like the real reading section. Instant scoring + explanations.`);
 
   const html = `<!DOCTYPE html>
@@ -4989,7 +4979,7 @@ function buildMixedPractice() {
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/practice/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
 <style>
@@ -5231,14 +5221,14 @@ function buildTranscriptPages() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${title} | Mandarin Zone</title>
+<title>${title} | HSK Prep</title>
 <meta name="description" content="${desc}">
 <link rel="canonical" href="https://hsk4.mandarinzone.com/test/${num}/transcript/">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${desc}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://hsk4.mandarinzone.com/test/${num}/transcript/">
-<meta property="og:site_name" content="Mandarin Zone">
+<meta property="og:site_name" content="HSK Prep">
 <meta name="twitter:card" content="summary_large_image">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
@@ -5264,8 +5254,7 @@ function buildTranscriptPages() {
 <header>
   <div class="header-inner">
     <a href="/" class="logo">
-      <img src="https://www.mandarinzone.com/wp-content/uploads/2015/01/logo.png" alt="Mandarin Zone" class="logo-mark" loading="eager">
-      <div class="logo-text">HSK 4 <span>Mock Exam</span></div>
+      <img src="/logo-light.svg" alt="HSK Prep" class="logo-mark" loading="eager">
     </a>
     <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Menu">
     <label for="nav-toggle" class="nav-burger" aria-hidden="true"><span class="nav-burger-bar"></span></label>
@@ -5286,7 +5275,7 @@ function buildTranscriptPages() {
 </header>
 <main>
   <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/">Home</a> &rsaquo; <a href="/">Mock Exams</a> &rsaquo; <a href="/test/${num}/">Test ${num}</a> &rsaquo; Transcript
+    <a href="/">Home</a> &rsaquo; <a href="/exams/">Mock Exams</a> &rsaquo; <a href="/test/${num}/">Test ${num}</a> &rsaquo; Transcript
   </nav>
   <div class="ts-hero">
     <h1 class="chinese">${escHtml(meta.title)}<br>Listening Transcript · 听力原文</h1>
@@ -5302,7 +5291,7 @@ function buildTranscriptPages() {
 
   <div class="test-nav">
     <a href="/test/${num}/" class="btn btn-ghost">&larr; Back to Test ${num}</a>
-    <a href="/" class="btn btn-secondary">All Tests</a>
+    <a href="/exams/" class="btn btn-secondary">All Tests</a>
   </div>
 </main>
 <footer>

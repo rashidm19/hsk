@@ -1,5 +1,5 @@
 /* ===================================================
-   HSK4 Mandarin Zone — Shared Styles
+   HSK4 HSK Prep — Shared Styles
    common.css
 
    Mobile-first responsive design system.
@@ -222,7 +222,7 @@ header {
 .logo-mark {
   height: 32px;
   width: auto;
-  max-width: 140px;
+  max-width: 108px;
   flex-shrink: 0;
   display: block;
   object-fit: contain;
@@ -584,7 +584,7 @@ footer {
 footer a { color: var(--accent); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
 
-/* Parent-brand block: surfaces "Mandarin Zone" as the publisher of this
+/* Parent-brand block: surfaces "HSK Prep" as the publisher of this
    sub-property. Stacks vertically on mobile, side-by-side on tablet+. */
 .footer-brand {
   display: flex;
@@ -617,7 +617,7 @@ footer a:hover { text-decoration: underline; }
 .footer-logo {
   height: 44px;
   width: auto;
-  max-width: 200px;
+  max-width: 108px;
   display: block;
   object-fit: contain;
 }

@@ -1,15 +1,15 @@
-# HSK 4 Mock Exam — Free Online Practice Tests with Answers
+# HSK Prep — Free HSK 4 Mock Exams & Study Tools
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![HSK Level](https://img.shields.io/badge/HSK-Level%204-red)](https://mandarinzone.com)
-[![Tests](https://img.shields.io/badge/Tests-12%20Complete%20Exams-blue)]()
-[![Questions](https://img.shields.io/badge/Questions-1%2C176-green)]()
+[![HSK Level](https://img.shields.io/badge/HSK-Level%204-red)](https://hsk4.mandarinzone.com)
+[![Tests](https://img.shields.io/badge/Tests-14%20Complete%20Exams-blue)]()
+[![Questions](https://img.shields.io/badge/Questions-1%2C375-green)]()
 
-**12 complete HSK 4 mock exams** with listening, reading, and writing sections — structured JSON data, ready to use in your app, flashcard tool, or study workflow.
+**14 complete HSK 4 mock exams** with listening, reading, and writing sections — structured JSON data, ready to use in your app, flashcard tool, or study workflow.
 
 12 套完整的 HSK 4 模拟试题，涵盖听力、阅读、书写三大部分，JSON 格式，可直接用于 App 开发、刷题工具或学习系统。
 
-> Created by [**Mandarin Zone**](https://mandarinzone.com) — A Chinese language school in Beijing since 2008, with 5,000+ students from 40+ countries and a 98% HSK pass rate.
+> Created by [**HSK Prep**](https://hsk4.mandarinzone.com) — Free HSK 4 mock exams and study tools.
 
 ---
 
@@ -76,7 +76,7 @@ Each test follows the official HSK 4 exam structure:
 {
   "quiz_id": 2,
   "title": "HSK 4 SAMPLE QUIZ",
-  "source": "Mandarin Zone (mandarinzone.com)",
+  "source": "HSK Prep",
   "total_questions": 100,
   "questions": [
     {
@@ -107,7 +107,7 @@ Each test follows the official HSK 4 exam structure:
 
 ## Audio Files
 
-Listening comprehension questions include audio file URLs hosted on Mandarin Zone's CDN. The `audio` field contains the direct URL. Audio files are not included in this repository due to size.
+Listening comprehension questions include audio file URLs hosted on HSK Prep's CDN. The `audio` field contains the direct URL. Audio files are not included in this repository due to size.
 
 ## Use Cases
 
@@ -127,13 +127,13 @@ The HSK (汉语水平考试 / Hanyu Shuiping Kaoshi) is the standardized Chinese
 - Communicate comfortably with native Chinese speakers
 - Understand approximately 1,200 vocabulary words
 
-Learn more about HSK preparation at [Mandarin Zone](https://mandarinzone.com).
+Learn more about HSK preparation at [HSK Prep](https://hsk4.mandarinzone.com).
 
 ## Related Resources
 
-- [Online HSK 4 Practice Tests](https://mandarinzone.com) — Take these tests online with full audio support
-- [HSK 4 Vocabulary List](https://mandarinzone.com) — Complete word list for HSK 4
-- [Learn Chinese Online](https://mandarinzone.com) — 1-on-1 online Chinese classes
+- [Online HSK 4 Practice Tests](https://hsk4.mandarinzone.com) — Take these tests online with full audio support
+- [HSK 4 Vocabulary List](https://hsk4.mandarinzone.com) — Complete word list for HSK 4
+- [Learn Chinese Online](https://hsk4.mandarinzone.com) — 1-on-1 online Chinese classes
 
 ## Contributing
 
@@ -150,8 +150,8 @@ Please open an issue or submit a pull request.
 
 This work is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 
-You are free to share and adapt this material for non-commercial purposes, as long as you give appropriate credit to [Mandarin Zone](https://mandarinzone.com) and distribute your contributions under the same license.
+You are free to share and adapt this material for non-commercial purposes, as long as you give appropriate credit to [HSK Prep](https://hsk4.mandarinzone.com) and distribute your contributions under the same license.
 
 ---
 
-**Made with ❤️ by [Mandarin Zone](https://mandarinzone.com) — Learn Chinese in Beijing & Online since 2008**
+**Made with ❤️ by [HSK Prep](https://hsk4.mandarinzone.com) — Free HSK 4 practice tests & study tools**
