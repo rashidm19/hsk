@@ -8,45 +8,43 @@
 
 /* === DESIGN TOKENS === */
 :root {
-  /* Color */
-  --ink: #1a1a2e;
-  --paper: #faf8f5;
-  --accent: #c23b22;
-  --accent-soft: #e8d5d0;
-  --jade: #2d6a4f;
-  --jade-soft: #d8f3dc;
-  --gold: #8b6610;
-  --gold-soft: #fef3cd;
-  --mist: #e8e4df;
-  --stone: #6b6b6b;
-  --correct: #2d6a4f;
-  --wrong: #c23b22;
+  /* Warm parchment — platform palette (landing page uses landing.css) */
+  --ink: #1a1614;
+  --paper: #f9f4ec;
+  --accent: #b84e2e;
+  --accent-hover: #9a4026;
+  --accent-soft: #f3e0d8;
+  --accent-btn: #b84e2e;
+  --accent-btn-hover: #9a4026;
+  --jade: #2f6349;
+  --jade-soft: #d8ebe1;
+  --gold: #8a6420;
+  --gold-soft: #f5ead0;
+  --mist: #d4c9bc;
+  --stone: #574f49;
+  --correct: #2f6349;
+  --wrong: #b84e2e;
 
-  /* Semantic surfaces — let dark mode (below) re-theme without touching
-     every rule. Light values keep the existing look pixel-for-pixel.
-     --surface  = raised cards/panels (was hardcoded `white`)
-     --invert-* = intentionally dark chrome (header, nav menu, CTA banner)
-                  that should NOT flip in dark mode.
-     --ok/--bad = success/error feedback widgets that pair a tinted
-                  background with matching text. */
-  --surface: #ffffff;
-  --surface-sunken: var(--paper);
-  --invert-bg: var(--ink);
-  --invert-fg: var(--paper);
-  --ok-bg: #e8f5e9;
-  --ok-border: #38a169;
-  --ok-ink: #2f855a;
-  --bad-bg: #ffe0e0;
-  --bad-bg-2: #fff5f5;
-  --bad-ink: #c53030;
-  --accent-tint: #fdf8f7;
-  --gold-border: #e8d5a0;
+  /* Semantic surfaces */
+  --surface: #fffdf8;
+  --surface-sunken: #efe6d9;
+  --invert-bg: #1a1614;
+  --invert-fg: #f9f4ec;
+  --ok-bg: #e4f0e8;
+  --ok-border: #4a8f6a;
+  --ok-ink: #2f6a4f;
+  --bad-bg: #f8e4dc;
+  --bad-bg-2: #faf0ec;
+  --bad-ink: #b84a2e;
+  --accent-tint: #faf3ee;
+  --gold-border: #e0cfa8;
+  --border-subtle: rgba(44, 40, 37, 0.12);
 
   /* Radius & elevation */
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 2px 20px rgba(26,26,46,0.08);
-  --shadow-lg: 0 8px 40px rgba(26,26,46,0.12);
+  --shadow: 0 8px 28px rgba(44, 40, 37, 0.07);
+  --shadow-lg: 0 16px 44px rgba(44, 40, 37, 0.1);
 
   /* Spacing scale (4px base) */
   --space-2: 8px;
@@ -83,35 +81,175 @@
    Only re-maps the color tokens above — every component inherits the new
    palette through the variables, so light mode stays byte-identical. */
 [data-theme="dark"] {
-  --ink: #e9e7f0;
-  --paper: #15151e;
-  --accent: #e36347;
-  --accent-soft: #3a241f;
-  --jade: #5cc995;
-  --jade-soft: #182f24;
-  --gold: #d9b24e;
-  --gold-soft: #322a13;
-  --mist: #34343f;
-  --stone: #a6a6b4;
-  --correct: #5cc995;
-  --wrong: #e36347;
+  --ink: #faf6f0;
+  --paper: #141210;
+  --accent: #e8886a;
+  --accent-hover: #d47558;
+  --accent-soft: #3d2c26;
+  --accent-btn: #e8886a;
+  --accent-btn-hover: #d47558;
+  --jade: #6bc497;
+  --jade-soft: #1c2e26;
+  --gold: #e0b85a;
+  --gold-soft: #2c2618;
+  --mist: #4a443c;
+  --stone: #b8afa6;
+  --correct: #6bc497;
+  --wrong: #e8886a;
 
-  --surface: #23232f;
-  --surface-sunken: #1a1a24;
-  --invert-bg: #1d1d28;
-  --invert-fg: #ececf2;
-  --ok-bg: #182f24;
-  --ok-border: #2f6a4a;
-  --ok-ink: #5cc995;
-  --bad-bg: #3a241f;
-  --bad-bg-2: #2e1c18;
-  --bad-ink: #ef8a72;
-  --accent-tint: #2a1d1a;
-  --gold-border: #4a3d1c;
+  --surface: #262219;
+  --surface-sunken: #302c24;
+  --invert-bg: #302c24;
+  --invert-fg: #faf6f0;
+  --ok-bg: #1e2e26;
+  --ok-border: #3a6b52;
+  --ok-ink: #5daf87;
+  --bad-bg: #3a2a24;
+  --bad-bg-2: #2e221c;
+  --bad-ink: #f0a088;
+  --accent-tint: #2a221e;
+  --gold-border: #4a3d20;
+  --border-subtle: rgba(255, 255, 255, 0.1);
 
-  --shadow: 0 2px 20px rgba(0,0,0,0.45);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,0.55);
+  --shadow: 0 20px 64px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 28px 80px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
+}
+
+[data-theme="dark"] .btn-primary {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* === READABLE SURFACES ===
+   Page-specific <style> blocks often hardcode background:white, which
+   stays white in dark mode while --ink flips to a light cream — invisible
+   text. These rules re-bind common card/panel classes to theme tokens. */
+
+.hero h1,
+.dash-head h1,
+.progress-title,
+.modal-title,
+.stat-num,
+.dash-stat-num {
+  color: var(--ink);
+}
+
+.progress-dashboard,
+.filter-bar,
+.vocab-card,
+.tip-card,
+.trap-card,
+.trap-quiz-item,
+.grammar-card,
+.grammar-point,
+.related-card,
+.q-item,
+.q-opt,
+.fill-item,
+.fill-check-btn,
+.sentence-row,
+.toc-pill,
+.quiz-item,
+.nf-link,
+.content-card,
+.option-btn,
+.question-card,
+.results-card,
+.test-card,
+.path-card,
+.toolkit-card,
+.plan-phase,
+.topics-cluster,
+.dash-stat-card,
+.modal,
+.pattern-box,
+.conv-card,
+.sort-tile,
+.dd-tile,
+.gen-tab:not(.active),
+.conv-btn:not(.active),
+.pr-filter:not(.active),
+.word-card,
+.topic-card,
+.ex-card,
+.level-card,
+.writing-card,
+.paragraph-card,
+.strategy-card,
+.trap-quiz-item,
+.tq-opt,
+.mistakes-box,
+.format-table,
+.compare-table td,
+table.prog,
+.prog td,
+.seo-content h2,
+.seo-content h3 {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.pill:not(.active),
+.toggle-btn:not(.active) {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.progress-stats,
+.dash-stat-label,
+.stat-label,
+.filter-label,
+.vocab-count,
+.hero p,
+.dash-head p {
+  color: var(--stone);
+}
+
+.progress-stats strong {
+  color: var(--ink);
+}
+
+/* Dark mode: override hardcoded white in page-specific inline styles */
+[data-theme="dark"] [style*="background:white"],
+[data-theme="dark"] [style*="background: white"],
+[data-theme="dark"] [style*="background:white;"],
+[data-theme="dark"] [style*="background: white;"] {
+  background: var(--surface) !important;
+  color: var(--ink);
+}
+
+[data-theme="dark"] .progress-dashboard,
+[data-theme="dark"] .progress-title,
+[data-theme="dark"] .filter-bar,
+[data-theme="dark"] .vocab-card,
+[data-theme="dark"] .pill:not(.active),
+[data-theme="dark"] .toggle-btn:not(.active),
+[data-theme="dark"] .tip-card,
+[data-theme="dark"] .trap-card,
+[data-theme="dark"] .related-card,
+[data-theme="dark"] .q-item,
+[data-theme="dark"] .q-opt:not(.selected):not(.correct):not(.wrong),
+[data-theme="dark"] .fill-item,
+[data-theme="dark"] .fill-check-btn,
+[data-theme="dark"] .sentence-row,
+[data-theme="dark"] .quiz-item,
+[data-theme="dark"] .grammar-card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .option-btn:not(.selected):not(.correct):not(.wrong),
+[data-theme="dark"] .question-card,
+[data-theme="dark"] .results-card,
+[data-theme="dark"] .test-card,
+[data-theme="dark"] .path-card,
+[data-theme="dark"] .toolkit-card,
+[data-theme="dark"] .dash-stat-card,
+[data-theme="dark"] .tq-opt:not(.correct):not(.wrong),
+[data-theme="dark"] .mistakes-box,
+[data-theme="dark"] table.prog,
+[data-theme="dark"] .format-table,
+[data-theme="dark"] .compare-table td {
+  background: var(--surface) !important;
+  color: var(--ink);
 }
 
 /* Floating dark-mode toggle (injected on every page before </body>).
@@ -455,6 +593,7 @@ main {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: var(--space-3);
+  color: var(--ink);
 }
 
 .hero h1 .accent { color: var(--accent); }
@@ -524,16 +663,28 @@ main {
 }
 .btn:active { transform: translateY(1px); }
 
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: #a83220; }
-.btn-secondary { background: var(--mist); color: var(--ink); }
-.btn-secondary:hover { background: #d8d4cf; }
-.btn-ghost {
-  background: transparent;
-  color: var(--stone);
+.btn-primary {
+  background: var(--accent-btn);
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(196, 92, 58, 0.22);
+}
+.btn-primary:hover { background: var(--accent-btn-hover); }
+.btn-secondary {
+  background: var(--surface-sunken);
+  color: var(--ink);
   border: 1px solid var(--mist);
 }
-.btn-ghost:hover { background: var(--mist); }
+.btn-secondary:hover { background: #e8dfd4; }
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--mist);
+}
+.btn-ghost:hover {
+  background: var(--surface-sunken);
+  border-color: var(--stone);
+}
 .btn-jade { background: var(--jade); color: white; }
 .btn-jade:hover { background: #245a42; }
 
@@ -934,4 +1085,16 @@ footer a:hover { text-decoration: underline; }
   gap: var(--space-3);
   margin: var(--space-8) 0 var(--space-5);
   flex-wrap: wrap;
+}
+
+/* Hide platform chrome until auth guard confirms session */
+html.hsk-auth-pending body.app > *:not(script) {
+  visibility: hidden;
+}
+html.hsk-auth-pending body.app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: var(--paper);
+  z-index: 9999;
 }

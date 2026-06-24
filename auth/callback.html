@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signing in… | HSK Prep</title>
+<link rel="stylesheet" href="/common.css">
+<style>
+  body {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  .auth-callback-card {
+    max-width: 400px;
+    padding: 32px;
+    background: var(--surface);
+    border: 1px solid var(--mist);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/config/auth.js"></script>
+<script src="/auth.js"></script>
+</head>
+<body>
+  <div class="auth-callback-card">
+    <h1 style="font-size:1.25rem;margin-bottom:8px;">Signing you in…</h1>
+    <p style="color:var(--stone);font-size:14px;">Please wait.</p>
+  </div>
+  <script>
+  (async function () {
+    try {
+      if (!HSKAuth.isConfigured()) throw new Error('Auth not configured');
+      var client = HSKAuth.getClient();
+      var params = new URLSearchParams(window.location.search);
+      var next = params.get('next') || '/exams/';
+      await client.auth.exchangeCodeForSession(window.location.href);
+      var user = await HSKAuth.getUser();
+      if (user) await HSKAuth.upsertProfile(user, {});
+      window.location.replace(next);
+    } catch (e) {
+      document.querySelector('.auth-callback-card').innerHTML =
+        '<h1 style="font-size:1.25rem;margin-bottom:8px;">Sign-in failed</h1>' +
+        '<p style="color:var(--stone);margin-bottom:16px;">' + (e.message || 'Try again from the home page.') + '</p>' +
+        '<a href="/" class="btn btn-primary">Back to home</a>';
+    }
+  })();
+  </script>
+</body>
+</html>

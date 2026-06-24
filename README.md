@@ -154,4 +154,22 @@ You are free to share and adapt this material for non-commercial purposes, as lo
 
 ---
 
+## Authentication (Supabase)
+
+Platform pages require a free account when Supabase is configured.
+
+1. Create a [Supabase](https://supabase.com) project.
+2. Run [`supabase/schema.sql`](supabase/schema.sql) in the SQL Editor.
+3. Copy config: `cp config/auth.example.js config/auth.js` and add your **Project URL** and **anon key**.
+4. In Supabase → Authentication → URL configuration, add:
+   - **Site URL:** `https://hsk4.mandarinzone.com`
+   - **Redirect URLs:** `https://hsk4.mandarinzone.com/auth/callback.html` (and `http://localhost:8080/auth/callback.html` for local dev)
+5. Deploy with `config/auth.js` on the server (gitignored locally).
+
+Until `config/auth.js` is filled in, the platform stays open for static preview. After configuration, visitors sign in on the landing page and user profiles are stored in the `profiles` table.
+
+To wire auth scripts into new platform HTML pages: `node scripts/inject-auth.js`
+
+---
+
 **Made with ❤️ by [HSK Prep](https://hsk4.mandarinzone.com) — Free HSK 4 practice tests & study tools**

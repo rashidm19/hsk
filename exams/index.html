@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/config/auth.js"></script>
+<script src="/auth.js"></script>
+<script src="/auth-guard.js"></script>
 <script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -155,7 +160,7 @@
 <link rel="stylesheet" href="/homepage.css">
 <link rel="stylesheet" href="/dashboard.css">
 </head>
-<body class="app">
+<body class="app hsk-auth-pending">
 
 <div class="app-layout">
   <aside class="app-sidebar" id="app-sidebar" aria-label="Main navigation">
@@ -739,6 +744,7 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
+<script src="/auth-ui.js"></script>
 
 <button id="to-top" class="to-top" type="button" aria-label="Back to top" hidden>
   <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20"><path d="M12 5l-7 7 1.41 1.41L11 8.83V19h2V8.83l4.59 4.58L19 12z" fill="currentColor"/></svg>

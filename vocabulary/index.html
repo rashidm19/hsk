@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/config/auth.js"></script>
+<script src="/auth.js"></script>
+<script src="/auth-guard.js"></script>
 <script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -79,7 +84,7 @@
 
   /* === SEARCH & FILTER === */
   .filter-bar {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--mist);
     border-radius: var(--radius);
     padding: 20px;
@@ -130,8 +135,8 @@
     font-size: 13px;
     font-weight: 500;
     border: 1px solid var(--mist);
-    background: white;
-    color: var(--stone);
+    background: var(--surface);
+    color: var(--ink);
     cursor: pointer;
     transition: all 0.15s;
     white-space: nowrap;
@@ -139,7 +144,7 @@
   .pill:hover { border-color: var(--accent); color: var(--accent); }
   .pill.active {
     background: var(--accent);
-    color: white;
+    color: #fff;
     border-color: var(--accent);
   }
 
@@ -155,15 +160,15 @@
     font-size: 13px;
     font-weight: 500;
     border: 1px solid var(--mist);
-    background: white;
-    color: var(--stone);
+    background: var(--surface);
+    color: var(--ink);
     cursor: pointer;
     transition: all 0.15s;
   }
   .toggle-btn:hover { border-color: var(--jade); color: var(--jade); }
   .toggle-btn.active {
     background: var(--jade);
-    color: white;
+    color: #fff;
     border-color: var(--jade);
   }
 
@@ -183,7 +188,7 @@
   }
 
   .vocab-card {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--mist);
     border-radius: var(--radius);
     overflow: hidden;
@@ -369,18 +374,20 @@
 
   /* === PROGRESS DASHBOARD === */
   .progress-dashboard {
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--mist);
     border-radius: var(--radius);
     padding: 24px;
     margin-bottom: 32px;
     box-shadow: var(--shadow);
+    color: var(--ink);
   }
 
   .progress-title {
     font-weight: 600;
     font-size: 16px;
     margin-bottom: 16px;
+    color: var(--ink);
   }
 
   .progress-bar-lg {
@@ -546,11 +553,12 @@
   }
 
   .flashcard-example {
-    background: white;
+    background: var(--surface-sunken);
     border-radius: 8px;
     padding: 14px;
     text-align: left;
     margin-top: 8px;
+    color: var(--ink);
   }
 
   .flashcard-tap {
@@ -600,7 +608,8 @@
     padding: 14px 18px;
     border: 2px solid var(--mist);
     border-radius: 10px;
-    background: white;
+    background: var(--surface);
+    color: var(--ink);
     cursor: pointer;
     transition: all 0.15s;
     font-size: 18px;
@@ -609,7 +618,7 @@
   }
   .quiz-opt-btn:hover:not(.disabled) {
     border-color: var(--accent);
-    background: #fdf8f7;
+    background: var(--accent-tint);
   }
   .quiz-opt-btn .marker {
     width: 28px;
@@ -690,7 +699,7 @@
   }
 </style>
 </head>
-<body class="app">
+<body class="app hsk-auth-pending">
 
 <div class="app-layout">
   <aside class="app-sidebar" id="app-sidebar" aria-label="Main navigation">
@@ -16868,7 +16877,7 @@
 
 
   <!-- hub-test-link -->
-  <div style="background:white;border:1px solid var(--mist);border-radius:var(--radius);padding:16px 20px;margin:24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+  <div style="background:var(--surface);border:1px solid var(--mist);border-radius:var(--radius);padding:16px 20px;margin:24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--ink);">
     <span style="font-size:14px;color:var(--stone);">Practice what you learned with our free mock exams</span>
     <a href="/" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">Take a Mock Exam →</a>
   </div>
@@ -16924,6 +16933,7 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
+<script src="/auth-ui.js"></script>
 
 <!-- STUDY MODE BAR -->
 <div class="study-bar">

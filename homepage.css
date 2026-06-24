@@ -18,38 +18,14 @@
    page load.
    =================================================== */
 
-/* === BRIGHT PALETTE (matches landing.css) === */
-:root {
-  --paper: #fffdf9;
-  --accent-soft: #fde8e4;
-  --mist: #ebe6df;
-  --stone: #5c5c6a;
-  --surface-sunken: #f5f0e8;
-  --accent-tint: #fff8f6;
-  --shadow: 0 8px 32px rgba(26, 26, 46, 0.08);
-  --shadow-lg: 0 16px 48px rgba(26, 26, 46, 0.1);
-  --border-subtle: rgba(26, 26, 46, 0.1);
-}
-
-[data-theme="dark"] {
-  --paper: #0c0c10;
-  --accent-soft: #3a241f;
-  --mist: rgba(255, 255, 255, 0.1);
-  --stone: #9b9aa8;
-  --surface-sunken: #1e1e26;
-  --accent-tint: #2a1d1a;
-  --shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 32px 96px rgba(0, 0, 0, 0.35);
-  --border-subtle: rgba(255, 255, 255, 0.1);
-}
-
+/* === BRIGHT PALETTE (warm parchment — platform only) === */
 /* App shell — header rules below are overridden by dashboard.css */
 body:not(.app) { color-scheme: light; }
 [data-theme="dark"] body { color-scheme: dark; }
 
-/* Light header — same feel as the marketing landing page */
+/* Light header — parchment canvas */
 header {
-  background: rgba(255, 253, 249, 0.92);
+  background: rgba(249, 244, 236, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: var(--ink);
@@ -98,30 +74,30 @@ header :focus-visible { outline-color: var(--accent); }
 /* Hero — soft radial washes like the landing page */
 .hero {
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(194, 59, 34, 0.07), transparent 65%),
-    radial-gradient(ellipse 50% 40% at 90% 20%, rgba(45, 106, 79, 0.06), transparent 55%),
-    radial-gradient(ellipse 40% 35% at 10% 80%, rgba(254, 243, 205, 0.5), transparent 50%);
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(196, 92, 58, 0.06), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 90% 20%, rgba(58, 107, 82, 0.06), transparent 55%),
+    radial-gradient(ellipse 40% 35% at 10% 80%, rgba(246, 237, 216, 0.7), transparent 50%);
   border-radius: var(--radius);
   margin-bottom: var(--space-4);
 }
 [data-theme="dark"] .hero {
   background:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(232, 93, 74, 0.1), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 80% 100%, rgba(62, 207, 142, 0.06), transparent 60%);
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(224, 122, 90, 0.1), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 100%, rgba(93, 175, 135, 0.06), transparent 60%);
 }
 
 .hero-badge {
   background: var(--jade-soft);
   color: var(--jade);
-  border: 1px solid rgba(45, 106, 79, 0.15);
+  border: 1px solid rgba(58, 107, 82, 0.15);
 }
 
 .btn-ghost {
-  border-color: var(--border-subtle);
+  border-color: var(--mist);
   color: var(--ink);
 }
 .btn-ghost:hover {
-  background: var(--surface);
+  background: var(--surface-sunken);
   border-color: var(--stone);
 }
 
@@ -159,7 +135,7 @@ footer {
 .hero h1 { letter-spacing: -0.5px; }
 .hero p { max-width: 520px; }
 
-.cta-banner .btn-primary { background: var(--accent); }
+.cta-banner .btn-primary { background: var(--accent-btn); }
 .cta-link {
   color: var(--invert-fg);
   opacity: 0.5;
@@ -1016,9 +992,9 @@ footer {
 @media (min-width: 768px) {
   .toolkit-group { padding: var(--space-6); }
 }
-.toolkit-group--foundation { background: rgba(216, 243, 220, 0.35); border-color: rgba(45, 106, 79, 0.15); }
-.toolkit-group--precision  { background: rgba(254, 243, 205, 0.45); border-color: rgba(139, 102, 16, 0.18); }
-.toolkit-group--strategy   { background: rgba(232, 213, 208, 0.4);  border-color: rgba(194, 59, 34, 0.18); }
+.toolkit-group--foundation { background: rgba(220, 235, 227, 0.45); border-color: rgba(58, 107, 82, 0.15); }
+.toolkit-group--precision  { background: rgba(246, 237, 216, 0.55); border-color: rgba(154, 112, 40, 0.18); }
+.toolkit-group--strategy   { background: rgba(245, 228, 220, 0.45); border-color: rgba(196, 92, 58, 0.18); }
 .toolkit-group-title {
   font-family: 'Noto Serif SC', serif;
   font-size: var(--fs-lg);
@@ -1180,7 +1156,7 @@ footer {
 .grammar-callout {
   background: linear-gradient(135deg, var(--accent-soft), var(--surface));
   color: var(--ink);
-  border: 1px solid rgba(194, 59, 34, 0.12);
+  border: 1px solid rgba(196, 92, 58, 0.12);
   border-radius: var(--radius);
   padding: var(--space-5) var(--space-6);
   margin-top: var(--space-4);
@@ -1466,6 +1442,6 @@ footer {
 /* === DARK THEME — homepage-only fixups ===
    The toolkit group panels use literal translucent light tints that can't
    adapt through a variable, so re-tint them for dark mode here. */
-[data-theme="dark"] .toolkit-group--foundation { background: rgba(92, 201, 149, 0.07); border-color: rgba(92, 201, 149, 0.18); }
-[data-theme="dark"] .toolkit-group--precision  { background: rgba(217, 178, 78, 0.07); border-color: rgba(217, 178, 78, 0.18); }
-[data-theme="dark"] .toolkit-group--strategy   { background: rgba(239, 113, 85, 0.07); border-color: rgba(239, 113, 85, 0.18); }
+[data-theme="dark"] .toolkit-group--foundation { background: rgba(93, 175, 135, 0.08); border-color: rgba(93, 175, 135, 0.18); }
+[data-theme="dark"] .toolkit-group--precision  { background: rgba(212, 168, 74, 0.08); border-color: rgba(212, 168, 74, 0.18); }
+[data-theme="dark"] .toolkit-group--strategy   { background: rgba(224, 122, 90, 0.08); border-color: rgba(224, 122, 90, 0.18); }

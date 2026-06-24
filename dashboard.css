@@ -1,28 +1,29 @@
-/* HSK Prep — app dashboard shell (MoonAI-inspired) */
+/* HSK Prep — app dashboard (warm parchment palette) */
 
 .app {
-  --dash-accent: #5c59e8;
-  --dash-accent-hover: #4a47d6;
-  --dash-accent-soft: #eeedfd;
-  --dash-bg: #f8f9fb;
-  --dash-surface: #ffffff;
-  --dash-text: #1a1d26;
-  --dash-muted: #6b7280;
-  --dash-border: #e8eaed;
+  --dash-accent: #b84e2e;
+  --dash-accent-hover: #9a4026;
+  --dash-accent-soft: #f3e0d8;
+  --dash-bg: #f9f4ec;
+  --dash-surface: #fffdf8;
+  --dash-text: #1a1614;
+  --dash-muted: #574f49;
+  --dash-border: #d4c9bc;
   --dash-sidebar-w: 248px;
   --dash-topbar-h: 64px;
   --dash-radius: 12px;
-  --dash-shadow: 0 1px 3px rgba(26, 32, 44, 0.06), 0 4px 16px rgba(26, 32, 44, 0.04);
+  --dash-shadow: 0 8px 28px rgba(44, 40, 37, 0.07);
 
-  /* Map shared tokens to dashboard accent */
-  --accent: var(--dash-accent);
-  --accent-soft: var(--dash-accent-soft);
+  /* Map shared layout tokens */
   --paper: var(--dash-bg);
   --surface: var(--dash-surface);
   --ink: var(--dash-text);
   --stone: var(--dash-muted);
   --mist: var(--dash-border);
-  --border-subtle: var(--dash-border);
+  --accent: var(--dash-accent);
+  --accent-btn: var(--dash-accent);
+  --accent-btn-hover: var(--dash-accent-hover);
+  --accent-soft: var(--dash-accent-soft);
   --shadow: var(--dash-shadow);
 
   font-family: 'DM Sans', system-ui, sans-serif;
@@ -33,15 +34,15 @@
 }
 
 [data-theme="dark"] .app {
-  --dash-accent: #7b78ff;
-  --dash-accent-hover: #9491ff;
-  --dash-accent-soft: #2a2850;
-  --dash-bg: #111218;
-  --dash-surface: #1a1b24;
-  --dash-text: #f0f1f5;
-  --dash-muted: #9ca3af;
-  --dash-border: #2a2d38;
-  --dash-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --dash-accent: #e8886a;
+  --dash-accent-hover: #d47558;
+  --dash-accent-soft: #3d2c26;
+  --dash-bg: #141210;
+  --dash-surface: #262219;
+  --dash-text: #faf6f0;
+  --dash-muted: #b8afa6;
+  --dash-border: #4a443c;
+  --dash-shadow: 0 20px 64px rgba(0, 0, 0, 0.35);
 }
 
 .app-layout {
@@ -84,7 +85,7 @@
 }
 
 .app-brand span {
-  color: var(--dash-accent);
+  color: var(--accent);
   font-family: 'Noto Serif SC', serif;
 }
 
@@ -132,13 +133,13 @@
 
 .app-nav-link.is-active {
   background: var(--dash-accent-soft);
-  color: var(--dash-accent);
+  color: var(--accent);
   font-weight: 600;
 }
 
 .app-nav-link.is-active svg {
   opacity: 1;
-  color: var(--dash-accent);
+  color: var(--accent);
 }
 
 .app-sidebar-foot {
@@ -167,14 +168,14 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(249, 244, 236, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--dash-border);
 }
 
 [data-theme="dark"] .app-topbar {
-  background: color-mix(in srgb, var(--dash-surface) 90%, transparent);
+  background: color-mix(in srgb, var(--dash-bg) 88%, transparent);
 }
 
 .app-menu-btn {
@@ -265,7 +266,8 @@
   border: 1px solid var(--dash-border);
   border-radius: 12px;
   background: var(--dash-surface);
-  cursor: default;
+  cursor: pointer;
+  position: relative;
 }
 
 .app-profile-info {
@@ -290,7 +292,7 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--dash-accent), #8b87ff);
+  background: linear-gradient(135deg, var(--dash-accent), #2f6349);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -298,6 +300,42 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.app-topbar-actions {
+  position: relative;
+}
+
+.app-profile-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  padding: 6px;
+  background: var(--dash-surface);
+  border: 1px solid var(--dash-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  z-index: 50;
+}
+
+.app-profile-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dash-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-profile-menu-item:hover {
+  background: var(--dash-surface-soft, rgba(0, 0, 0, 0.04));
 }
 
 /* === CONTENT === */
@@ -322,7 +360,7 @@
 }
 
 .app .breadcrumb a {
-  color: var(--dash-accent);
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -364,6 +402,7 @@
   font-weight: 700;
   margin: 0 0 6px;
   letter-spacing: -0.02em;
+  color: var(--dash-text);
 }
 
 .dash-head p {
@@ -396,6 +435,7 @@
   font-weight: 700;
   line-height: 1;
   margin-bottom: 4px;
+  color: var(--dash-text);
 }
 
 .dash-stat-label {
@@ -436,10 +476,17 @@
 
 .app .btn-primary {
   background: var(--dash-accent);
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(196, 92, 58, 0.22);
 }
 
 .app .btn-primary:hover {
   background: var(--dash-accent-hover);
+}
+
+[data-theme="dark"] .app .btn-primary {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .app .quiz-header {
@@ -474,7 +521,7 @@
   position: fixed;
   inset: 0;
   z-index: 150;
-  background: rgba(26, 32, 44, 0.4);
+  background: rgba(44, 40, 37, 0.4);
 }
 
 /* === MOBILE === */

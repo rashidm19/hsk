@@ -30,9 +30,7 @@
       <a href="#faq">FAQ</a>
     </nav>
     <div class="lp-header-actions">
-      <a href="/vocabulary/" class="lp-btn-ghost">Vocabulary</a>
-      <a href="/guide/" class="lp-btn-ghost">Study guide</a>
-      <a href="/exams/" class="lp-btn-primary">Mock exams</a>
+      <a href="/exams/" class="lp-btn-primary" id="lp-header-cta" data-open-auth="signin">Sign in</a>
     </div>
   </div>
 </header>
@@ -47,8 +45,7 @@
     <h1>Get the HSK score you want — on your first try</h1>
     <p class="lp-hero-sub">Mock exams, vocabulary, grammar, and drills in one app!.</p>
     <div class="lp-hero-cta">
-      <a href="/exams/" class="lp-btn-primary lp-btn-primary--lg">Mock exams</a>
-      <a href="/vocabulary/" class="lp-btn-primary lp-btn-primary--lg">Vocabulary</a>
+      <a href="/exams/" class="lp-btn-primary lp-btn-primary--lg" data-open-auth="signin">Get started</a>
       <a href="#platform" class="lp-btn-outline">See the platform</a>
     </div>
     <div class="lp-trust">
@@ -75,7 +72,7 @@
   <section class="lp-section lp-section--alt" id="platform">
     <div class="lp-section-inner">
       <h2>Take a look inside the platform</h2>
-      <p class="lp-section-lead">Everything you need for listening, reading, and writing — no sign-up, no paywall.</p>
+      <p class="lp-section-lead">Everything you need for listening, reading, and writing — free account, full access.</p>
 
       <div class="lp-tabs" role="tablist" aria-label="Platform features">
         <button class="lp-tab is-active" role="tab" aria-selected="true" data-tab="mocks">Mock exams</button>
@@ -139,8 +136,7 @@
       </div>
 
       <div class="lp-cta-row">
-        <a href="/exams/" class="lp-btn-primary lp-btn-primary--lg">Mock exams</a>
-        <a href="/vocabulary/" class="lp-btn-primary lp-btn-primary--lg">Vocabulary</a>
+        <a href="/exams/" class="lp-btn-primary lp-btn-primary--lg" data-open-auth="signin">Get started</a>
       </div>
     </div>
   </section>
@@ -255,8 +251,7 @@
     <h2>Ready to start your HSK preparation?</h2>
     <p>Start with Test 01 or drill the 1,000-word vocabulary list — both free, no sign-up.</p>
     <div class="lp-cta-row">
-      <a href="/exams/" class="lp-btn-primary lp-btn-primary--lg">Mock exams</a>
-      <a href="/vocabulary/" class="lp-btn-primary lp-btn-primary--lg">Vocabulary</a>
+      <a href="/exams/" class="lp-btn-primary lp-btn-primary--lg" data-open-auth="signin">Get started</a>
     </div>
   </section>
 </main>
@@ -277,6 +272,42 @@
   </div>
 </footer>
 
+<div class="lp-auth-modal" id="lp-auth-modal" hidden role="dialog" aria-modal="true" aria-labelledby="lp-auth-title">
+  <div class="lp-auth-card">
+    <button type="button" class="lp-auth-close" data-close-auth aria-label="Close">×</button>
+    <h2 id="lp-auth-title">Welcome to HSK Prep</h2>
+    <p class="lp-auth-lead">Create a free account to access mock exams, vocabulary, and study tools.</p>
+    <div class="lp-auth-tabs" role="tablist">
+      <button type="button" class="lp-auth-tab is-active" role="tab" data-mode="signin" aria-selected="true">Sign in</button>
+      <button type="button" class="lp-auth-tab" role="tab" data-mode="signup" aria-selected="false">Create account</button>
+    </div>
+    <form id="lp-auth-form" class="lp-auth-form" novalidate>
+      <label class="lp-auth-field" id="lp-auth-name-wrap" hidden>
+        <span>Name</span>
+        <input type="text" name="name" autocomplete="name" placeholder="Your name">
+      </label>
+      <label class="lp-auth-field">
+        <span>Email</span>
+        <input type="email" name="email" required autocomplete="email" placeholder="you@example.com">
+      </label>
+      <label class="lp-auth-field">
+        <span>Password</span>
+        <input type="password" name="password" required minlength="8" autocomplete="current-password" placeholder="At least 8 characters">
+      </label>
+      <label class="lp-auth-field" id="lp-auth-country-wrap" hidden>
+        <span>Country</span>
+        <input type="text" name="country" autocomplete="country-name" placeholder="Your country">
+      </label>
+      <p class="lp-auth-msg" id="lp-auth-msg" hidden role="status"></p>
+      <button type="submit" class="lp-btn-primary lp-btn-primary--lg lp-auth-submit" id="lp-auth-submit">Sign in</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/config/auth.js"></script>
+<script src="/auth.js"></script>
+<script src="/landing-auth.js"></script>
 <script>
 (function () {
   // Feature tabs
