@@ -122,11 +122,11 @@
   font-weight: 600;
   text-decoration: none;
   color: var(--lp-muted);
-  border: 1px solid var(--lp-border);
-  transition: border-color 0.15s, color 0.15s;
+  border: none;
+  transition: color 0.15s;
 }
 
-.lp-btn-ghost:hover { color: var(--lp-text); border-color: var(--lp-muted); }
+.lp-btn-ghost:hover { color: var(--lp-text); }
 
 @media (min-width: 640px) { .lp-btn-ghost { display: inline-flex; } }
 
@@ -139,16 +139,17 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  background: var(--lp-accent);
+  background: rgba(255, 162, 148, 1);
   color: #fff;
   border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s, transform 0.15s;
 }
 
 .lp-btn-primary:hover {
-  background: var(--lp-accent-hover);
+  background: #e07a6a;
   transform: translateY(-1px);
 }
 
@@ -247,6 +248,19 @@
   margin-bottom: 48px;
 }
 
+.lp-cta-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+.lp-panel-cta {
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+
 .lp-btn-outline {
   display: inline-flex;
   align-items: center;
@@ -255,13 +269,14 @@
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  border: 1px solid var(--lp-border);
+  border-style: solid;
+  border-width: 1px;
+  border-color: rgba(0, 0, 0, 1);
   color: var(--lp-text);
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.15s;
 }
 
 .lp-btn-outline:hover {
-  border-color: var(--lp-muted);
   background: var(--lp-surface);
 }
 
