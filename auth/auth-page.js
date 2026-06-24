@@ -34,10 +34,6 @@
     window.location.href = nextPath();
   }
 
-  function callbackUrl() {
-    return HSKAuth.oauthCallbackUrl(nextPath());
-  }
-
   function setMode(next) {
     mode = next;
     if (countryField) countryField.hidden = mode !== 'signup';
@@ -86,7 +82,7 @@
       googleBtn.disabled = true;
       if (msg) msg.hidden = true;
       try {
-        await HSKAuth.signInWithGoogle({ redirectTo: callbackUrl() });
+        await HSKAuth.signInWithGoogle({ next: nextPath() });
       } catch (err) {
         showMsg(err.message || 'Google sign-in failed. Try again.', 'error');
         googleBtn.disabled = false;

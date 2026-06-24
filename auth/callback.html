@@ -53,14 +53,10 @@
 
       var next = HSKAuth.safeNextPath(params.get('next'));
       var client = HSKAuth.getClient();
-      var code = params.get('code');
+      if (!params.get('code')) throw new Error('No sign-in code found. Try again.');
 
-      if (code) {
-        await client.auth.exchangeCodeForSession(code);
-      } else {
-        var session = await HSKAuth.getSession();
-        if (!session) throw new Error('No sign-in session found. Try again.');
-      }
+      var result = await client.auth.exchangeCodeForSession(window.location.href);
+      if (result.error) throw result.error;
 
       var user = await HSKAuth.getUser();
       if (user) await HSKAuth.upsertProfile(user, {});

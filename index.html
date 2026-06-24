@@ -15,6 +15,12 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/landing.css">
+<script>
+(function () {
+  if (location.search.indexOf('code=') === -1) return;
+  document.documentElement.classList.add('hsk-oauth-pending');
+})();
+</script>
 </head>
 <body class="lp">
 

@@ -5,6 +5,8 @@
 (function (global) {
   'use strict';
 
+  var AUTH_NEXT_KEY = 'hsk_auth_next';
+
   function cfg() {
     return global.HSK_AUTH_CONFIG || {};
   }
@@ -33,7 +35,7 @@
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true,
+          detectSessionInUrl: false,
           flowType: 'pkce',
         },
       });
@@ -65,8 +67,24 @@
     return next;
   }
 
+  function storeAuthNext(next) {
+    try {
+      global.sessionStorage.setItem(AUTH_NEXT_KEY, safeNextPath(next));
+    } catch (e) {}
+  }
+
+  function readAuthNext(fallback) {
+    var next = fallback || '/exams/';
+    try {
+      var stored = global.sessionStorage.getItem(AUTH_NEXT_KEY);
+      if (stored) next = stored;
+      global.sessionStorage.removeItem(AUTH_NEXT_KEY);
+    } catch (e) {}
+    return safeNextPath(next);
+  }
+
   function oauthCallbackUrl(next) {
-    return global.location.origin + '/auth/callback.html?next=' + encodeURIComponent(safeNextPath(next));
+    return global.location.origin + '/?next=' + encodeURIComponent(safeNextPath(next));
   }
 
   function profileName(user, fields) {
@@ -105,7 +123,7 @@
       password,
       options: {
         data: { name, country },
-        emailRedirectTo: oauthCallbackUrl('/exams/'),
+        emailRedirectTo: global.location.origin + '/auth/callback.html?next=' + encodeURIComponent('/exams/'),
       },
     });
     if (error) throw error;
@@ -122,13 +140,15 @@
     return data;
   }
 
-  async function signInWithGoogle({ redirectTo } = {}) {
+  async function signInWithGoogle({ redirectTo, next } = {}) {
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    const nextPath = safeNextPath(next || '/exams/');
+    storeAuthNext(nextPath);
     const { data, error } = await c.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectTo || oauthCallbackUrl('/exams/'),
+        redirectTo: redirectTo || oauthCallbackUrl(nextPath),
         queryParams: {
           prompt: 'select_account',
         },
@@ -162,6 +182,35 @@
     return (profile && profile.name) || profileName(user, {}) || user?.email?.split('@')[0] || 'Student';
   }
 
+  async function finishOAuthFromUrl() {
+    if (!global.location || !isConfigured()) return false;
+    var params = new URLSearchParams(global.location.search);
+    var code = params.get('code');
+    if (!code) return false;
+
+    var next = readAuthNext(params.get('next'));
+    var c = getClient();
+    if (!c) return false;
+
+    try {
+      var result = await c.auth.exchangeCodeForSession(code);
+      if (result.error) throw result.error;
+      if (result.data.session?.user) {
+        await upsertProfile(result.data.session.user, {});
+      }
+      global.location.replace(next);
+      return true;
+    } catch (e) {
+      console.error('[HSKAuth] OAuth finish failed:', e);
+      try {
+        global.history.replaceState({}, '', global.location.pathname);
+      } catch (ignore) {}
+      if (global.location.pathname.indexOf('/auth') === 0) return false;
+      global.location.replace('/auth/?oauth_error=1');
+      return false;
+    }
+  }
+
   global.HSKAuth = {
     isConfigured,
     configError,
@@ -172,6 +221,7 @@
     upsertProfile,
     safeNextPath,
     oauthCallbackUrl,
+    finishOAuthFromUrl,
     signUp,
     signIn,
     signInWithGoogle,
@@ -180,4 +230,6 @@
     initials,
     displayName,
   };
+
+  finishOAuthFromUrl();
 })(window);
