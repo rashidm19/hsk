@@ -34,20 +34,39 @@
   </div>
   <script>
   (async function () {
+    var card = document.querySelector('.auth-callback-card');
+
+    function fail(message) {
+      card.innerHTML =
+        '<h1 style="font-size:1.25rem;margin-bottom:8px;">Sign-in failed</h1>' +
+        '<p style="color:var(--stone);margin-bottom:16px;">' + message + '</p>' +
+        '<a href="/auth/" class="btn btn-primary">Back to sign in</a>';
+    }
+
     try {
-      if (!HSKAuth.isConfigured()) throw new Error('Auth not configured');
-      var client = HSKAuth.getClient();
+      if (!HSKAuth.isConfigured()) throw new Error('Auth is not configured.');
+
       var params = new URLSearchParams(window.location.search);
-      var next = params.get('next') || '/exams/';
-      await client.auth.exchangeCodeForSession(window.location.href);
+      var hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      var oauthError = params.get('error_description') || params.get('error') || hash.get('error_description') || hash.get('error');
+      if (oauthError) throw new Error(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
+
+      var next = HSKAuth.safeNextPath(params.get('next'));
+      var client = HSKAuth.getClient();
+      var code = params.get('code');
+
+      if (code) {
+        await client.auth.exchangeCodeForSession(code);
+      } else {
+        var session = await HSKAuth.getSession();
+        if (!session) throw new Error('No sign-in session found. Try again.');
+      }
+
       var user = await HSKAuth.getUser();
       if (user) await HSKAuth.upsertProfile(user, {});
       window.location.replace(next);
     } catch (e) {
-      document.querySelector('.auth-callback-card').innerHTML =
-        '<h1 style="font-size:1.25rem;margin-bottom:8px;">Sign-in failed</h1>' +
-        '<p style="color:var(--stone);margin-bottom:16px;">' + (e.message || 'Try again from the home page.') + '</p>' +
-        '<a href="/" class="btn btn-primary">Back to home</a>';
+      fail(e.message || 'Try again from the sign-in page.');
     }
   })();
   </script>

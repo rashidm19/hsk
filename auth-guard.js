@@ -21,7 +21,7 @@
         return;
       }
       var next = encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
-      window.location.replace('/?signin=1&next=' + next);
+      window.location.replace('/auth/?next=' + next);
     })
     .catch(function () {
       document.documentElement.classList.remove('hsk-auth-pending');

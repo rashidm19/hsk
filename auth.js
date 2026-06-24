@@ -44,14 +44,35 @@
     return session ? session.user : null;
   }
 
+  function safeNextPath(raw) {
+    let next = raw || '/exams/';
+    try {
+      next = decodeURIComponent(next);
+    } catch {
+      next = '/exams/';
+    }
+    if (!next.startsWith('/') || next.startsWith('//')) next = '/exams/';
+    return next;
+  }
+
+  function oauthCallbackUrl(next) {
+    return global.location.origin + '/auth/callback.html?next=' + encodeURIComponent(safeNextPath(next));
+  }
+
+  function profileName(user, fields) {
+    if (fields && fields.name) return fields.name;
+    const meta = user?.user_metadata || {};
+    return meta.name || meta.full_name || null;
+  }
+
   async function upsertProfile(user, fields) {
     const c = getClient();
     if (!c || !user) return;
     const row = {
       id: user.id,
-      email: user.email || fields.email || null,
-      name: (fields && fields.name) || user.user_metadata?.name || null,
-      country: (fields && fields.country) || user.user_metadata?.country || null,
+      email: user.email || fields?.email || null,
+      name: profileName(user, fields),
+      country: fields?.country || user.user_metadata?.country || null,
       updated_at: new Date().toISOString(),
     };
     const { error } = await c.from('profiles').upsert(row, { onConflict: 'id' });
@@ -74,7 +95,7 @@
       password,
       options: {
         data: { name, country },
-        emailRedirectTo: global.location.origin + '/auth/callback.html',
+        emailRedirectTo: oauthCallbackUrl('/exams/'),
       },
     });
     if (error) throw error;
@@ -88,6 +109,24 @@
     const { data, error } = await c.auth.signInWithPassword({ email, password });
     if (error) throw error;
     if (data.user) await upsertProfile(data.user, {});
+    return data;
+  }
+
+  async function signInWithGoogle({ redirectTo } = {}) {
+    const c = getClient();
+    if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    const { data, error } = await c.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectTo || oauthCallbackUrl('/exams/'),
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    });
+    if (error) throw error;
+    if (!data?.url) throw new Error('Could not start Google sign-in. Check Google provider settings in Supabase.');
+    global.location.assign(data.url);
     return data;
   }
 
@@ -110,7 +149,7 @@
   }
 
   function displayName(user, profile) {
-    return (profile && profile.name) || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
+    return (profile && profile.name) || profileName(user, {}) || user?.email?.split('@')[0] || 'Student';
   }
 
   global.HSKAuth = {
@@ -120,8 +159,11 @@
     getUser,
     getProfile,
     upsertProfile,
+    safeNextPath,
+    oauthCallbackUrl,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     onAuthStateChange,
     initials,

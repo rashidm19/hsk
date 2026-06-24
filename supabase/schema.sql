@@ -35,7 +35,7 @@ begin
   values (
     new.id,
     new.email,
-    coalesce(new.raw_user_meta_data->>'name', ''),
+    coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', ''),
     coalesce(new.raw_user_meta_data->>'country', '')
   )
   on conflict (id) do update set
@@ -49,3 +49,5 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
