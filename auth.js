@@ -11,7 +11,17 @@
 
   function isConfigured() {
     const c = cfg();
-    return Boolean(c.url && c.anonKey && !c.url.includes('YOUR_PROJECT'));
+    if (!c.url || !c.anonKey || c.url.includes('YOUR_PROJECT')) {
+      return false;
+    }
+    return true;
+  }
+
+  function configError() {
+    if (global.HSK_AUTH_CONFIG) {
+      return 'Supabase auth is not configured. Check config/auth.js.';
+    }
+    return 'Could not load /config/auth.js — make sure it is deployed with your site.';
   }
 
   let client = null;
@@ -154,6 +164,7 @@
 
   global.HSKAuth = {
     isConfigured,
+    configError,
     getClient,
     getSession,
     getUser,

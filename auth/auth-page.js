@@ -80,7 +80,7 @@
   if (googleBtn) {
     googleBtn.addEventListener('click', async function () {
       if (!window.HSKAuth || !HSKAuth.isConfigured()) {
-        showMsg('Add your Supabase URL and anon key in config/auth.js first.', 'error');
+        showMsg(HSKAuth && HSKAuth.configError ? HSKAuth.configError() : 'Auth is not configured.', 'error');
         return;
       }
       googleBtn.disabled = true;
@@ -99,7 +99,7 @@
       e.preventDefault();
       if (!form.reportValidity()) return;
       if (!window.HSKAuth || !HSKAuth.isConfigured()) {
-        showMsg('Add your Supabase URL and anon key in config/auth.js first.', 'error');
+        showMsg(HSKAuth && HSKAuth.configError ? HSKAuth.configError() : 'Auth is not configured.', 'error');
         return;
       }
 
