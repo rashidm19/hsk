@@ -51,6 +51,42 @@
     return data.session;
   }
 
+  function waitForSession(timeoutMs) {
+    timeoutMs = timeoutMs || 4000;
+    return new Promise(function (resolve) {
+      var c = getClient();
+      if (!c) {
+        resolve(null);
+        return;
+      }
+      var settled = false;
+      function finish(session) {
+        if (settled) return;
+        settled = true;
+        resolve(session || null);
+      }
+      c.auth.getSession().then(function (result) {
+        if (result.data.session) finish(result.data.session);
+      }).catch(function () {
+        finish(null);
+      });
+      var sub = c.auth.onAuthStateChange(function (event, session) {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          finish(session);
+          sub.data.subscription.unsubscribe();
+        }
+      });
+      global.setTimeout(function () {
+        if (settled) return;
+        c.auth.getSession().then(function (result) {
+          finish(result.data.session);
+        }).catch(function () {
+          finish(null);
+        });
+      }, timeoutMs);
+    });
+  }
+
   async function getUser() {
     const session = await getSession();
     return session ? session.user : null;
@@ -216,6 +252,7 @@
     configError,
     getClient,
     getSession,
+    waitForSession,
     getUser,
     getProfile,
     upsertProfile,

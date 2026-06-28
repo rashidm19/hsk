@@ -1,10 +1,25 @@
 /**
- * Platform shell — live profile + sign out.
+ * Platform shell — profile, sign out, and in-app home links.
  */
 (function () {
   'use strict';
 
   if (!document.body.classList.contains('app')) return;
+
+  var APP_HOME = '/exams/';
+
+  function fixAppHomeLinks() {
+    document.querySelectorAll('.app-sidebar-foot a[href="/"]').forEach(function (a) {
+      a.setAttribute('href', APP_HOME);
+    });
+    document.querySelectorAll(
+      '.breadcrumb a[href="/"], nav[aria-label="Breadcrumb"] a[href="/"]'
+    ).forEach(function (a) {
+      a.setAttribute('href', APP_HOME);
+    });
+  }
+
+  fixAppHomeLinks();
 
   var profileEl = document.querySelector('.app-profile');
   var nameEl = document.querySelector('.app-profile-name');
@@ -49,14 +64,14 @@
   document.getElementById('app-sign-out').addEventListener('click', function () {
     if (!window.HSKAuth) return;
     HSKAuth.signOut().then(function () {
-      window.location.href = '/';
+      window.location.href = '/auth/';
     });
   });
 
   async function refresh() {
     if (!window.HSKAuth || !HSKAuth.isConfigured()) {
       nameEl.textContent = 'Guest';
-      emailEl.textContent = 'Sign in on home page';
+      emailEl.textContent = 'Sign in to save progress';
       avatarEl.textContent = '?';
       return;
     }
