@@ -567,12 +567,12 @@ function buildTestPages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(pageTitle)}</title>
 <meta name="description" content="${escHtml(pageDesc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/test/${num}/">
+<link rel="canonical" href="https://hskprep.cc/test/${num}/">
 
 <meta property="og:title" content="${escHtml(meta.title)} \u2014 Free HSK 4 Practice Test">
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/test/${num}/">
+<meta property="og:url" content="https://hskprep.cc/test/${num}/">
 <meta property="og:site_name" content="HSK Prep">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="zh_CN">
@@ -587,14 +587,14 @@ function buildTestPages() {
   "@type": "Quiz",
   "name": "${escHtml(meta.title)}",
   "description": "${escHtml(pageDesc)}",
-  "url": "https://hsk4.mandarinzone.com/test/${num}/",
+  "url": "https://hskprep.cc/test/${num}/",
   "educationalLevel": "Intermediate",
   "inLanguage": ["en", "zh-CN"],
   "isAccessibleForFree": true,
   "author": {
     "@type": "Organization",
     "name": "HSK Prep",
-    "url": "https://hsk4.mandarinzone.com"
+    "url": "https://hskprep.cc"
   },
   "about": {
     "@type": "Thing",
@@ -769,7 +769,7 @@ ${renderAppShellOpen('exams')}
 <footer>
   <div class="footer-brand">
     <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy">
       <div>
         <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
@@ -1174,7 +1174,7 @@ function buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, character
   const allPages = [...existingPages, ...testPages, ...taskPages, ...confusablePages, ...grammarPatternPages, ...characterPages, ...recognitionPages, ...(extraPages || [])];
 
   const urls = allPages.map(p => `  <url>
-    <loc>https://hsk4.mandarinzone.com${p.loc}</loc>
+    <loc>https://hskprep.cc${p.loc}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>${p.priority}</priority>
@@ -2116,12 +2116,12 @@ function buildTaskTopicPages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(pageTitle)}</title>
 <meta name="description" content="${escHtml(pageDesc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/topics/${task.slug}/">
+<link rel="canonical" href="https://hskprep.cc/topics/${task.slug}/">
 
 <meta property="og:title" content="HSK 4 ${escHtml(task.task_en)} Vocabulary \u2014 ${escHtml(task.task_cn)}">
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/topics/${task.slug}/">
+<meta property="og:url" content="https://hskprep.cc/topics/${task.slug}/">
 <meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
@@ -2130,8 +2130,8 @@ function buildTaskTopicPages() {
   "@type": "Article",
   "headline": "HSK 4 ${escHtml(task.task_en)} Vocabulary (${escHtml(task.task_cn)})",
   "description": "${escHtml(pageDesc)}",
-  "url": "https://hsk4.mandarinzone.com/topics/${task.slug}/",
-  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
+  "url": "https://hskprep.cc/topics/${task.slug}/",
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hskprep.cc" },
   "inLanguage": ["en", "zh-CN"],
   "educationalLevel": "Intermediate"
 }
@@ -2286,7 +2286,7 @@ ${faqJsonLd}
 <footer>
   <div class="footer-brand">
     <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy">
       <div>
         <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
@@ -2511,12 +2511,12 @@ function buildConfusablePages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(pageTitle)}</title>
 <meta name="description" content="${escHtml(pageDesc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/words/${pair.slug}/">
+<link rel="canonical" href="https://hskprep.cc/words/${pair.slug}/">
 
 <meta property="og:title" content="${escHtml(pair.wordA)} vs ${escHtml(pair.wordB)} \u2014 HSK 4 Confusable Words">
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/words/${pair.slug}/">
+<meta property="og:url" content="https://hskprep.cc/words/${pair.slug}/">
 <meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
@@ -2525,8 +2525,8 @@ function buildConfusablePages() {
   "@type": "Article",
   "headline": "${escHtml(pair.wordA)} vs ${escHtml(pair.wordB)} \u2014 HSK 4 Confusable Words",
   "description": "${escHtml(pageDesc)}",
-  "url": "https://hsk4.mandarinzone.com/words/${pair.slug}/",
-  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
+  "url": "https://hskprep.cc/words/${pair.slug}/",
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hskprep.cc" },
   "inLanguage": ["en", "zh-CN"],
   "educationalLevel": "Intermediate"
 }
@@ -2683,7 +2683,7 @@ ${pairFaqHtml}
 <footer>
   <div class="footer-brand">
     <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy">
       <div>
         <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
@@ -2914,12 +2914,12 @@ function buildGrammarPatternPages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(pageTitle)}</title>
 <meta name="description" content="${escHtml(pageDesc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/grammar/patterns/${pat.slug}/">
+<link rel="canonical" href="https://hskprep.cc/grammar/patterns/${pat.slug}/">
 
 <meta property="og:title" content="${escHtml(pat.pattern_cn)} \u2014 HSK 4 Grammar">
 <meta property="og:description" content="${escHtml(pageDesc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/grammar/patterns/${pat.slug}/">
+<meta property="og:url" content="https://hskprep.cc/grammar/patterns/${pat.slug}/">
 <meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
@@ -2928,8 +2928,8 @@ function buildGrammarPatternPages() {
   "@type": "Article",
   "headline": "${escHtml(pat.pattern_cn)} \u2014 HSK 4 Grammar Pattern",
   "description": "${escHtml(pageDesc)}",
-  "url": "https://hsk4.mandarinzone.com/grammar/patterns/${pat.slug}/",
-  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
+  "url": "https://hskprep.cc/grammar/patterns/${pat.slug}/",
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hskprep.cc" },
   "inLanguage": ["en", "zh-CN"],
   "educationalLevel": "Intermediate"
 }
@@ -3062,7 +3062,7 @@ ${patFaqHtml}
 <footer>
   <div class="footer-brand">
     <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy">
       <div>
         <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Learn Chinese in Beijing &amp; Online \u00b7 Since 2008</div>
@@ -3154,13 +3154,13 @@ function buildGrammarPatternsHub() {
     '@type': 'CollectionPage',
     'name': 'HSK 4 Sentence Patterns — 复句与固定格式',
     'description': 'All HSK 4 complex-sentence patterns from the official grammar syllabus, each with examples, common errors, and a quiz.',
-    'url': 'https://hsk4.mandarinzone.com/grammar/patterns/',
+    'url': 'https://hskprep.cc/grammar/patterns/',
     'inLanguage': ['en', 'zh-CN'],
     'isAccessibleForFree': true,
     'hasPart': patterns.map(pat => ({
       '@type': 'Article',
       'name': `${pat.pattern_cn} (${pat.pattern_en || ''})`,
-      'url': `https://hsk4.mandarinzone.com/grammar/patterns/${pat.slug}/`,
+      'url': `https://hskprep.cc/grammar/patterns/${pat.slug}/`,
     })),
   }, null, 2);
 
@@ -3171,12 +3171,12 @@ function buildGrammarPatternsHub() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HSK 4 Sentence Patterns — ${patterns.length} 复句句型 Explained | HSK Prep</title>
 <meta name="description" content="All ${patterns.length} HSK 4 complex-sentence patterns (尽管…但是, 不管…都, 即使…也, 连…都/也 and more) with examples, common errors, and quizzes. From the official syllabus.">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/grammar/patterns/">
+<link rel="canonical" href="https://hskprep.cc/grammar/patterns/">
 
 <meta property="og:title" content="HSK 4 Sentence Patterns — Complex Patterns with Exercises">
 <meta property="og:description" content="All ${patterns.length} HSK 4 complex-sentence patterns with examples, common errors, and quizzes.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/grammar/patterns/">
+<meta property="og:url" content="https://hskprep.cc/grammar/patterns/">
 <meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
@@ -3246,7 +3246,7 @@ ${cards}
 <footer>
   <div class="footer-brand">
     <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy">
       <div>
         <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Free HSK 4 practice tests & study tools</div>
@@ -3373,7 +3373,7 @@ function buildCharacterPages() {
 <footer>
   <div class="footer-brand">
     <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy">
       <div>
         <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Free HSK 4 practice tests & study tools</div>
@@ -3404,13 +3404,13 @@ function buildCharacterPages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(hubTitle)}</title>
 <meta name="description" content="${escHtml(hubDesc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/characters/">
+<link rel="canonical" href="https://hskprep.cc/characters/">
 <meta property="og:title" content="${escHtml(hubTitle)}">
 <meta property="og:description" content="${escHtml(hubDesc)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/characters/">
+<meta property="og:url" content="https://hskprep.cc/characters/">
 <meta property="og:site_name" content="HSK Prep">
-<meta property="og:image" content="https://hsk4.mandarinzone.com/logo.svg">
+<meta property="og:image" content="https://hskprep.cc/logo.svg">
 <meta property="og:image:alt" content="HSK Prep — HSK 4 character writing practice">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="/logo-light.svg">
@@ -3420,7 +3420,7 @@ function buildCharacterPages() {
   "@type": "CollectionPage",
   "name": "HSK 4 Required Characters",
   "description": "${escHtml(hubDesc)}",
-  "url": "https://hsk4.mandarinzone.com/characters/",
+  "url": "https://hskprep.cc/characters/",
   "inLanguage": ["en", "zh-CN"],
   "isAccessibleForFree": true,
   "about": { "@type": "Thing", "name": "HSK 4 Chinese characters writing" },
@@ -3767,13 +3767,13 @@ ${renderShellEnd()}
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(detailTitle)}</title>
 <meta name="description" content="${escHtml(detailDesc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/">
+<link rel="canonical" href="https://hskprep.cc/characters/${encodeURIComponent(c.char)}/">
 <meta property="og:title" content="${escHtml(detailTitle)}">
 <meta property="og:description" content="${escHtml(detailDesc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/">
+<meta property="og:url" content="https://hskprep.cc/characters/${encodeURIComponent(c.char)}/">
 <meta property="og:site_name" content="HSK Prep">
-<meta property="og:image" content="https://hsk4.mandarinzone.com/logo.svg">
+<meta property="og:image" content="https://hskprep.cc/logo.svg">
 <meta property="og:image:alt" content="HSK Prep — HSK 4 character writing practice">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="/logo-light.svg">
@@ -3783,7 +3783,7 @@ ${renderShellEnd()}
   "@type": "LearningResource",
   "name": "How to write ${escHtml(c.char)}",
   "description": "${escHtml(detailDesc)}",
-  "url": "https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/",
+  "url": "https://hskprep.cc/characters/${encodeURIComponent(c.char)}/",
   "inLanguage": ["en", "zh-CN"],
   "isAccessibleForFree": true,
   "learningResourceType": "Interactive practice",
@@ -3972,13 +3972,13 @@ window.addEventListener('load', function(){
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(detailTitle)}</title>
 <meta name="description" content="${escHtml(detailDesc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/">
+<link rel="canonical" href="https://hskprep.cc/characters/${encodeURIComponent(c.char)}/">
 <meta property="og:title" content="${escHtml(detailTitle)}">
 <meta property="og:description" content="${escHtml(detailDesc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/">
+<meta property="og:url" content="https://hskprep.cc/characters/${encodeURIComponent(c.char)}/">
 <meta property="og:site_name" content="HSK Prep">
-<meta property="og:image" content="https://hsk4.mandarinzone.com/logo.svg">
+<meta property="og:image" content="https://hskprep.cc/logo.svg">
 <meta property="og:image:alt" content="HSK Prep — HSK 4 character writing practice">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="/logo-light.svg">
@@ -3988,7 +3988,7 @@ window.addEventListener('load', function(){
   "@type": "LearningResource",
   "name": "How to write ${escHtml(c.char)}",
   "description": "${escHtml(detailDesc)}",
-  "url": "https://hsk4.mandarinzone.com/characters/${encodeURIComponent(c.char)}/",
+  "url": "https://hskprep.cc/characters/${encodeURIComponent(c.char)}/",
   "inLanguage": ["en", "zh-CN"],
   "isAccessibleForFree": true,
   "learningResourceType": "Interactive practice",
@@ -4169,7 +4169,7 @@ const DRILL_HEADER = (active) => `<header>
 const DRILL_FOOTER = `<footer>
   <div class="footer-brand">
     <a href="/" target="_blank" rel="noopener" class="footer-brand-link">
-      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy" src="/logo.svg">
+      <img src="/logo.svg" alt="HSK Prep" class="footer-logo" loading="lazy">
       <div>
         <div class="footer-brand-name">HSK Prep</div>
         <div class="footer-tagline">Free HSK 4 practice tests & study tools</div>
@@ -4299,18 +4299,18 @@ function buildSentenceCategoryPages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(title)} | HSK Prep</title>
 <meta name="description" content="${escHtml(desc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/sentences/${cat.slug}/">
+<link rel="canonical" href="https://hskprep.cc/sentences/${cat.slug}/">
 <meta property="og:title" content="${escHtml(title)}">
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/sentences/${cat.slug}/">
+<meta property="og:url" content="https://hskprep.cc/sentences/${cat.slug}/">
 <script type="application/ld+json">
 ${JSON.stringify({
   '@context': 'https://schema.org', '@type': 'Article',
   headline: title,
   description: desc,
   inLanguage: ['en', 'zh-CN'], isAccessibleForFree: true,
-  url: `https://hsk4.mandarinzone.com/sentences/${cat.slug}/`,
+  url: `https://hskprep.cc/sentences/${cat.slug}/`,
 }, null, 1)}
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -4498,11 +4498,11 @@ function buildTrapCategoryPages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(title)} | HSK Prep</title>
 <meta name="description" content="${escHtml(desc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/traps/${cat.slug}/">
+<link rel="canonical" href="https://hskprep.cc/traps/${cat.slug}/">
 <meta property="og:title" content="${escHtml(title)}">
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/traps/${cat.slug}/">
+<meta property="og:url" content="https://hskprep.cc/traps/${cat.slug}/">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
 <link rel="stylesheet" href="/dashboard.css">
@@ -4646,11 +4646,11 @@ function buildCompleteSentence() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(title)}</title>
 <meta name="description" content="${escHtml(desc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/writing/complete-sentence/">
+<link rel="canonical" href="https://hskprep.cc/writing/complete-sentence/">
 <meta property="og:title" content="HSK 4 完成句子 — Complete-the-Sentence Writing Drill">
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/writing/complete-sentence/">
+<meta property="og:url" content="https://hskprep.cc/writing/complete-sentence/">
 <meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
@@ -4798,11 +4798,11 @@ function buildPracticeHub() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(title)}</title>
 <meta name="description" content="${escHtml(desc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/train/">
+<link rel="canonical" href="https://hskprep.cc/train/">
 <meta property="og:title" content="HSK 4 Practice Center — All Drills in One Place">
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/train/">
+<meta property="og:url" content="https://hskprep.cc/train/">
 <meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
@@ -4947,11 +4947,11 @@ function buildMixedPractice() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${escHtml(title)}</title>
 <meta name="description" content="${escHtml(desc)}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/practice/">
+<link rel="canonical" href="https://hskprep.cc/practice/">
 <meta property="og:title" content="HSK 4 Mixed Practice — Grammar + Confusable Words Drill">
 <meta property="og:description" content="${escHtml(desc)}">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/practice/">
+<meta property="og:url" content="https://hskprep.cc/practice/">
 <meta property="og:site_name" content="HSK Prep">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
@@ -5197,11 +5197,11 @@ function buildTranscriptPages() {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${title} | HSK Prep</title>
 <meta name="description" content="${desc}">
-<link rel="canonical" href="https://hsk4.mandarinzone.com/test/${num}/transcript/">
+<link rel="canonical" href="https://hskprep.cc/test/${num}/transcript/">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${desc}">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://hsk4.mandarinzone.com/test/${num}/transcript/">
+<meta property="og:url" content="https://hskprep.cc/test/${num}/transcript/">
 <meta property="og:site_name" content="HSK Prep">
 <meta name="twitter:card" content="summary_large_image">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
