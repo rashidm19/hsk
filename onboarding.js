@@ -1,0 +1,904 @@
+/* ===================================================
+   HSK Prep — Onboarding funnel runtime (/quiz/)
+   Vanilla JS, no dependencies. Reads window.OB_CONFIG
+   (injected by buildQuizFunnel() in build.js).
+
+   Flow: welcome -> assessment -> diagnostic -> processing ->
+   mirror -> name -> email-gate -> growth -> timeline ->
+   value-stack -> wheel -> paywall -> checkout/exit-intent ->
+   success -> handoff to /exams/.
+
+   Payment is SIMULATED. The single seam to swap in a real
+   provider is startCheckout() (see below).
+   =================================================== */
+(function () {
+  'use strict';
+
+  var CFG = window.OB_CONFIG || {};
+  var S = CFG.screens || {};
+  var DIAG = CFG.diagnosticQuestions || [];      // resolved at build time
+  var PRICING = CFG.pricing || { tiers: [] };
+  var TIERS = PRICING.tiers || [];
+
+  var LS_STATE = 'hsk_onboarding_v1';
+  var LS_DONE = 'hsk_onboarding_complete';
+  var LS_SUB = 'hsk_subscription';
+
+  var HANDOFF = CFG.handoffUrl || '/exams/';
+
+  // ---------- utilities ----------
+  function $(sel, ctx) { return (ctx || document).querySelector(sel); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtPrice(n) { return '$' + Number(n).toFixed(2); }
+  function param(name) {
+    try { return new URLSearchParams(location.search).get(name); } catch (e) { return null; }
+  }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  // ---------- state ----------
+  function freshState() { return { idx: 0, answers: {} }; }
+  function load() {
+    try {
+      var raw = lsGet(LS_STATE);
+      if (raw) { var p = JSON.parse(raw); if (p && typeof p.idx === 'number') return p; }
+    } catch (e) {}
+    return freshState();
+  }
+  var state = load();
+  function save() { lsSet(LS_STATE, JSON.stringify(state)); }
+  var A = state.answers;
+
+  // ---------- derived / dynamic values ----------
+  function selectedTier() {
+    var id = A.plan || PRICING.defaultTier || (TIERS[0] && TIERS[0].id);
+    return TIERS.filter(function (t) { return t.id === id; })[0] || TIERS[0] || {};
+  }
+  function diagnosticCorrect() {
+    var d = A.diag || [];
+    var c = 0;
+    for (var i = 0; i < DIAG.length; i++) { if (d[i] === DIAG[i].correctIndex) c++; }
+    return c;
+  }
+  function diagnosticResult() {
+    var scale = CFG.levelScale || [];
+    var c = diagnosticCorrect();
+    return scale[c] || scale[scale.length - 1] || 'HSK 3';
+  }
+  function targetLevel() { return A.target || 'your goal level'; }
+  function weakSection() { return (A.section && A.section.short) || 'your weakest section'; }
+  function dailyTime() { return A.dailyShort || 'your study time'; }
+
+  var DYN = {
+    target_level: targetLevel,
+    diagnostic_result: diagnosticResult,
+    weak_section: weakSection,
+    daily_time: dailyTime,
+    name: function () { return A.name || 'there'; },
+    plan: function () { return selectedTier().planLabel || ''; },
+    price: function () { return fmtPrice(selectedTier().price || 0); },
+    interval: function () { return selectedTier().interval || ''; },
+    discount: function () { return '50%'; }
+  };
+  // Replace {known} dynamic tokens (HTML-escaped). Unknown {tokens} (placeholders
+  // like {learner_count}) are left verbatim — never invented.
+  function subst(str) {
+    return String(str == null ? '' : str).replace(/\{(\w+)\}/g, function (m, key) {
+      return Object.prototype.hasOwnProperty.call(DYN, key) ? esc(DYN[key]()) : m;
+    });
+  }
+
+  // ---------- flow ----------
+  // counts:true => this screen is a real assessment step shown in the progress
+  // counter (no inflation, per spec). back:false => no back button.
+  var FLOW = [
+    { id: 's0',  counts: false },
+    { id: 's1',  counts: false },
+    { id: 's2',  counts: true },
+    { id: 's3',  counts: true },
+    { id: 's4',  counts: false },
+    { id: 's5',  counts: true },
+    { id: 's6',  counts: false },
+    { id: 's7',  counts: true },
+    { id: 's8',  counts: true },
+    { id: 's9',  counts: true },
+    { id: 's10', counts: false },
+    { id: 's11', counts: true },
+    { id: 's12', counts: true },
+    { id: 's13', counts: true },
+    { id: 's14', counts: false, back: false },
+    { id: 's15', counts: false },
+    { id: 's16', counts: false },
+    { id: 's17', counts: false },
+    { id: 's18', counts: false },
+    { id: 's19', counts: false },
+    { id: 's20', counts: false },
+    { id: 's21', counts: false },
+    { id: 's22', counts: false },
+    { id: 's25', counts: false, back: false }
+  ];
+  var COUNT_TOTAL = FLOW.filter(function (f) { return f.counts; }).length;
+  function indexOfId(id) { for (var i = 0; i < FLOW.length; i++) if (FLOW[i].id === id) return i; return -1; }
+
+  var stage, backEl, progEl, barEl, countEl;
+  var timerInt = null;
+
+  function clearTimer() { if (timerInt) { clearInterval(timerInt); timerInt = null; } }
+
+  function next() {
+    if (state.idx < FLOW.length - 1) { state.idx++; save(); render(); }
+  }
+  function back() {
+    if (state.idx <= 0) return;
+    state.idx--;
+    // Processing (S14) is a transient auto-advancing screen — skip it on the way
+    // back so the Back button from the mirror doesn't bounce forward off the timer.
+    if (state.idx > 0 && FLOW[state.idx] && FLOW[state.idx].id === 's14') state.idx--;
+    save();
+    render();
+  }
+  function goById(id) { var i = indexOfId(id); if (i >= 0) { state.idx = i; save(); render(); } }
+
+  function render() {
+    clearTimer();
+    var f = FLOW[state.idx];
+    var node = build(f.id);
+    stage.innerHTML = '';
+    stage.appendChild(node);
+
+    // progress + back
+    var canBack = state.idx > 0 && f.back !== false;
+    backEl.hidden = !canBack;
+    if (f.counts) {
+      var num = 0;
+      for (var i = 0; i <= state.idx; i++) if (FLOW[i].counts) num++;
+      progEl.style.display = '';
+      barEl.style.width = (num / COUNT_TOTAL * 100) + '%';
+      countEl.textContent = num + ' of ' + COUNT_TOTAL;
+    } else {
+      progEl.style.display = 'none';
+      countEl.textContent = '';
+    }
+
+    // focus + scroll
+    try { window.scrollTo(0, 0); } catch (e) {}
+    var h = node.querySelector('.ob-h1, [data-focus]');
+    if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); } }
+  }
+
+  // ---------- small DOM helpers ----------
+  function mk(html) {
+    var d = document.createElement('div');
+    d.innerHTML = html;
+    return d.firstElementChild;
+  }
+  function screenEl(inner, opts) {
+    opts = opts || {};
+    var cls = 'ob-screen' + (opts.center ? ' ob-center' : '');
+    var wide = opts.wide ? ' data-wide' : '';
+    return mk('<div class="' + cls + '"' + wide + '>' + inner + '</div>');
+  }
+  function ctaBtn(label, opts) {
+    opts = opts || {};
+    var cls = 'ob-cta' + (opts.lg ? ' ob-cta--lg' : '') + (opts.ghost ? ' ob-ghost' : '');
+    return '<button type="button" class="' + cls + '"' + (opts.disabled ? ' disabled' : '') +
+      (opts.id ? ' id="' + opts.id + '"' : '') + '>' + esc(label) + '</button>';
+  }
+
+  // Render a list of options. items: [{label, key?, recommended?, value}]
+  function optionList(items, opts) {
+    opts = opts || {};
+    var single = opts.single !== false; // default single
+    return '<div class="ob-options" role="' + (single ? 'radiogroup' : 'group') + '">' +
+      items.map(function (it, i) {
+        var label = typeof it === 'string' ? it : it.label;
+        var sel = opts.selected && opts.selected(it, i);
+        var rec = it && it.recommended ? '<span class="ob-badge-rec">recommended</span>' : '';
+        var mark = '<span class="ob-opt-mark" aria-hidden="true">' + (single ? '' : (sel ? '✓' : '')) + '</span>';
+        return '<button type="button" class="ob-opt' + (sel ? ' is-selected' : '') + '"' +
+          (single ? ' data-single role="radio" aria-checked="' + (sel ? 'true' : 'false') + '"' : ' role="checkbox" aria-checked="' + (sel ? 'true' : 'false') + '"') +
+          ' data-i="' + i + '">' + (single ? '' : mark) +
+          '<span>' + esc(label) + '</span>' + rec + '</button>';
+      }).join('') + '</div>';
+  }
+
+  // ============================================================
+  //  SCREEN BUILDERS
+  // ============================================================
+  function build(id) {
+    switch (id) {
+      case 's0': return sWelcome();
+      case 's1': return sSocial();
+      case 's2': return sSingle('s2', 's2', 'goal');
+      case 's3': return sTarget();
+      case 's4': return sAuthority1();
+      case 's5': return sSingle('s5', 's5', 'first');
+      case 's6': return sEncourage();
+      case 's7': return sSection();
+      case 's8': return sPain();
+      case 's9': return sSingle('s9', 's9', 'examDate');
+      case 's10': return sAuthority2();
+      case 's11': return sDaily();
+      case 's12': return sSingle('s12', 's12', 'fear');
+      case 's13': return sDiagnostic();
+      case 's14': return sProcessing();
+      case 's15': return sMirror();
+      case 's16': return sName();
+      case 's17': return sEmailGate();
+      case 's18': return sGrowth();
+      case 's19': return sTimeline();
+      case 's20': return sValueStack();
+      case 's21': return sWheel();
+      case 's22': return sPaywall();
+      case 's25': return sSuccess();
+      default: return screenEl('<p>Missing screen: ' + esc(id) + '</p>');
+    }
+  }
+
+  // S0 — Welcome
+  function sWelcome() {
+    var c = S.s0 || {};
+    var el = screenEl(
+      '<img src="/logo.svg" alt="HSK Prep" class="ob-logo">' +
+      '<div class="ob-pill">' + subst(c.badge) + '</div>' +
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + subst(c.sub) + '</p>' +
+      ctaBtn(c.cta || 'Start', { lg: true, id: 'go' }),
+      { center: true });
+    $('#go', el).onclick = next;
+    return el;
+  }
+
+  // S1 — Social proof
+  function sSocial() {
+    var c = S.s1 || {};
+    var quotes = (CFG.testimonials || []).map(function (t) {
+      return '<div class="ob-quote"><div class="ob-stars">★★★★★</div>' +
+        '<p class="ob-quote-text">“' + esc(t.text) + '”</p>' +
+        '<div class="ob-quote-name">' + esc(t.name) + '</div></div>';
+    }).join('');
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline || 'What learners say') + '</h1>' + quotes +
+      '<p class="ob-tail">' + esc(c.tail) + '</p>' +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+    $('#go', el).onclick = next;
+    return el;
+  }
+
+  // Generic single-select that stores a string answer (goal/first/examDate/fear)
+  function sSingle(screenKey, copyKey, answerKey) {
+    var c = S[copyKey] || {};
+    var items = (c.options || []).map(function (o) { return { label: o, value: o }; });
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      (c.sub ? '<p class="ob-sub">' + subst(c.sub) + '</p>' : '') +
+      optionList(items, { single: true, selected: function (it) { return A[answerKey] === it.value; } }));
+    wireSingle(el, items, function (it) { A[answerKey] = it.value; save(); next(); });
+    return el;
+  }
+
+  // S3 — target level (objects with recommended flag)
+  function sTarget() {
+    var c = S.s3 || {};
+    var items = c.options || [];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      optionList(items, { single: true, selected: function (it) { return A.target === it.label; } }));
+    wireSingle(el, items, function (it) { A.target = it.label; save(); next(); });
+    return el;
+  }
+
+  // S7 — section
+  function sSection() {
+    var c = S.s7 || {};
+    var items = c.options || [];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      (c.sub ? '<p class="ob-sub">' + subst(c.sub) + '</p>' : '') +
+      optionList(items, { single: true, selected: function (it) { return A.section && A.section.key === it.key; } }));
+    wireSingle(el, items, function (it) { A.section = { key: it.key, short: it.short }; save(); next(); });
+    return el;
+  }
+
+  // S11 — daily time
+  function sDaily() {
+    var c = S.s11 || {};
+    var items = c.options || [];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      (c.sub ? '<p class="ob-sub">' + subst(c.sub) + '</p>' : '') +
+      optionList(items, { single: true, selected: function (it) { return A.daily === it.key; } }));
+    wireSingle(el, items, function (it) { A.daily = it.key; A.dailyShort = it.short; save(); next(); });
+    return el;
+  }
+
+  function wireSingle(el, items, onPick) {
+    el.querySelectorAll('.ob-opt').forEach(function (btn) {
+      btn.onclick = function () {
+        el.querySelectorAll('.ob-opt').forEach(function (b) { b.classList.remove('is-selected'); b.setAttribute('aria-checked', 'false'); });
+        btn.classList.add('is-selected'); btn.setAttribute('aria-checked', 'true');
+        var it = items[+btn.getAttribute('data-i')];
+        setTimeout(function () { onPick(it); }, 170);
+      };
+    });
+  }
+
+  // S8 — pain (multi)
+  function sPain() {
+    var c = S.s8 || {};
+    var items = (c.options || []).map(function (o) { return { label: o, value: o }; });
+    A.pain = A.pain || [];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      (c.sub ? '<p class="ob-sub">' + subst(c.sub) + '</p>' : '') +
+      optionList(items, { single: false, selected: function (it) { return A.pain.indexOf(it.value) >= 0; } }) +
+      ctaBtn(c.cta || 'Continue', { id: 'go', disabled: A.pain.length === 0 }));
+    var go = $('#go', el);
+    el.querySelectorAll('.ob-opt').forEach(function (btn) {
+      btn.onclick = function () {
+        var v = items[+btn.getAttribute('data-i')].value;
+        var k = A.pain.indexOf(v);
+        if (k >= 0) A.pain.splice(k, 1); else A.pain.push(v);
+        var on = A.pain.indexOf(v) >= 0;
+        btn.classList.toggle('is-selected', on);
+        btn.setAttribute('aria-checked', on ? 'true' : 'false');
+        btn.querySelector('.ob-opt-mark').textContent = on ? '✓' : '';
+        go.disabled = A.pain.length === 0;
+        save();
+      };
+    });
+    go.onclick = next;
+    return el;
+  }
+
+  // S4 / S10 — authority
+  function sAuthority1() {
+    var c = S.s4 || {};
+    var logos = (CFG.placeholders && CFG.placeholders.authority_logos) || [];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<ul class="ob-bullets">' + (c.bullets || []).map(function (b) { return '<li><span>' + subst(b) + '</span></li>'; }).join('') + '</ul>' +
+      authLogos(logos) +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+    $('#go', el).onclick = next;
+    return el;
+  }
+  function sAuthority2() {
+    var c = S.s10 || {};
+    var logos = (CFG.placeholders && CFG.placeholders.authority_logos) || [];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline || 'Why HSK Prep works') + '</h1>' +
+      '<ul class="ob-bullets">' + (c.bullets || []).map(function (b) { return '<li><span>' + subst(b) + '</span></li>'; }).join('') + '</ul>' +
+      '<div class="ob-stat">' + subst(c.stat) + '</div>' +
+      authLogos(logos) +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+    $('#go', el).onclick = next;
+    return el;
+  }
+  function authLogos(logos) {
+    if (logos && logos.length) {
+      return '<div class="ob-logos">' + logos.map(function (u) { return '<img src="' + esc(u) + '" alt="" height="28">'; }).join('') + '</div>';
+    }
+    return '<div class="ob-logos"><span class="ob-logo-ph">Partner schools — coming soon</span></div>';
+  }
+
+  // S6 — encouragement
+  function sEncourage() {
+    var c = S.s6 || {};
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + subst(c.sub) + '</p>' +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }), { center: true });
+    $('#go', el).onclick = next;
+    return el;
+  }
+
+  // S13 — diagnostic (5 sub-questions inside one step)
+  function sDiagnostic() {
+    var c = S.s13 || {};
+    A.diag = A.diag || [];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      (c.sub ? '<p class="ob-sub">' + esc(c.sub) + '</p>' : '') +
+      '<div id="dqhost"></div>');
+    var host = $('#dqhost', el);
+    // Resume at the first unanswered question if interrupted; if a full set
+    // already exists (user navigated back to re-take), start over fresh.
+    if (!Array.isArray(A.diag)) A.diag = [];
+    var di = A.diag.length >= DIAG.length ? 0 : A.diag.length;
+    if (di === 0) { A.diag = []; save(); }
+    renderDQ();
+    function renderDQ() {
+      var q = DIAG[di];
+      if (!q) { next(); return; }
+      var audio = q.audio ? '<audio class="ob-dq-audio" controls preload="none" src="' + esc(q.audio) + '"></audio>' : '';
+      var text = q.text ? '<div class="ob-dq-text">' + esc(q.text) + '</div>' : '';
+      var prompt = q.prompt ? '<p class="ob-sub">' + esc(q.prompt) + '</p>' : '';
+      host.innerHTML =
+        '<div class="ob-dq">' +
+        '<div class="ob-dq-prog">Question ' + (di + 1) + ' of ' + DIAG.length + '</div>' +
+        prompt + audio + text +
+        optionList(q.options.map(function (o) { return { label: o }; }), { single: true, selected: function () { return false; } }) +
+        '</div>';
+      host.querySelectorAll('.ob-opt').forEach(function (btn) {
+        btn.onclick = function () {
+          host.querySelectorAll('.ob-opt').forEach(function (b) { b.classList.remove('is-selected'); });
+          btn.classList.add('is-selected');
+          A.diag[di] = +btn.getAttribute('data-i');
+          save();
+          setTimeout(function () { di++; if (di < DIAG.length) renderDQ(); else next(); }, 220);
+        };
+      });
+    }
+    return el;
+  }
+
+  // S14 — processing
+  function sProcessing() {
+    var c = S.s14 || {};
+    var el = screenEl(
+      '<div class="ob-spinner" aria-hidden="true"></div>' +
+      '<h1 class="ob-h1" data-focus>' + esc(c.copy || 'Analyzing…') + '</h1>', { center: true });
+    setTimeout(function () { if (FLOW[state.idx].id === 's14') next(); }, 1600);
+    return el;
+  }
+
+  // S15 — mirror
+  function sMirror() {
+    var c = S.s15 || {};
+    var t = CFG.mirrorTestimonial || {};
+    var rows = [
+      ['Goal', subst('{target_level}')],
+      ['You now', '<span class="ob-result-hl">' + subst('{diagnostic_result}') + '</span>'],
+      ['Weak spot', subst('{weak_section}')],
+      ['Time/day', subst('{daily_time}')]
+    ];
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<dl class="ob-summary">' + rows.map(function (r) {
+        return '<div class="ob-summary-row"><dt>' + esc(r[0]) + '</dt><dd>' + r[1] + '</dd></div>';
+      }).join('') + '</dl>' +
+      '<div class="ob-quote"><div class="ob-stars">★★★★★</div><p class="ob-quote-text">“' + esc(t.text) + '”</p>' +
+      '<div class="ob-quote-name">' + esc(t.name) + '</div></div>' +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+    $('#go', el).onclick = next;
+    return el;
+  }
+
+  // S16 — name (optional)
+  function sName() {
+    var c = S.s16 || {};
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + esc(c.sub) + '</p>' +
+      '<input class="ob-input" id="nm" type="text" autocomplete="given-name" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.name || '') + '">' +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }) +
+      '<button type="button" class="ob-link" id="skip">' + esc(c.skip || 'Skip') + '</button>');
+    var nm = $('#nm', el);
+    $('#go', el).onclick = function () { A.name = nm.value.trim(); save(); next(); };
+    $('#skip', el).onclick = function () { A.name = ''; save(); next(); };
+    nm.onkeydown = function (e) { if (e.key === 'Enter') $('#go', el).click(); };
+    return el;
+  }
+
+  // S17 — email gate / account (single auth step)
+  function sEmailGate() {
+    var c = S.s17 || {};
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + subst(c.sub) + '</p>' +
+      '<input class="ob-input" id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.email || '') + '">' +
+      '<div class="ob-error" id="emerr" hidden></div>' +
+      '<p class="ob-note">' + esc(c.trust) + '</p>' +
+      ctaBtn(c.cta || 'Show my plan', { id: 'go' }) +
+      '<div class="ob-or">' + esc(c.or || 'OR') + '</div>' +
+      '<button type="button" class="ob-google" id="goog">' + esc(c.google || 'Continue with Google') + '</button>' +
+      '<div class="ob-bonus">' + subst(c.bonus) + '</div>');
+    var em = $('#em', el), err = $('#emerr', el);
+    function valid(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+    $('#go', el).onclick = function () {
+      var v = em.value.trim();
+      if (!valid(v)) { err.textContent = c.invalidEmail || 'Please enter a valid email address.'; err.hidden = false; em.classList.add('is-error'); em.focus(); return; }
+      err.hidden = true; em.classList.remove('is-error');
+      A.email = v; save();
+      // Register / send results email if Supabase is configured (non-blocking).
+      try {
+        if (window.HSKAuth && HSKAuth.isConfigured() && HSKAuth.signInWithEmailOtp) {
+          HSKAuth.signInWithEmailOtp(v, { next: '/quiz/' }).catch(function () {});
+        }
+      } catch (e) {}
+      next();
+    };
+    $('#goog', el).onclick = function () {
+      try {
+        if (window.HSKAuth && HSKAuth.isConfigured()) {
+          A.email = (em.value || '').trim(); save();
+          HSKAuth.signInWithGoogle({ next: '/quiz/' });
+          return;
+        }
+      } catch (e) {}
+      // Auth not configured (local preview) — just continue.
+      next();
+    };
+    em.onkeydown = function (e) { if (e.key === 'Enter') $('#go', el).click(); };
+    return el;
+  }
+
+  // S18 — growth curve
+  function sGrowth() {
+    var c = S.s18 || {};
+    var now = diagnosticResult(), target = targetLevel();
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + subst(c.sub) + '</p>' +
+      '<div class="ob-growth">' + growthSVG(now, target, c) + '</div>' +
+      '<div class="ob-growth-cap">' + esc(c.caption || 'Projected path') + '</div>' +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+    $('#go', el).onclick = next;
+    return el;
+  }
+  function parseLevel(s) { var m = String(s || '').match(/([\d.]+)/); return m ? parseFloat(m[1]) : 3; }
+  function growthSVG(now, target, c) {
+    var nowV = parseLevel(now), tgtV = parseLevel(target);
+    if (tgtV <= nowV) tgtV = nowV + 0.6; // always show upward motion
+    var W = 320, H = 180, padX = 34, padB = 34, padT = 24;
+    var x0 = padX, x1 = W - padX, y0 = H - padB, y1 = padT;
+    var path = 'M' + x0 + ',' + y0 + ' C' + (x0 + 90) + ',' + y0 + ' ' + (x1 - 120) + ',' + (y1 + 6) + ' ' + x1 + ',' + y1;
+    var area = path + ' L' + x1 + ',' + y0 + ' L' + x0 + ',' + y0 + ' Z';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Projected progress from ' + esc(now) + ' to ' + esc(target) + '">' +
+      '<defs><linearGradient id="obg" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="var(--accent)" stop-opacity="0.22"/>' +
+      '<stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>' +
+      '<line x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y0 + '" stroke="var(--mist)" stroke-width="1"/>' +
+      '<path d="' + area + '" fill="url(#obg)"/>' +
+      '<path d="' + path + '" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>' +
+      '<circle cx="' + x0 + '" cy="' + y0 + '" r="5" fill="var(--stone)"/>' +
+      '<circle cx="' + x1 + '" cy="' + y1 + '" r="6" fill="var(--accent)"/>' +
+      '<text x="' + x0 + '" y="' + (y0 + 20) + '" fill="var(--stone)" font-size="11" text-anchor="middle">' + esc((c.nowLabel || 'You now')) + '</text>' +
+      '<text x="' + x0 + '" y="' + (y0 - 12) + '" fill="var(--stone)" font-size="12" font-weight="700" text-anchor="middle">' + esc(now) + '</text>' +
+      '<text x="' + x1 + '" y="' + (y1 - 10) + '" fill="var(--accent)" font-size="12" font-weight="800" text-anchor="middle">' + esc(target) + '</text>' +
+      '<text x="' + x1 + '" y="' + (y0 + 20) + '" fill="var(--stone)" font-size="11" text-anchor="middle">' + esc((c.targetLabel || 'Target')) + '</text>' +
+      '</svg>';
+  }
+
+  // S19 — timeline
+  function sTimeline() {
+    var c = S.s19 || {};
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<ul class="ob-timeline">' + (c.steps || []).map(function (s) {
+        return '<li><div class="ob-tl-when">' + esc(s.when) + '</div>' +
+          '<div class="ob-tl-title">' + esc(s.title) + '</div>' +
+          '<div class="ob-tl-text">' + esc(s.text) + '</div></li>';
+      }).join('') + '</ul>' +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+    $('#go', el).onclick = next;
+    return el;
+  }
+
+  // S20 — value stack
+  function sValueStack() {
+    var c = S.s20 || {}, g = CFG.guarantee || {};
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      (c.rows || []).map(function (r) {
+        return '<div class="ob-vrow"><span class="ob-check" aria-hidden="true">✓</span><div>' +
+          '<div class="ob-vrow-title">' + subst(r.title) + '</div>' +
+          '<div class="ob-vrow-text">' + subst(r.text) + '</div></div></div>';
+      }).join('') +
+      '<div class="ob-guarantee"><div class="ob-guarantee-title">✅ ' + esc(g.headline || 'Pass guarantee') + '</div>' +
+      '<div>' + esc(g.short || '') + '</div>' +
+      '<details class="ob-guarantee-terms"><summary>Terms apply</summary>' + esc(g.terms || '') + '</details></div>' +
+      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+    $('#go', el).onclick = next;
+    return el;
+  }
+
+  // S21 — discount wheel (always 50%)
+  function sWheel() {
+    var c = S.s21 || {};
+    var w = CFG.wheel || { segments: [10, 15, 20, 30, 40, 50], win: 50 };
+    var el = screenEl(
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + esc(c.sub) + '</p>' +
+      '<div class="ob-wheel-wrap"><div class="ob-wheel-pointer"></div>' +
+      wheelSVG(w.segments) + '<div class="ob-wheel-hub"></div></div>' +
+      '<div id="wheelfoot">' + ctaBtn(c.spin || 'SPIN', { id: 'spin', lg: true }) + '</div>',
+      { center: true });
+    var svg = el.querySelector('.ob-wheel');
+    var foot = $('#wheelfoot', el);
+    var spun = false;
+    $('#spin', el).onclick = function () {
+      if (spun) return; spun = true;
+      $('#spin', el).disabled = true;
+      foot.querySelector('.ob-cta').textContent = c.spinning || 'Good luck…';
+      var segs = w.segments, n = segs.length, step = 360 / n;
+      var winIdx = segs.indexOf(w.win); if (winIdx < 0) winIdx = n - 1;
+      var center = winIdx * step + step / 2;
+      var rot = 360 * 5 + (360 - center);
+      svg.style.transform = 'rotate(' + rot + 'deg)';
+      var fired = false, fb;
+      var done = function () {
+        if (fired) return; fired = true; clearTimeout(fb);
+        A.discount = w.win; save();
+        foot.innerHTML =
+          '<div class="ob-win"><div class="ob-win-big">' + esc(c.winTitle || '') + '</div>' +
+          '<div>' + esc(c.winLine1 || '') + '</div>' +
+          '<div class="ob-win-big">' + esc(c.winLine2 || '50% off') + '</div>' +
+          '<div class="ob-note">' + esc(c.winLine3 || '') + '</div></div>' +
+          ctaBtn(c.cta || 'Claim my discount', { id: 'claim', lg: true });
+        $('#claim', el).onclick = next;
+      };
+      svg.addEventListener('transitionend', done, { once: true });
+      fb = setTimeout(done, 5200); // fallback if transitionend doesn't fire
+    };
+    return el;
+  }
+  function wheelSVG(segs) {
+    var R = 96, C = 100, n = segs.length, step = 360 / n;
+    var fills = ['var(--accent)', 'var(--gold)', 'var(--jade)', 'var(--accent-hover)', 'var(--stone)', 'var(--accent-btn-hover)'];
+    // angle measured clockwise from top (0deg = top)
+    function P(ang, r) { var a = ang * Math.PI / 180; return [C + r * Math.sin(a), C - r * Math.cos(a)]; }
+    var parts = '';
+    for (var i = 0; i < n; i++) {
+      var a0 = i * step, a1 = (i + 1) * step, mid = a0 + step / 2;
+      var s = P(a0, R), e = P(a1, R), lc = P(mid, R * 0.64);
+      parts += '<path d="M' + C + ',' + C + ' L' + s[0].toFixed(2) + ',' + s[1].toFixed(2) +
+        ' A' + R + ',' + R + ' 0 0 1 ' + e[0].toFixed(2) + ',' + e[1].toFixed(2) + ' Z" fill="' + fills[i % fills.length] + '"/>';
+      parts += '<text x="' + lc[0].toFixed(2) + '" y="' + lc[1].toFixed(2) + '" fill="#fff" font-size="15" font-weight="800" text-anchor="middle" dominant-baseline="central">' + segs[i] + '%</text>';
+    }
+    return '<svg class="ob-wheel" viewBox="0 0 200 200" aria-hidden="true">' + parts + '</svg>';
+  }
+
+  // S22 — paywall
+  function sPaywall() {
+    var c = S.s22 || {};
+    if (!A.plan) A.plan = PRICING.defaultTier || (TIERS[0] && TIERS[0].id);
+    var tiers = TIERS.map(function (t) {
+      var tag = t.popular ? '<span class="ob-tier-tag">' + esc(c.mostPopular || 'MOST POPULAR') + '</span>' : '';
+      var best = t.bestValue ? ' <span class="ob-tier-best">' + esc(c.bestValue || 'best value') + '</span>' : '';
+      return '<button type="button" class="ob-tier' + (t.popular ? ' is-popular' : '') + (A.plan === t.id ? ' is-selected' : '') + '"' +
+        ' data-id="' + esc(t.id) + '" role="radio" aria-checked="' + (A.plan === t.id ? 'true' : 'false') + '"' +
+        ' aria-label="' + esc(t.label + (t.popular ? ' (most popular)' : '') + ' ' + fmtPrice(t.price)) + '">' + tag +
+        '<span class="ob-tier-radio" aria-hidden="true"></span>' +
+        '<span class="ob-tier-main"><span class="ob-tier-label">' + esc(t.label) + best + '</span><br>' +
+        '<span class="ob-tier-base">' + fmtPrice(t.base) + '</span>' +
+        '<span class="ob-tier-price">' + fmtPrice(t.price) + '</span></span>' +
+        '<span class="ob-tier-perday">~' + fmtPrice(t.perDay) + (c.perDay || '/day') + '</span></button>';
+    }).join('');
+
+    var el = screenEl(
+      '<div class="ob-headerbar"><span>' + esc(c.discountLabel || 'Special discount: 50%') + '</span>' +
+      '<span class="ob-timer">⏳ <span id="tmr">10:00</span></span></div>' +
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + subst(c.subtag) + '</p>' +
+      '<div class="ob-chips"><span class="ob-chip">' + subst(c.goalChip) + '</span><span class="ob-chip">' + subst(c.focusChip) + '</span></div>' +
+      '<div class="ob-cert"><span class="ob-cert-note">' + esc(c.certNote || 'Example') + '</span>' +
+      '<div>HSK Score Report</div><div class="ob-cert-score">' + esc(targetLevel()) + ' · 240+/300</div><div class="ob-note">Aspirational target — example only</div></div>' +
+      '<div class="ob-social">' + subst(c.social) + '</div>' +
+      '<div class="ob-tiers" role="radiogroup" aria-label="Choose a plan">' + tiers + '</div>' +
+      '<p class="ob-fineprint">' + esc(c.riskReversal || '') + '</p>' +
+      '<div class="ob-trustrow"><span>🔒 Secure payment</span><span>💳 Visa · Mastercard · Amex</span></div>' +
+      ctaBtn(c.cta || 'Get my plan', { id: 'go', lg: true }),
+      { wide: true });
+
+    el.querySelectorAll('.ob-tier').forEach(function (btn) {
+      btn.onclick = function () {
+        A.plan = btn.getAttribute('data-id'); save();
+        el.querySelectorAll('.ob-tier').forEach(function (b) {
+          var on = b === btn; b.classList.toggle('is-selected', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      };
+    });
+    $('#go', el).onclick = openCheckout;
+    startTimer($('#tmr', el));
+    return el;
+  }
+
+  function startTimer(elSpan) {
+    var T = CFG.timerSeconds || 600;
+    var left = T;
+    function tick() {
+      if (left < 0) left = T; // refresh/reset on expiry (price stays constant)
+      var m = Math.floor(left / 60), s = left % 60;
+      if (elSpan && elSpan.isConnected) elSpan.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+      else { clearTimer(); return; }
+      left--;
+    }
+    tick();
+    timerInt = setInterval(tick, 1000);
+  }
+
+  // ---------- S23 checkout modal + S24 exit-intent (overlays) ----------
+  var overlay = null;
+  function closeOverlay() { if (overlay) { overlay.remove(); overlay = null; } }
+
+  // Modal a11y: trap Tab within the dialog and route Escape.
+  function trapModal(ov, onEscape) {
+    ov.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); onEscape(); return; }
+      if (e.key !== 'Tab') return;
+      var f = [].filter.call(
+        ov.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+        function (el) { return !el.disabled && el.offsetParent !== null; });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+
+  function openCheckout() {
+    var c = S.s23 || {};
+    var t = selectedTier();
+    closeOverlay();
+    overlay = mk('<div class="ob-modal-overlay" role="dialog" aria-modal="true" aria-label="Checkout"></div>');
+    var disclosure = subst(c.disclosure);
+    overlay.appendChild(mk(
+      '<div class="ob-modal">' +
+      '<div class="ob-modal-head"><div class="ob-modal-title">' + esc(c.title || 'Checkout') + '</div>' +
+      '<button type="button" class="ob-modal-x" id="x" aria-label="Close">×</button></div>' +
+      '<div class="ob-co-line"><span>' + esc(t.label) + '</span><button type="button" class="ob-link" id="chg">' + esc(c.changePlan || 'Change') + '</button></div>' +
+      '<div class="ob-co-line ob-co-total"><span>' + esc(c.totalLabel || 'Total due today') + '</span><span>' + fmtPrice(t.price) + '</span></div>' +
+      '<label class="ob-field"><span>' + esc(c.countryLabel || 'Country') + '</span>' + countrySelect() + '</label>' +
+      '<div class="ob-field"><span>' + esc(c.paymentLabel || 'Payment method') + '</span><div class="ob-note">' + esc(c.paymentNote || '') + '</div></div>' +
+      '<div class="ob-disclosure">' + disclosure + '</div>' +
+      ctaBtn((c.cta || 'Subscribe') + ' · ' + fmtPrice(t.price), { id: 'sub', lg: true }) +
+      '<p class="ob-note" style="text-align:center">🔒 ' + esc(c.trust || 'Secure checkout.') + '</p>' +
+      '</div>'));
+    document.body.appendChild(overlay);
+
+    var toExit = function () { closeOverlay(); openExitIntent(); };
+    $('#x', overlay).onclick = toExit;
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) toExit(); });
+    $('#chg', overlay).onclick = function () { closeOverlay(); }; // back to paywall to change plan
+    $('#sub', overlay).onclick = function () {
+      var btn = $('#sub', overlay); btn.disabled = true; btn.textContent = c.processing || 'Processing…';
+      startCheckout(t, A.discount || 50);
+    };
+    trapModal(overlay, toExit);
+    setTimeout(function () { var x = $('#x', overlay); if (x) x.focus(); }, 30);
+  }
+
+  function openExitIntent() {
+    var c = S.s24 || {};
+    closeOverlay();
+    overlay = mk('<div class="ob-modal-overlay" role="dialog" aria-modal="true" aria-label="Special offer"></div>');
+    overlay.appendChild(mk(
+      '<div class="ob-modal ob-center">' +
+      '<div class="ob-modal-head" style="justify-content:flex-end"><button type="button" class="ob-modal-x" id="x" aria-label="Close">×</button></div>' +
+      '<div class="ob-pill">🎁 ' + esc(c.badge || '−50%') + '</div>' +
+      '<h2 class="ob-h1">' + esc(c.headline || 'Special offer') + '</h2>' +
+      '<p class="ob-sub">' + esc(c.sub || '') + '</p>' +
+      '<div class="ob-guarantee" style="text-align:left"><div class="ob-guarantee-title">✅ ' + esc(c.cardTitle || '') + '</div><div>' + esc(c.cardText || '') + '</div></div>' +
+      ctaBtn(c.primary || 'Get my discount', { id: 'prim', lg: true }) +
+      '<button type="button" class="ob-link" id="sec">' + esc(c.secondary || 'No thanks') + '</button>' +
+      '</div>'));
+    document.body.appendChild(overlay);
+    $('#x', overlay).onclick = closeOverlay;
+    $('#sec', overlay).onclick = closeOverlay;
+    $('#prim', overlay).onclick = function () { closeOverlay(); openCheckout(); };
+    trapModal(overlay, closeOverlay);
+    setTimeout(function () { var p = $('#prim', overlay); if (p) p.focus(); }, 30);
+  }
+
+  function countrySelect() {
+    var list = ['United States', 'China', 'Russia', 'India', 'Indonesia', 'Vietnam', 'South Korea', 'Japan', 'Kazakhstan', 'Germany', 'United Kingdom', 'Other'];
+    var guess = guessCountry();
+    return '<select class="ob-select" id="country">' + list.map(function (cn) {
+      return '<option' + (cn === guess ? ' selected' : '') + '>' + esc(cn) + '</option>';
+    }).join('') + '</select>';
+  }
+  function guessCountry() {
+    var map = { US: 'United States', CN: 'China', RU: 'Russia', IN: 'India', ID: 'Indonesia', VN: 'Vietnam', KR: 'South Korea', JP: 'Japan', KZ: 'Kazakhstan', DE: 'Germany', GB: 'United Kingdom' };
+    try {
+      var loc = (navigator.language || '').split('-')[1];
+      if (loc && map[loc.toUpperCase()]) return map[loc.toUpperCase()];
+    } catch (e) {}
+    return 'United States';
+  }
+
+  // ---------- payment seam (SIMULATED) ----------
+  // Swap this single function for a real provider (e.g. Stripe Checkout redirect,
+  // which matches the "secure window after clicking" copy) + return-URL handling.
+  function startCheckout(tier, discount) { return simulatePayment(tier, discount); }
+  function simulatePayment(tier, discount) {
+    setTimeout(function () {
+      markPurchased(tier, discount);
+      closeOverlay();
+      clearTimer();
+      goById('s25');
+    }, 1200);
+  }
+  function markPurchased(tier, discount) {
+    var sub = { status: 'active', plan: tier.id, planLabel: tier.planLabel, price: tier.price, interval: tier.interval, discount: discount, simulated: true, ts: Date.now() };
+    A.subscription = sub; save();
+    lsSet(LS_SUB, JSON.stringify(sub));
+    lsSet(LS_DONE, '1');
+    syncToProfile();
+  }
+
+  // S25 — success
+  function sSuccess() {
+    var c = S.s25 || {};
+    var t = selectedTier();
+    var el = screenEl(
+      '<div class="ob-success-mark" aria-hidden="true">✓</div>' +
+      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+      '<p class="ob-sub">' + esc(c.sub) + '</p>' +
+      '<dl class="ob-summary" style="text-align:left">' +
+      '<div class="ob-summary-row"><dt>Plan</dt><dd>' + esc(t.label) + '</dd></div>' +
+      '<div class="ob-summary-row"><dt>Goal</dt><dd>' + subst('{target_level}') + '</dd></div>' +
+      '<div class="ob-summary-row"><dt>Focus</dt><dd>' + subst('{weak_section}') + '</dd></div></dl>' +
+      '<p class="ob-sub">' + subst(c.next) + '</p>' +
+      ctaBtn(c.cta || 'Start studying', { id: 'go', lg: true }),
+      { center: true });
+    $('#go', el).onclick = function () { location.href = HANDOFF; };
+    return el;
+  }
+
+  // ---------- profile migration ----------
+  function syncToProfile() {
+    try {
+      if (!window.HSKAuth || !HSKAuth.isConfigured() || !HSKAuth.updateProfile) return;
+      HSKAuth.getUser().then(function (user) {
+        if (!user) return;
+        HSKAuth.updateProfile({ onboarding: state.answers, subscription: A.subscription || null }).catch(function () {});
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  // ---------- boot ----------
+  function init() {
+    var root = document.getElementById('ob-root');
+    if (!root) return;
+
+    // ?reset=1 — restart the funnel (dev / explicit reset)
+    if (param('reset')) {
+      lsDel(LS_STATE); lsDel(LS_DONE); lsDel(LS_SUB);
+      state = freshState(); A = state.answers;
+    }
+    // Once-only: completed onboarding -> straight to the product.
+    if (lsGet(LS_DONE) === '1' && !param('reset')) { location.replace(HANDOFF); return; }
+
+    root.innerHTML =
+      '<div class="ob-app">' +
+      '<div class="ob-top" id="ob-top">' +
+      '<button class="ob-back" id="ob-back" type="button" aria-label="Back" hidden>←</button>' +
+      '<div class="ob-progress" id="ob-prog"><div class="ob-progress-bar" id="ob-progbar"></div></div>' +
+      '<div class="ob-step-count" id="ob-count"></div>' +
+      '</div>' +
+      '<div class="ob-stage" id="ob-stage"></div>' +
+      '</div>';
+    stage = $('#ob-stage'); backEl = $('#ob-back');
+    progEl = $('#ob-prog'); barEl = $('#ob-progbar'); countEl = $('#ob-count');
+    backEl.onclick = back;
+
+    // guard against a stale idx
+    if (state.idx < 0 || state.idx >= FLOW.length) state.idx = 0;
+    render();
+
+    // Returning from OAuth (or already signed in): migrate answers and, if we're
+    // sitting on the email-gate, skip past it.
+    try {
+      if (window.HSKAuth && HSKAuth.isConfigured()) {
+        HSKAuth.getUser().then(function (user) {
+          if (!user) return;
+          syncToProfile();
+          if (FLOW[state.idx] && FLOW[state.idx].id === 's17') next();
+        }).catch(function () {});
+      }
+    } catch (e) {}
+
+    // expose minimal hooks for testing
+    window.OB = { go: goById, reset: function () { location.href = '/quiz/?reset=1'; }, state: state };
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();

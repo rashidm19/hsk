@@ -10,6 +10,13 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+-- Onboarding funnel: quiz answers + (simulated) subscription status, written by
+-- HSKAuth.updateProfile() once the user has a session. The existing
+-- "profiles_update_own" policy already authorizes the owner to write these.
+alter table public.profiles
+  add column if not exists onboarding   jsonb,
+  add column if not exists subscription jsonb;
+
 alter table public.profiles enable row level security;
 
 create policy "profiles_select_own"

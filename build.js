@@ -5287,10 +5287,121 @@ function buildTranscriptPages() {
   return generated;
 }
 
+// ============================================================
+//  ONBOARDING FUNNEL — /quiz/  (single JS-driven conversion page)
+//  Reads data/onboarding.json (copy + config), resolves the 5
+//  diagnostic questions from real product data, and emits a
+//  body.lp page (so injectAppShell/inject-auth skip it — the
+//  funnel must be reachable without login). Auth scripts are
+//  wired in here manually (no auth-guard). Payment is simulated
+//  client-side; see onboarding.js startCheckout() for the seam.
+// ============================================================
+function buildQuizFunnel() {
+  console.log('[quiz] Generating onboarding funnel /quiz/ ...');
+
+  // {{mocks}}/{{questions}} = build-time derived counts (stay truthful as papers
+  // are added). {dynamic} and other {placeholder} tokens are handled at runtime.
+  const raw = fs.readFileSync(path.join(DATA, 'onboarding.json'), 'utf8')
+    .replace(/\{\{mocks\}\}/g, String(TEST_COUNT))
+    .replace(/\{\{questions\}\}/g, fmtNum(TOTAL_QUESTIONS));
+  const ob = JSON.parse(raw);
+
+  function findArr(obj, keys) {
+    if (Array.isArray(obj)) return obj;
+    for (const k of keys) if (Array.isArray(obj[k])) return obj[k];
+    return Object.values(obj).find(Array.isArray) || [];
+  }
+
+  // Resolve the 5 diagnostic questions from real data — reuses the same
+  // correct-answer representation the exam grader uses (selected index ===
+  // correct_answer_index), so the result is a genuine score, not self-report.
+  const d = ob.diagnostic || {};
+  const Q = [];
+  if (d.listening) {
+    const t = readJSON(d.listening.source);
+    const q = (t.questions || []).find(x => x.number === d.listening.number);
+    if (q) Q.push({ kind: 'listening', prompt: d.listening.prompt, audio: q.audio || '', options: q.options, correctIndex: q.correct_answer_index });
+  }
+  if (d.reading) {
+    const t = readJSON(d.reading.source);
+    const q = (t.questions || []).find(x => x.number === d.reading.number);
+    if (q) Q.push({ kind: 'reading', prompt: d.reading.prompt, text: q.text, options: q.options, correctIndex: q.correct_answer_index });
+  }
+  if (d.grammar) {
+    const pat = findArr(readJSON('grammar-patterns.json'), ['patterns', 'grammar']).find(x => x.slug === d.grammar.pattern);
+    const item = pat && pat.quiz && pat.quiz[d.grammar.quizIndex || 0];
+    if (item) Q.push({ kind: 'grammar', prompt: d.grammar.prompt, text: item.stem, options: [item.wrong, item.correct], correctIndex: 1 });
+  }
+  if (d.confusable) {
+    const pair = findArr(readJSON('confusables.json'), ['confusables']).find(x => x.slug === d.confusable.slug);
+    const item = pair && pair.quiz && pair.quiz[d.confusable.quizIndex || 0];
+    if (item) Q.push({ kind: 'confusable', prompt: d.confusable.prompt, text: item.stem, options: [item.correct, item.wrong], correctIndex: 0 });
+  }
+  if (d.vocabulary) {
+    const vv = findArr(readJSON('vocabulary.json'), ['words']);
+    const byId = id => vv.find(x => x.id === id);
+    const target = byId(d.vocabulary.id);
+    const ds = (d.vocabulary.distractorIds || []).map(byId).filter(Boolean);
+    if (target) {
+      const opts = [ds[0], target, ds[1], ds[2]].filter(Boolean).map(w => w.word);
+      Q.push({ kind: 'vocabulary', prompt: 'Which word means “' + (target.meaning || '') + '”?', options: opts, correctIndex: opts.indexOf(target.word) });
+    }
+  }
+
+  if (Q.length < 5) {
+    console.warn(`[quiz] WARNING: only ${Q.length}/5 diagnostic questions resolved — check data/onboarding.json "diagnostic" refs against the source data (a slug/number/id may have drifted).`);
+  }
+
+  const cfg = {
+    brand: ob.brand, handoffUrl: ob.handoffUrl,
+    placeholders: ob.placeholders, testimonials: ob.testimonials, mirrorTestimonial: ob.mirrorTestimonial,
+    pricing: ob.pricing, wheel: ob.wheel, timerSeconds: ob.timerSeconds,
+    guarantee: ob.guarantee, levelScale: ob.levelScale, screens: ob.screens,
+    diagnosticQuestions: Q,
+    counts: { mocks: TEST_COUNT, questions: TOTAL_QUESTIONS },
+  };
+  // Embed as a JS object literal; escape so no </script> or line-separators break out.
+  const json = JSON.stringify(cfg)
+    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
+    .replace(/[\u2028\u2029]/g, function (c) { return '\\u' + c.charCodeAt(0).toString(16); });
+
+  const title = 'Free HSK assessment — build your personalized plan | HSK Prep';
+  const desc = 'Take a quick HSK assessment and get a personalized study plan built from your real weak spots.';
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,follow">
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="https://hskprep.cc/quiz/">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/common.css">
+<link rel="stylesheet" href="/onboarding.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/config/auth.js"></script>
+<script src="/auth.js"></script>
+</head>
+<body class="lp ob">
+<div id="ob-root"></div>
+<script>window.OB_CONFIG = ${json};</script>
+<script src="/onboarding.js" defer></script>
+</body>
+</html>`;
+
+  const dir = path.join(ROOT, 'quiz');
+  ensureDir(dir);
+  fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+  console.log(`[quiz] Wrote /quiz/index.html (${Q.length}/5 diagnostic questions resolved)`);
+}
+
 buildVocabulary();
 buildTestPages();
 const transcriptPages = buildTranscriptPages();
 buildHomepage();
+buildQuizFunnel();
 buildTopics();
 fixGuide();
 buildSentenceOrder();

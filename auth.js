@@ -160,6 +160,40 @@
     return data;
   }
 
+  // Passwordless email registration (used by the onboarding email-gate: an email
+  // capture IS the account). Sends a magic link; the session activates when the
+  // user confirms. Non-blocking — the funnel continues regardless.
+  async function signInWithEmailOtp(email, opts) {
+    const c = getClient();
+    if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    opts = opts || {};
+    const next = safeNextPath(opts.next || '/exams/');
+    const { data, error } = await c.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: global.location.origin + '/auth/callback.html?next=' + encodeURIComponent(next),
+      },
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  // Update the current user's profile row with a whitelisted set of fields
+  // (used by onboarding to persist quiz answers + subscription status).
+  async function updateProfile(fields) {
+    const c = getClient();
+    if (!c) return null;
+    const user = await getUser();
+    if (!user) return null;
+    const allowed = ['name', 'country', 'onboarding', 'subscription'];
+    const row = { id: user.id, email: user.email || null, updated_at: new Date().toISOString() };
+    Object.keys(fields || {}).forEach((k) => { if (allowed.indexOf(k) >= 0) row[k] = fields[k]; });
+    const { error } = await c.from('profiles').upsert(row, { onConflict: 'id' });
+    if (error) { console.warn('[HSKAuth] updateProfile:', error.message); return null; }
+    return row;
+  }
+
   async function signOut() {
     const c = getClient();
     if (c) await c.auth.signOut();
@@ -227,6 +261,8 @@
     signUp,
     signIn,
     signInWithGoogle,
+    signInWithEmailOtp,
+    updateProfile,
     signOut,
     onAuthStateChange,
     initials,
