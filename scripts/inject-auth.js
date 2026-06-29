@@ -32,12 +32,33 @@ function walk(dir, out) {
 }
 
 function injectHead(html) {
-  if (html.includes('/auth-guard.js')) return html;
   if (!/\bclass="[^"]*\bapp\b/.test(html)) return html;
+  // Start of the inline anti-FOUC dark-mode loader injected by build.js'
+  // injectTheme(). The auth scripts must come AFTER this loader so it runs
+  // before the render-blocking Supabase CDN <script> (no flash before paint).
   const marker = '<script>(function(){try{var t=localStorage.getItem';
-  if (html.includes(marker)) {
-    return html.replace(marker, HEAD_SNIPPET + '\n' + marker);
+
+  if (html.includes('/auth-guard.js')) {
+    // Self-heal pages injected by the old code, which placed the auth scripts
+    // ABOVE the loader (marker preceded by HEAD_SNIPPET). Strip that block so
+    // it gets re-inserted below the loader; if it's already below, do nothing.
+    const wrongOrder = HEAD_SNIPPET + '\n' + marker;
+    if (html.includes(wrongOrder)) {
+      html = html.replace(wrongOrder, marker); // healed — fall through to re-insert below the loader
+    } else {
+      return html; // already correct — nothing to do
+    }
   }
+
+  const idx = html.indexOf(marker);
+  if (idx !== -1) {
+    const close = html.indexOf('</script>', idx);
+    if (close !== -1) {
+      const at = close + '</script>'.length;
+      return html.slice(0, at) + HEAD_SNIPPET + html.slice(at);
+    }
+  }
+  // No loader present (unexpected post-build) — fall back to top of <head>.
   return html.replace(/<head>/i, '<head>' + HEAD_SNIPPET);
 }
 

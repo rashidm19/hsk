@@ -3,6 +3,7 @@ node_modules/
 __pycache__/
 *.pyc
 .env
+.idea/
 
 # Local scratch / screenshots (not part of the site)
 .playwright-mcp/
