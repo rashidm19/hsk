@@ -17,9 +17,10 @@ const HEAD_SNIPPET = `
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
-<script src="/auth-guard.js"></script>`;
+<script src="/auth-guard.js"></script>
+<script src="/auth-ui.js" defer></script>`;
 
-const BODY_SNIPPET = `<script src="/auth-ui.js"></script>`;
+const BODY_SNIPPET = '';
 
 function walk(dir, out) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -32,8 +33,14 @@ function walk(dir, out) {
 }
 
 function injectHead(html) {
-  if (html.includes('/auth-guard.js')) return html;
+  if (html.includes('/auth-ui.js" defer')) return html;
   if (!/\bclass="[^"]*\bapp\b/.test(html)) return html;
+  if (html.includes('/auth-guard.js')) {
+    return html.replace(
+      /<script src="\/auth-guard\.js"><\/script>/,
+      '<script src="/auth-guard.js"></script>\n<script src="/auth-ui.js" defer></script>'
+    );
+  }
   const marker = '<script>(function(){try{var t=localStorage.getItem';
   if (html.includes(marker)) {
     return html.replace(marker, HEAD_SNIPPET + '\n' + marker);
@@ -42,12 +49,12 @@ function injectHead(html) {
 }
 
 function injectBody(html) {
-  if (html.includes('/auth-ui.js')) return html;
+  if (html.includes('/auth-ui.js" defer')) return html;
   if (!/\bclass="[^"]*\bapp\b/.test(html)) return html;
-  if (html.includes('/shell.js')) {
-    return html.replace(/<script src="\/shell\.js"><\/script>/, '<script src="/shell.js"></script>\n' + BODY_SNIPPET);
+  if (html.includes('<script src="/auth-ui.js"></script>')) {
+    return html.replace(/\n?<script src="\/auth-ui\.js"><\/script>/g, '');
   }
-  return html.replace(/<\/body>/i, BODY_SNIPPET + '\n</body>');
+  return html;
 }
 
 function addAuthPending(html) {
@@ -61,7 +68,7 @@ walk(ROOT, []).forEach((file) => {
   if (SKIP.has(file)) return;
   let html = fs.readFileSync(file, 'utf8');
   if (!/\bclass="[^"]*\bapp\b/.test(html)) return;
-  const next = injectBody(injectHead(addAuthPending(html)));
+  const next = injectHead(injectBody(addAuthPending(html)));
   if (next !== html) {
     fs.writeFileSync(file, next, 'utf8');
     count++;

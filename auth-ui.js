@@ -68,24 +68,59 @@
     });
   });
 
+  function applyProfile(name, email, avatar) {
+    nameEl.textContent = name || '';
+    emailEl.textContent = email || '';
+    avatarEl.textContent = avatar || '';
+    profileEl.title = name || 'Account';
+    profileEl.classList.add('is-hydrated');
+  }
+
+  function applyCachedProfile() {
+    if (!window.HSKAuth || !HSKAuth.readProfileCache) return false;
+    var cached = HSKAuth.readProfileCache();
+    if (!cached) return false;
+    applyProfile(cached.name, cached.email, cached.initials);
+    return true;
+  }
+
+  applyCachedProfile();
+
   async function refresh() {
     if (!window.HSKAuth || !HSKAuth.isConfigured()) {
-      nameEl.textContent = 'Guest';
-      emailEl.textContent = 'Sign in to save progress';
-      avatarEl.textContent = '?';
+      applyProfile('Guest', 'Sign in to save progress', '?');
       return;
     }
     try {
       var user = await HSKAuth.getUser();
       if (!user) return;
-      var profile = await HSKAuth.getProfile(user.id);
+
+      var cached = HSKAuth.readProfileCache && HSKAuth.readProfileCache();
+      if (cached && cached.userId === user.id) {
+        applyProfile(cached.name, cached.email, cached.initials);
+      }
+
+      var profile = null;
+      if (!cached || cached.userId !== user.id) {
+        profile = await HSKAuth.getProfile(user.id);
+      }
+
       var name = HSKAuth.displayName(user, profile);
-      nameEl.textContent = name;
-      emailEl.textContent = user.email || '';
-      avatarEl.textContent = HSKAuth.initials(name, user.email);
-      profileEl.title = name;
+      var email = user.email || '';
+      var avatar = HSKAuth.initials(name, email);
+      applyProfile(name, email, avatar);
+
+      HSKAuth.writeProfileCache({
+        userId: user.id,
+        name: name,
+        email: email,
+        initials: avatar,
+      });
     } catch (e) {
       console.warn('[auth-ui]', e);
+      if (!profileEl.classList.contains('is-hydrated')) {
+        applyCachedProfile();
+      }
     }
   }
 
