@@ -5112,7 +5112,8 @@ startRound();
 function injectTheme() {
   console.log('[theme] Injecting dark-mode loader + toggle into all pages...');
   // No-flash loader: sets data-theme before first paint, honouring a saved
-  // choice, otherwise the OS preference. Placed at the very top of <head>.
+  // choice, otherwise the OS preference. Placed early in <head> — note
+  // scripts/inject-auth.js later inserts the auth <script>s above it.
   const loader = `<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();<\/script>`;
   // Floating toggle (bottom-left). Inline handler keeps it dependency-free
   // on content pages that ship no JavaScript of their own.
@@ -5133,7 +5134,7 @@ function injectTheme() {
   walk(ROOT, []).forEach(f => {
     let html = fs.readFileSync(f, 'utf8');
     let changed = false;
-    if (html.indexOf('hsk4_theme') === -1 && html.indexOf('<head>') !== -1) {
+    if (html.indexOf("getItem('hsk4_theme')") === -1 && html.indexOf('<head>') !== -1) {
       html = html.replace('<head>', '<head>\n' + loader);
       changed = true;
     }

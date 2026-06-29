@@ -3,3 +3,7 @@ node_modules/
 __pycache__/
 *.pyc
 .env
+
+# Local scratch / screenshots (not part of the site)
+.playwright-mcp/
+hsk-home.png
