@@ -20,14 +20,11 @@
   }
 
   function nextPath() {
-    var next = params().get('next') || '/exams/';
-    try {
-      next = decodeURIComponent(next);
-    } catch (e) {
-      next = '/exams/';
-    }
-    if (!next.startsWith('/') || next.startsWith('//')) next = '/exams/';
-    return next;
+    // Single source of truth for redirect-target validation lives in HSKAuth.safeNextPath
+    // (auth.js always loads before this script on the sign-in page). Fall back to a safe
+    // constant if HSKAuth somehow failed to load, rather than duplicating the guard.
+    var raw = params().get('next');
+    return window.HSKAuth && HSKAuth.safeNextPath ? HSKAuth.safeNextPath(raw) : '/exams/';
   }
 
   function redirectAfterAuth() {

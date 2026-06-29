@@ -23,7 +23,7 @@
       var session = await HSKAuth.getSession();
       await refreshHeader(session);
       HSKAuth.onAuthStateChange(function (_e, s) {
-        refreshHeader(s.session);
+        refreshHeader(s);
       });
     }
   })();

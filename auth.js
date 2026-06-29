@@ -63,7 +63,7 @@
     } catch {
       next = '/exams/';
     }
-    if (!next.startsWith('/') || next.startsWith('//')) next = '/exams/';
+    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) next = '/exams/';
     return next;
   }
 
@@ -127,7 +127,7 @@
       },
     });
     if (error) throw error;
-    if (data.user) await upsertProfile(data.user, { email, name, country });
+    if (data.user && data.session) await upsertProfile(data.user, { email, name, country });
     return data;
   }
 
@@ -184,6 +184,8 @@
 
   async function finishOAuthFromUrl() {
     if (!global.location || !isConfigured()) return false;
+    // The dedicated /auth/callback.html page owns its own code exchange — don't double-exchange.
+    if (global.location.pathname.indexOf('/auth/callback') === 0) return false;
     var params = new URLSearchParams(global.location.search);
     var code = params.get('code');
     if (!code) return false;
