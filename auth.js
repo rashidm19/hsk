@@ -119,8 +119,21 @@
     return safeNextPath(next);
   }
 
+  function isLocalOrigin(origin) {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin || '');
+  }
+
+  /** Canonical origin for OAuth/email redirects (production), or current origin locally. */
+  function authOrigin() {
+    var origin = global.location.origin;
+    if (isLocalOrigin(origin)) return origin;
+    var siteUrl = cfg().siteUrl;
+    if (siteUrl) return String(siteUrl).replace(/\/$/, '');
+    return origin;
+  }
+
   function oauthCallbackUrl(next) {
-    return global.location.origin + '/?next=' + encodeURIComponent(safeNextPath(next));
+    return authOrigin() + '/auth/callback.html?next=' + encodeURIComponent(safeNextPath(next));
   }
 
   function profileName(user, fields) {
@@ -159,7 +172,7 @@
       password,
       options: {
         data: { name, country },
-        emailRedirectTo: global.location.origin + '/auth/callback.html?next=' + encodeURIComponent('/exams/'),
+        emailRedirectTo: authOrigin() + '/auth/callback.html?next=' + encodeURIComponent('/exams/'),
       },
     });
     if (error) throw error;
@@ -257,6 +270,7 @@
     getProfile,
     upsertProfile,
     safeNextPath,
+    authOrigin,
     oauthCallbackUrl,
     finishOAuthFromUrl,
     signUp,
