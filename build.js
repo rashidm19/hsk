@@ -5359,7 +5359,7 @@ function buildQuizFunnel() {
   }
 
   const cfg = {
-    brand: ob.brand, handoffUrl: ob.handoffUrl,
+    brand: ob.brand, handoffUrl: ob.handoffUrl, pay: ob.pay,
     placeholders: ob.placeholders, testimonials: ob.testimonials, mirrorTestimonial: ob.mirrorTestimonial,
     pricing: ob.pricing, wheel: ob.wheel, timerSeconds: ob.timerSeconds,
     guarantee: ob.guarantee, levelScale: ob.levelScale, screens: ob.screens,
