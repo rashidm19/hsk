@@ -953,6 +953,52 @@
     } catch (e) {}
   }
 
+  // ---------- payment return handling (/quiz/?pay=success|cancel) ----------
+  var POLL_MAX = 6;
+  function stripPayParam() {
+    try {
+      var u = new URL(location.href);
+      u.searchParams.delete('pay');
+      history.replaceState({}, '', u.pathname + (u.search || '') + u.hash);
+    } catch (e) {}
+  }
+  function handlePayCancel() {
+    stripPayParam();
+    obTrack('payment_cancelled', {});
+    goById('s22');        // back to the paywall
+    openExitIntent();     // recovery offer (function is hoisted in this closure)
+  }
+  function handlePaySuccess() {
+    stripPayParam();
+    clearTimer();
+    goById('s25');        // show success optimistically (content is ungated)
+    pollSubscription(0);  // confirm the server-written entitlement in the background
+  }
+  function pollSubscription(attempt) {
+    if (!window.HSKAuth || !HSKAuth.isConfigured() || !HSKAuth.getSubscription) return finishSuccess(null);
+    HSKAuth.getUser().then(function (user) {
+      if (!user) return finishSuccess(null); // null session on return -> stay optimistic
+      HSKAuth.getSubscription(user.id).then(function (sub) {
+        if (sub && sub.status === 'active') return finishSuccess(sub);
+        if (attempt + 1 >= POLL_MAX) return finishSuccess(null); // proceed anyway (ungated)
+        setTimeout(function () { pollSubscription(attempt + 1); }, 1000);
+      }).catch(function () {
+        if (attempt + 1 >= POLL_MAX) return finishSuccess(null);
+        setTimeout(function () { pollSubscription(attempt + 1); }, 1000);
+      });
+    }).catch(function () { finishSuccess(null); });
+  }
+  function finishSuccess(sub) {
+    if (sub && sub.status === 'active') {
+      A.subscription = sub; save();
+      lsSet(LS_SUB, JSON.stringify(sub));
+      lsSet(LS_DONE, '1'); // only on confirmed server entitlement — never at checkout/timeout
+      obTrack('purchase', { plan: sub.plan, value: sub.price, currency: sub.currency, order_id: sub.order_id });
+    }
+    // Timeout / null session: stay optimistic on S25 (already shown). Do NOT set LS_DONE, so the
+    // next authenticated /quiz visit can reconcile once the lagging webhook row lands.
+  }
+
   // ---------- boot ----------
   function init() {
     var root = document.getElementById('ob-root');
@@ -963,8 +1009,11 @@
       lsDel(LS_STATE); lsDel(LS_DONE); lsDel(LS_SUB);
       state = freshState(); A = state.answers;
     }
+    // Payment redirect return — handled below, after the shell renders. Read it BEFORE the
+    // once-only guard so a returning payer is never bounced straight to the product.
+    var payResult = param('pay');
     // Once-only: completed onboarding -> straight to the product.
-    if (lsGet(LS_DONE) === '1' && !param('reset')) { location.replace(HANDOFF); return; }
+    if (lsGet(LS_DONE) === '1' && !param('reset') && !payResult) { location.replace(HANDOFF); return; }
 
     root.innerHTML =
       '<div class="ob-app">' +
@@ -982,6 +1031,12 @@
     // guard against a stale idx
     if (state.idx < 0 || state.idx >= FLOW.length) state.idx = 0;
     render();
+
+    // Payment return: success shows S25 + polls the server row; cancel re-offers the deal.
+    // Runs synchronously BEFORE the OAuth getUser()/s17-skip block below, so the restored-idx
+    // s17 auto-advance can't override the forced s25/s22 screen (goById has already moved idx).
+    if (payResult === 'success') handlePaySuccess();
+    else if (payResult === 'cancel') handlePayCancel();
 
     // Returning from OAuth (or already signed in): migrate answers and, if we're
     // sitting on the email-gate, skip past it.
