@@ -58,3 +58,41 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
+-- ── Payments (written ONLY by the grant-entitlement Edge Function via service-role) ──
+create table if not exists public.payments (
+  order_id   text primary key,
+  user_id    uuid references auth.users (id) on delete set null,
+  plan       text,
+  amount     numeric,
+  currency   text,
+  status     text not null default 'paid',
+  receipt    text,
+  paid_at    timestamptz,
+  raw        jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- RLS ENABLED with ZERO policies: anon/authenticated read nothing; service-role bypasses RLS.
+-- (No policies by design — do NOT add a select policy or the financial/PII ledger leaks.)
+alter table public.payments enable row level security;
+
+-- ── Lock profiles.subscription: only the service-role (Edge Function) may change it ──
+create or replace function public.guard_subscription_write()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if new.subscription is distinct from old.subscription
+     and coalesce(auth.role(), '') <> 'service_role' then
+    raise exception 'profiles.subscription is read-only for non-service-role';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_guard_subscription on public.profiles;
+create trigger profiles_guard_subscription
+  before update on public.profiles
+  for each row execute function public.guard_subscription_write();
