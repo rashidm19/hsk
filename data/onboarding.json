@@ -3,6 +3,7 @@
 
   "brand": "HSK Prep",
   "handoffUrl": "/exams/",
+  "pay": { "checkoutUrl": "https://pay.studybox.kz/checkout", "returnBase": "https://www.hskprep.cc" },
 
   "_mocksDisplay_comment": "Mock-exam count shown in funnel copy ({{mocks}}). Marketing claim, decoupled from the real TEST_COUNT and from syncCounts (which skips /quiz/).",
   "mocksDisplay": 100,
@@ -22,11 +23,11 @@
   "mirrorTestimonial": { "name": "{testimonial_name}", "text": "{testimonial}" },
 
   "pricing": {
-    "currency": "USD",
+    "currency": "KZT",
     "tiers": [
-      { "id": "1mo",  "label": "1 month",   "planLabel": "1-month",  "interval": "month",     "months": 1,  "base": 155.98, "price": 77.99,  "perDay": 2.60 },
-      { "id": "3mo",  "label": "3 months",  "planLabel": "3-month",  "interval": "3 months",  "months": 3,  "base": 215.98, "price": 107.99, "perDay": 1.20, "popular": true },
-      { "id": "12mo", "label": "12 months", "planLabel": "12-month", "interval": "12 months", "months": 12, "base": 599.98, "price": 299.99, "perDay": 0.82, "bestValue": true }
+      { "id": "1mo",  "label": "1 month",   "planLabel": "1-month",  "interval": "1 month",   "months": 1,  "base": 78000,  "price": 39000,  "perDay": 1300 },
+      { "id": "3mo",  "label": "3 months",  "planLabel": "3-month",  "interval": "3 months",  "months": 3,  "base": 108000, "price": 54000,  "perDay": 600, "popular": true },
+      { "id": "12mo", "label": "12 months", "planLabel": "12-month", "interval": "12 months", "months": 12, "base": 298000, "price": 149000, "perDay": 408, "bestValue": true }
     ],
     "defaultTier": "3mo"
   },
@@ -250,7 +251,7 @@
       "focusChip": "Focus: {weak_section}",
       "certNote": "Example HSK score report",
       "social": "{n} learners started this week",
-      "riskReversal": "No commitment. Cancel anytime.",
+      "riskReversal": "One-time payment. No auto-renewal.",
       "cta": "Get my plan",
       "mostPopular": "MOST POPULAR",
       "bestValue": "best value",
@@ -263,11 +264,11 @@
       "details": "Show details",
       "countryLabel": "Country",
       "paymentLabel": "Payment method",
-      "paymentNote": "You'll enter your card details in a secure window after clicking. Final amount may vary due to your bank's exchange rate.",
+      "paymentNote": "You'll be taken to our secure payment page to enter your card details.",
       "trust": "Secure checkout.",
       "cta": "Subscribe",
       "processing": "Processing…",
-      "disclosure": "Your card will be charged {price} today for the {plan} plan, then {price} every {interval} until you cancel. Cancel anytime in your account settings — it stops your next renewal. By subscribing you accept our Terms, Privacy Policy, and Refund Policy."
+      "disclosure": "You'll be charged {price} once for {interval} of full access — a one-time payment with no auto-renewal. By continuing you accept our Terms, Privacy Policy, and Refund Policy."
     },
     "s24": {
       "badge": "−50%",
