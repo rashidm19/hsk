@@ -115,6 +115,17 @@
     return data;
   }
 
+  // Read the server-owned entitlement (written only by the grant-entitlement Edge
+  // Function). profiles_select_own RLS already authorizes the owner. Returns null for both
+  // a missing row and a query error — the return poll treats them identically (ungated).
+  async function getSubscription(userId) {
+    const c = getClient();
+    if (!c || !userId) return null;
+    const { data, error } = await c.from('profiles').select('subscription').eq('id', userId).maybeSingle();
+    if (error) return null;
+    return (data && data.subscription) || null;
+  }
+
   async function signUp({ email, password, name, country }) {
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
@@ -205,7 +216,7 @@
     if (!c) return null;
     const user = await getUser();
     if (!user) return null;
-    const allowed = ['name', 'country', 'onboarding', 'subscription'];
+    const allowed = ['name', 'country', 'onboarding'];
     const row = { id: user.id, email: user.email || null, updated_at: new Date().toISOString() };
     Object.keys(fields || {}).forEach((k) => { if (allowed.indexOf(k) >= 0) row[k] = fields[k]; });
     const { error } = await c.from('profiles').upsert(row, { onConflict: 'id' });
@@ -273,6 +284,7 @@
     getSession,
     getUser,
     getProfile,
+    getSubscription,
     upsertProfile,
     safeNextPath,
     oauthCallbackUrl,
