@@ -336,7 +336,10 @@ to:
 
 - [ ] **Step 2: Add `getSubscription` right after `getProfile`**
 
-In `auth.js`, immediately after the `getProfile` function (ends at line 116 with `}`), insert:
+In `auth.js`, immediately after the `getProfile` function (ends at line 116 with `}`), insert the
+reader below. Returning `null` for **both** a missing row and a query error is intentional — the
+return poll (Task 7) treats "not active yet" and "error" identically because content is ungated, so
+spec A.3's error/no-session distinction is deliberately collapsed (no sentinel needed):
 
 ```js
   // Read the server-owned entitlement (written only by the grant-entitlement Edge
@@ -435,7 +438,31 @@ git commit -m "feat(funnel): currency-aware fmtPrice (KZT) + obTrack analytics s
 
 - [ ] **Step 1: Replace the payment seam block**
 
-In `onboarding.js`, replace lines 858-876 (from the `// ---------- payment seam (SIMULATED) ----------` comment through the end of `markPurchased`):
+In `onboarding.js`, replace this exact block (lines 858-876):
+
+```js
+  // ---------- payment seam (SIMULATED) ----------
+  // Swap this single function for a real provider (e.g. Stripe Checkout redirect,
+  // which matches the "secure window after clicking" copy) + return-URL handling.
+  function startCheckout(tier, discount) { return simulatePayment(tier, discount); }
+  function simulatePayment(tier, discount) {
+    setTimeout(function () {
+      markPurchased(tier, discount);
+      closeOverlay();
+      clearTimer();
+      goById('s25');
+    }, 1200);
+  }
+  function markPurchased(tier, discount) {
+    var sub = { status: 'active', plan: tier.id, planLabel: tier.planLabel, price: tier.price, interval: tier.interval, discount: discount, simulated: true, ts: Date.now() };
+    A.subscription = sub; save();
+    lsSet(LS_SUB, JSON.stringify(sub));
+    lsSet(LS_DONE, '1');
+    syncToProfile();
+  }
+```
+
+with:
 
 ```js
   // ---------- payment seam ----------
@@ -459,6 +486,7 @@ In `onboarding.js`, replace lines 858-876 (from the `// ---------- payment seam 
         '&email=' + encodeURIComponent(user.email || A.email || '') +
         '&return=' + encodeURIComponent(base + '/quiz/?pay=success') +
         '&cancel=' + encodeURIComponent(base + '/quiz/?pay=cancel');
+      closeOverlay();
       clearTimer();
       location.href = url;
     }).catch(function () { simulatePayment(tier, discount); });
@@ -494,7 +522,22 @@ In `onboarding.js`, replace lines 858-876 (from the `// ---------- payment seam 
 
 - [ ] **Step 2: Remove the subscription write from `syncToProfile`**
 
-In `onboarding.js`, replace the body of `syncToProfile` (lines 898-906) so it persists only onboarding answers:
+In `onboarding.js`, replace this exact block (lines 897-906 — include the comment line 897 so it isn't duplicated):
+
+```js
+  // ---------- profile migration ----------
+  function syncToProfile() {
+    try {
+      if (!window.HSKAuth || !HSKAuth.isConfigured() || !HSKAuth.updateProfile) return;
+      HSKAuth.getUser().then(function (user) {
+        if (!user) return;
+        HSKAuth.updateProfile({ onboarding: state.answers, subscription: A.subscription || null }).catch(function () {});
+      }).catch(function () {});
+    } catch (e) {}
+  }
+```
+
+with (persists only onboarding answers):
 
 ```js
   // ---------- profile migration ----------
@@ -611,14 +654,26 @@ with:
     if (lsGet(LS_DONE) === '1' && !param('reset') && !payResult) { location.replace(HANDOFF); return; }
 ```
 
-- [ ] **Step 3: Dispatch the pay handlers right after `render()`**
+- [ ] **Step 3: Dispatch the pay handlers right after the boot render**
 
-In `init()`, find `render();` (line 936) and insert immediately after it:
+`render();` appears several times in `onboarding.js` — do NOT anchor on the bare call. Anchor on
+the unique stale-idx guard that immediately precedes the boot render (`state.idx = 0;` occurs
+exactly once). Replace:
 
 ```js
+    if (state.idx < 0 || state.idx >= FLOW.length) state.idx = 0;
+    render();
+```
+
+with:
+
+```js
+    if (state.idx < 0 || state.idx >= FLOW.length) state.idx = 0;
     render();
 
     // Payment return: success shows S25 + polls the server row; cancel re-offers the deal.
+    // Runs synchronously BEFORE the OAuth getUser()/s17-skip block below, so the restored-idx
+    // s17 auto-advance can't override the forced s25/s22 screen (goById has already moved idx).
     if (payResult === 'success') handlePaySuccess();
     else if (payResult === 'cancel') handlePayCancel();
 ```
@@ -644,7 +699,7 @@ git commit -m "feat(funnel): handle /quiz/?pay return — poll server entitlemen
 
 - [ ] **Step 1: Set the currency and KZT tier values**
 
-In `data/onboarding.json`, set `pricing.currency` to `"KZT"` and replace the three tier objects so each reads (keep any other existing keys like `popular`/`bestValue`):
+In `data/onboarding.json`, set `pricing.currency` to `"KZT"` and replace the three tier objects so each reads (keep any other existing keys like `popular`/`bestValue`). Note: the `1mo` `interval` MUST change from `"month"` to `"1 month"` (below) so it matches the Edge Function `PLAN_MAP` exactly — otherwise the simulated and real `subscription.interval` diverge:
 
 ```json
       { "id": "1mo",  "label": "1 month",   "planLabel": "1-month",  "interval": "1 month",   "months": 1,  "base": 78000,  "price": 39000,  "perDay": 1300 },
@@ -861,6 +916,12 @@ These are live-project steps (run by the operator, not part of CI):
 - Apply `supabase/schema.sql` (SQL editor, or `apply_migration` via the Supabase MCP).
 - `supabase functions deploy grant-entitlement --no-verify-jwt`
 - `supabase secrets set HSK_GRANT_HMAC_SECRET='…'`
+- **Regression check — the lock trigger must NOT block normal onboarding writes:** as a signed-in
+  user (complete the email gate), trigger an `HSKAuth.updateProfile({ onboarding: { check: 1 } })`
+  from the funnel and confirm the row persists with no `subscription is read-only` error (the
+  payload omits `subscription`, so `is distinct from old` is false and the trigger passes).
+- **End-to-end check:** a real test order flips `profiles.subscription.status` to `active`
+  (service-role SQL: `select subscription from profiles where id = '<uid>';`).
 
 - [ ] **Step 3: Commit the doc**
 

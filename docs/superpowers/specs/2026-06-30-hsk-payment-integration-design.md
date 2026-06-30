@@ -180,10 +180,9 @@ Set `pricing.currency = "KZT"` and tier `price`/`base`/`perDay` to whole tenge
   `{ status:'active', plan, price, currency:'KZT', interval, provider, order_id, paid_at, expires_at }`.
   Make `simulatePayment()` emit the same keys (`provider:'simulated'`, synthetic `order_id`, computed
   `expires_at`). Readers strictly require only `status`; everything else is display/support metadata.
-- **`expires_at`** computed on the StudyBox backend at pay time from the **integer month count**
-  (`paid_at + N months`, UTC), passed explicitly to the function (send integer `months`, not the
-  display string). For MVP nothing flips `active → expired` (gating is deferred) — QA should not
-  treat a permanently-active row as a bug.
+- **`expires_at`** is computed **by the Edge Function** from `paid_at + plan.months` (UTC) using the
+  plan map — not trusted from the body. For MVP nothing flips `active → expired` (gating is deferred)
+  — QA should not treat a permanently-active row as a bug.
 - **Idempotent migration** — append `payments` + any policies guarded with
   `drop policy if exists …; create policy …` (mirroring the file's existing drop-if-exists for the
   trigger) so `schema.sql` stays re-runnable by hand.
@@ -197,9 +196,12 @@ Set `pricing.currency = "KZT"` and tier `price`/`base`/`perDay` to whole tenge
   identity is expected and harmless).
 - **acquiring → StudyBox** (webhook): provider-signed; carries `{ hsk_uid, plan, months, order_id }`.
 - **StudyBox → HSK Edge Function** (POST + HMAC): canonical JSON
-  `{ uid, plan, months, order_id, amount, currency:'KZT', paid_at, expires_at, ts, nonce }`.
-  Signature: HMAC-SHA256 over the **raw body bytes** (no re-serialization), hex-encoded, in header
-  `X-HSK-Signature`. Both sides must agree byte-for-byte.
+  `{ uid, plan, order_id, currency:'KZT', paid_at, ts, receipt? }`. The function **re-derives**
+  amount / interval / expires_at from the `plan` id via the plan map — any `amount`/`months`/
+  `expires_at` in the body are audit-only and are NOT part of the entitlement, so they are kept out
+  of the signed contract to avoid drift. Replay is covered by `order_id` idempotency + `ts` freshness
+  (±300 s); no separate nonce. Signature: HMAC-SHA256 over the **raw body bytes** (no
+  re-serialization), hex-encoded, in header `X-HSK-Signature`. Both sides must agree byte-for-byte.
 - **HSK reads:** `profiles.subscription.status === 'active'`.
 - **Plan → KZT map** (must match `data/onboarding.json`; `onboarding.json` is canonical, the
   contract table is the authority StudyBox copies): `1mo=39000`, `3mo=54000`, `12mo=149000`.
