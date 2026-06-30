@@ -179,6 +179,25 @@
     return data;
   }
 
+  // Verify an emailed OTP code (in-flow, no redirect — works cross-device).
+  // Pairs with signInWithEmailOtp(); on success the session is active.
+  async function verifyEmailOtp(email, token) {
+    const c = getClient();
+    if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    const t = String(token).trim();
+    // 'email' is the documented type for codes sent via signInWithOtp; some
+    // Supabase configs issue a 'signup' token for brand-new addresses, so fall
+    // back to that on failure rather than betting on one. Harmless either way.
+    let res = await c.auth.verifyOtp({ email: email, token: t, type: 'email' });
+    if (res.error) {
+      const retry = await c.auth.verifyOtp({ email: email, token: t, type: 'signup' });
+      if (retry.error) throw res.error; // surface the original error
+      res = retry;
+    }
+    if (res.data && res.data.user) await upsertProfile(res.data.user, {});
+    return res.data;
+  }
+
   // Update the current user's profile row with a whitelisted set of fields
   // (used by onboarding to persist quiz answers + subscription status).
   async function updateProfile(fields) {
@@ -262,6 +281,7 @@
     signIn,
     signInWithGoogle,
     signInWithEmailOtp,
+    verifyEmailOtp,
     updateProfile,
     signOut,
     onAuthStateChange,

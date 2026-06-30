@@ -486,46 +486,93 @@
     return el;
   }
 
-  // S17 — email gate / account (single auth step)
+  // S17 — email gate / account. Two phases inside one step:
+  // (1) email entry -> sends an email OTP code; (2) code entry -> verifyOtp =
+  // account + session, in-flow (cross-device, no redirect). When Supabase is
+  // unconfigured (local preview) it just continues.
   function sEmailGate() {
     var c = S.s17 || {};
-    var el = screenEl(
-      '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
-      '<p class="ob-sub">' + subst(c.sub) + '</p>' +
-      '<input class="ob-input" id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.email || '') + '">' +
-      '<div class="ob-error" id="emerr" hidden></div>' +
-      '<p class="ob-note">' + esc(c.trust) + '</p>' +
-      ctaBtn(c.cta || 'Show my plan', { id: 'go' }) +
-      '<div class="ob-or">' + esc(c.or || 'OR') + '</div>' +
-      '<button type="button" class="ob-google" id="goog">' + esc(c.google || 'Continue with Google') + '</button>' +
-      '<div class="ob-bonus">' + subst(c.bonus) + '</div>');
-    var em = $('#em', el), err = $('#emerr', el);
-    function valid(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-    $('#go', el).onclick = function () {
-      var v = em.value.trim();
-      if (!valid(v)) { err.textContent = c.invalidEmail || 'Please enter a valid email address.'; err.hidden = false; em.classList.add('is-error'); em.focus(); return; }
-      err.hidden = true; em.classList.remove('is-error');
-      A.email = v; save();
-      // Register / send results email if Supabase is configured (non-blocking).
-      try {
-        if (window.HSKAuth && HSKAuth.isConfigured() && HSKAuth.signInWithEmailOtp) {
-          HSKAuth.signInWithEmailOtp(v, { next: '/quiz/' }).catch(function () {});
+    var el = screenEl('<div id="gatehost"></div>');
+    var host = $('#gatehost', el);
+    function configured() { try { return !!(window.HSKAuth && HSKAuth.isConfigured()); } catch (e) { return false; } }
+    function focusHead() { var h = host.querySelector('.ob-h1'); if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); } } }
+    function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+    renderEmail();
+
+    function renderEmail() {
+      host.innerHTML =
+        '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
+        '<p class="ob-sub">' + subst(c.sub) + '</p>' +
+        '<input class="ob-input" id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.email || '') + '">' +
+        '<div class="ob-error" id="emerr" role="alert" hidden></div>' +
+        '<p class="ob-note">' + esc(c.trust) + '</p>' +
+        ctaBtn(c.cta || 'Show my plan', { id: 'go' }) +
+        '<div class="ob-or">' + esc(c.or || 'OR') + '</div>' +
+        '<button type="button" class="ob-google" id="goog">' + esc(c.google || 'Continue with Google') + '</button>' +
+        '<div class="ob-bonus">' + subst(c.bonus) + '</div>';
+      var em = $('#em', host), err = $('#emerr', host);
+      $('#go', host).onclick = function () {
+        var v = em.value.trim();
+        if (!validEmail(v)) { err.textContent = c.invalidEmail || 'Please enter a valid email address.'; err.hidden = false; em.classList.add('is-error'); em.focus(); return; }
+        err.hidden = true; em.classList.remove('is-error'); A.email = v; save();
+        if (configured() && HSKAuth.signInWithEmailOtp) {
+          var btn = $('#go', host); btn.disabled = true; btn.textContent = c.sending || 'Sending…';
+          HSKAuth.signInWithEmailOtp(v, { next: '/quiz/' })
+            .then(function () { renderCode(); })
+            .catch(function () {
+              btn.disabled = false; btn.textContent = c.cta || 'Show my plan';
+              err.textContent = c.sendError || 'Could not send the code. Check the address and try again.'; err.hidden = false;
+            });
+        } else {
+          next(); // local preview / unconfigured
         }
-      } catch (e) {}
-      next();
-    };
-    $('#goog', el).onclick = function () {
-      try {
-        if (window.HSKAuth && HSKAuth.isConfigured()) {
-          A.email = (em.value || '').trim(); save();
-          HSKAuth.signInWithGoogle({ next: '/quiz/' });
-          return;
-        }
-      } catch (e) {}
-      // Auth not configured (local preview) — just continue.
-      next();
-    };
-    em.onkeydown = function (e) { if (e.key === 'Enter') $('#go', el).click(); };
+      };
+      $('#goog', host).onclick = function () {
+        try { if (configured()) { A.email = (em.value || '').trim(); save(); HSKAuth.signInWithGoogle({ next: '/quiz/' }); return; } } catch (e) {}
+        next();
+      };
+      em.onkeydown = function (e) { if (e.key === 'Enter') $('#go', host).click(); };
+      focusHead();
+    }
+
+    function renderCode() {
+      host.innerHTML =
+        '<h1 class="ob-h1">' + esc(c.codeHeadline || 'Check your email') + '</h1>' +
+        '<p class="ob-sub">' + esc(c.codeSub || 'We sent a code to') + ' <strong>' + esc(A.email) + '</strong></p>' +
+        '<input class="ob-input" id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="' + esc(c.codePlaceholder || 'Enter code') + '">' +
+        '<div class="ob-error" id="cerr" role="alert" hidden></div>' +
+        ctaBtn(c.verify || 'Verify & show my plan', { id: 'verify' }) +
+        '<button type="button" class="ob-link" id="resend">' + esc(c.resend || 'Resend code') + '</button>' +
+        '<button type="button" class="ob-link" id="changeem">' + esc(c.changeEmail || '← Use a different email') + '</button>' +
+        '<button type="button" class="ob-link" id="skip">' + esc(c.skipCode || 'Enter it later') + '</button>';
+      var code = $('#code', host), cerr = $('#cerr', host);
+      $('#verify', host).onclick = function () {
+        var t = (code.value || '').trim();
+        if (!t) { cerr.textContent = c.codeRequired || 'Enter the code from your email.'; cerr.hidden = false; code.focus(); return; }
+        cerr.hidden = true;
+        var btn = $('#verify', host); btn.disabled = true; btn.textContent = c.verifying || 'Verifying…';
+        HSKAuth.verifyEmailOtp(A.email, t)
+          .then(function () { syncToProfile(); next(); })
+          .catch(function () {
+            btn.disabled = false; btn.textContent = c.verify || 'Verify & show my plan';
+            cerr.textContent = c.codeError || "That code didn't work — check it and try again."; cerr.hidden = false;
+          });
+      };
+      $('#resend', host).onclick = function () {
+        var r = $('#resend', host); r.disabled = true; r.textContent = c.resending || 'Sending…';
+        HSKAuth.signInWithEmailOtp(A.email, { next: '/quiz/' })
+          .then(function () { r.textContent = c.resent || 'Code sent'; setTimeout(function () { if (r.isConnected) { r.disabled = false; r.textContent = c.resend || 'Resend code'; } }, 4000); })
+          .catch(function () {
+            r.disabled = false; r.textContent = c.resend || 'Resend code';
+            cerr.textContent = c.resendError || 'Please wait a moment before requesting another code.'; cerr.hidden = false;
+          });
+      };
+      $('#changeem', host).onclick = function () { renderEmail(); }; // fix a wrong/typo'd email in-flow
+      $('#skip', host).onclick = function () { next(); }; // continue without verifying now
+      code.onkeydown = function (e) { if (e.key === 'Enter') $('#verify', host).click(); };
+      focusHead();
+    }
     return el;
   }
 
