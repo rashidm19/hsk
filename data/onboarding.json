@@ -266,7 +266,7 @@
       "paymentLabel": "Payment method",
       "paymentNote": "You'll be taken to our secure payment page to enter your card details.",
       "trust": "Secure checkout.",
-      "cta": "Subscribe",
+      "cta": "Pay",
       "processing": "Processing…",
       "disclosure": "You'll be charged {price} once for {interval} of full access — a one-time payment with no auto-renewal. By continuing you accept our Terms, Privacy Policy, and Refund Policy."
     },
@@ -281,7 +281,7 @@
     },
     "s25": {
       "headline": "You're in! Your HSK plan is ready.",
-      "sub": "Payment confirmed — your receipt is on its way to your email.",
+      "sub": "Thanks! Let's get your study plan started.",
       "recapLabel": "Your plan",
       "next": "Your Week 1 starts now — first up: {weak_section}.",
       "cta": "Start studying"

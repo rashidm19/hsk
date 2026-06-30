@@ -35,6 +35,11 @@ Deno.serve(async (req) => {
   if (p.currency !== "KZT") { log({ order_id: p.order_id, result: "reject", reject: "bad_currency" }); return new Response("bad currency", { status: 400 }); }
   if (!freshTs(Number(p.ts), Date.now())) { log({ order_id: p.order_id, result: "reject", reject: "stale" }); return new Response("stale", { status: 400 }); }
   if (!p.uid || !p.order_id || !p.paid_at) return new Response("missing fields", { status: 400 });
+  if (isNaN(new Date(String(p.paid_at)).getTime())) {
+    // permanent caller error — fail closed with 400 so the acquiring doesn't retry-storm a 500
+    log({ order_id: p.order_id, result: "reject", reject: "bad_paid_at" });
+    return new Response("bad paid_at", { status: 400 });
+  }
 
   const sb = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });
 

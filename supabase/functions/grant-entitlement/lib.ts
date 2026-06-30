@@ -36,8 +36,12 @@ export async function verifySig(secret: string, body: string, sigHex: string): P
 export function computeExpiry(paidAtIso: string, months: number): string {
   const d = new Date(paidAtIso);
   if (isNaN(d.getTime())) throw new Error("bad paid_at");
+  const day = d.getUTCDate();
   const r = new Date(d);
+  r.setUTCDate(1); // shift the month off day 1 so e.g. Jan 31 + 1mo cannot roll into March
   r.setUTCMonth(r.getUTCMonth() + months);
+  const daysInTarget = new Date(Date.UTC(r.getUTCFullYear(), r.getUTCMonth() + 1, 0)).getUTCDate();
+  r.setUTCDate(Math.min(day, daysInTarget)); // clamp to the target month's last day
   return r.toISOString();
 }
 

@@ -823,7 +823,7 @@
     $('#chg', overlay).onclick = function () { closeOverlay(); }; // back to paywall to change plan
     $('#sub', overlay).onclick = function () {
       var btn = $('#sub', overlay); btn.disabled = true; btn.textContent = c.processing || 'Processing…';
-      startCheckout(t, A.discount || 50);
+      startCheckout(t);
     };
     trapModal(overlay, toExit);
     setTimeout(function () { var x = $('#x', overlay); if (x) x.focus(); }, 30);
@@ -872,14 +872,15 @@
   // bound to studybox.kz). Entitlement is written server-side by the acquiring webhook ->
   // grant-entitlement Edge Function; the /quiz/?pay=success return is UX only and is polled.
   // Unconfigured Supabase (local static preview) keeps the simulated path.
-  function startCheckout(tier, discount) {
+  function startCheckout(tier) {
     var pay = CFG.pay || {};
     if (!window.HSKAuth || !HSKAuth.isConfigured() || !pay.checkoutUrl) {
-      return simulatePayment(tier, discount);
+      return simulatePayment(tier);
     }
-    obTrack('begin_checkout', { plan: tier.id, value: tier.price, currency: (PRICING.currency || 'USD') });
     HSKAuth.getUser().then(function (user) {
-      if (!user) return simulatePayment(tier, discount); // no session -> can't key the grant
+      if (!user) return simulatePayment(tier); // no session -> can't key the grant
+      // Fire begin_checkout only when a real cross-domain redirect is imminent.
+      obTrack('begin_checkout', { plan: tier.id, value: tier.price, currency: (PRICING.currency || 'USD') });
       var base = pay.returnBase || location.origin;
       var url = pay.checkoutUrl +
         '?product=hsk' +
@@ -891,13 +892,13 @@
       closeOverlay();
       clearTimer();
       location.href = url;
-    }).catch(function () { simulatePayment(tier, discount); });
+    }).catch(function () { simulatePayment(tier); });
   }
 
   // Simulated fallback (unconfigured preview only). Writes the canonical subscription shape
   // locally so the success screen renders; never reaches Supabase (syncToProfile no-ops when
   // unconfigured, and only the service-role may write profiles.subscription anyway).
-  function simulatePayment(tier, discount) {
+  function simulatePayment(tier) {
     setTimeout(function () {
       markPurchased(tier);
       closeOverlay();

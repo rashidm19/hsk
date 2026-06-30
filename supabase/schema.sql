@@ -84,8 +84,17 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  if new.subscription is distinct from old.subscription
-     and coalesce(auth.role(), '') <> 'service_role' then
+  -- The service-role (grant-entitlement Edge Function) may always write subscription.
+  if coalesce(auth.role(), '') = 'service_role' then
+    return new;
+  end if;
+  -- Non-service-role: subscription must be absent on INSERT and unchanged on UPDATE,
+  -- so a client cannot self-grant by inserting its own profiles row before one exists.
+  if tg_op = 'INSERT' then
+    if new.subscription is not null then
+      raise exception 'profiles.subscription is read-only for non-service-role';
+    end if;
+  elsif new.subscription is distinct from old.subscription then
     raise exception 'profiles.subscription is read-only for non-service-role';
   end if;
   return new;
@@ -94,5 +103,5 @@ $$;
 
 drop trigger if exists profiles_guard_subscription on public.profiles;
 create trigger profiles_guard_subscription
-  before update on public.profiles
+  before insert or update on public.profiles
   for each row execute function public.guard_subscription_write();
