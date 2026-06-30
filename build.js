@@ -1543,6 +1543,9 @@ function syncCounts() {
   const total = fmtNum(TOTAL_QUESTIONS);
   let touched = 0;
   walkHtmlFiles().forEach(f => {
+    // The onboarding funnel uses its own marketing mock-exam claim (mocksDisplay),
+    // not the derived TEST_COUNT — don't rewrite it.
+    if (f.endsWith(path.join('quiz', 'index.html'))) return;
     let html = fs.readFileSync(f, 'utf8');
     const before = html;
     // "N mock exams" in any phrasing (free / complete / full / HSK 4 qualifiers,
@@ -5299,10 +5302,13 @@ function buildTranscriptPages() {
 function buildQuizFunnel() {
   console.log('[quiz] Generating onboarding funnel /quiz/ ...');
 
-  // {{mocks}}/{{questions}} = build-time derived counts (stay truthful as papers
-  // are added). {dynamic} and other {placeholder} tokens are handled at runtime.
-  const raw = fs.readFileSync(path.join(DATA, 'onboarding.json'), 'utf8')
-    .replace(/\{\{mocks\}\}/g, String(TEST_COUNT))
+  // {{questions}} = derived count. {{mocks}} = a marketing claim from
+  // onboarding.json (mocksDisplay), NOT the real TEST_COUNT — syncCounts() skips
+  // /quiz/ so it won't rewrite it back. {dynamic}/{placeholder} are runtime.
+  const rawFile = fs.readFileSync(path.join(DATA, 'onboarding.json'), 'utf8');
+  const mocksDisplay = JSON.parse(rawFile).mocksDisplay || TEST_COUNT;
+  const raw = rawFile
+    .replace(/\{\{mocks\}\}/g, String(mocksDisplay))
     .replace(/\{\{questions\}\}/g, fmtNum(TOTAL_QUESTIONS));
   const ob = JSON.parse(raw);
 

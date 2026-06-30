@@ -85,11 +85,16 @@
     interval: function () { return selectedTier().interval || ''; },
     discount: function () { return '50%'; }
   };
-  // Replace {known} dynamic tokens (HTML-escaped). Unknown {tokens} (placeholders
-  // like {learner_count}) are left verbatim — never invented.
+  // Replace tokens (HTML-escaped): first answer-derived {dynamic} values, then
+  // content {placeholders} from OB_CONFIG.placeholders (e.g. learner_count). A
+  // token that resolves to nothing — or to itself ("{x}") — is left verbatim.
+  var PH = CFG.placeholders || {};
   function subst(str) {
     return String(str == null ? '' : str).replace(/\{(\w+)\}/g, function (m, key) {
-      return Object.prototype.hasOwnProperty.call(DYN, key) ? esc(DYN[key]()) : m;
+      if (Object.prototype.hasOwnProperty.call(DYN, key)) return esc(DYN[key]());
+      var v = PH[key];
+      if (v != null && typeof v !== 'object' && String(v) !== '' && String(v) !== m) return esc(v);
+      return m;
     });
   }
 
@@ -544,8 +549,7 @@
         '<div class="ob-error" id="cerr" role="alert" hidden></div>' +
         ctaBtn(c.verify || 'Verify & show my plan', { id: 'verify' }) +
         '<button type="button" class="ob-link" id="resend">' + esc(c.resend || 'Resend code') + '</button>' +
-        '<button type="button" class="ob-link" id="changeem">' + esc(c.changeEmail || '← Use a different email') + '</button>' +
-        '<button type="button" class="ob-link" id="skip">' + esc(c.skipCode || 'Enter it later') + '</button>';
+        '<button type="button" class="ob-link" id="changeem">' + esc(c.changeEmail || '← Use a different email') + '</button>';
       var code = $('#code', host), cerr = $('#cerr', host);
       $('#verify', host).onclick = function () {
         var t = (code.value || '').trim();
@@ -569,7 +573,8 @@
           });
       };
       $('#changeem', host).onclick = function () { renderEmail(); }; // fix a wrong/typo'd email in-flow
-      $('#skip', host).onclick = function () { next(); }; // continue without verifying now
+      // No skip: verifying the emailed code (or Google sign-in) is required to
+      // pass the gate — email == a real account (hard gate, per product).
       code.onkeydown = function (e) { if (e.key === 'Enter') $('#verify', host).click(); };
       focusHead();
     }

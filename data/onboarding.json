@@ -4,10 +4,13 @@
   "brand": "HSK Prep",
   "handoffUrl": "/exams/",
 
+  "_mocksDisplay_comment": "Mock-exam count shown in funnel copy ({{mocks}}). Marketing claim, decoupled from the real TEST_COUNT and from syncCounts (which skips /quiz/).",
+  "mocksDisplay": 100,
+
   "placeholders": {
-    "learner_count": "{learner_count}",
+    "learner_count": "1000",
     "pass_rate": "{pass_rate}",
-    "started_this_week": "{n}",
+    "n": "{n}",
     "authority_logos": [],
     "starter_kit": "{starter_kit}"
   },
@@ -198,8 +201,7 @@
       "resending": "Sending…",
       "resent": "Code sent ✓",
       "resendError": "Please wait a moment before requesting another code.",
-      "changeEmail": "← Use a different email",
-      "skipCode": "I'll enter it later"
+      "changeEmail": "← Use a different email"
     },
     "s18": {
       "headline": "Your path to {target_level} — mapped",
