@@ -867,20 +867,54 @@
     return 'United States';
   }
 
-  // ---------- payment seam (SIMULATED) ----------
-  // Swap this single function for a real provider (e.g. Stripe Checkout redirect,
-  // which matches the "secure window after clicking" copy) + return-URL handling.
-  function startCheckout(tier, discount) { return simulatePayment(tier, discount); }
+  // ---------- payment seam ----------
+  // Real provider: redirect to the StudyBox acquiring on pay.studybox.kz (the acquiring is
+  // bound to studybox.kz). Entitlement is written server-side by the acquiring webhook ->
+  // grant-entitlement Edge Function; the /quiz/?pay=success return is UX only and is polled.
+  // Unconfigured Supabase (local static preview) keeps the simulated path.
+  function startCheckout(tier, discount) {
+    var pay = CFG.pay || {};
+    if (!window.HSKAuth || !HSKAuth.isConfigured() || !pay.checkoutUrl) {
+      return simulatePayment(tier, discount);
+    }
+    obTrack('begin_checkout', { plan: tier.id, value: tier.price, currency: (PRICING.currency || 'USD') });
+    HSKAuth.getUser().then(function (user) {
+      if (!user) return simulatePayment(tier, discount); // no session -> can't key the grant
+      var base = pay.returnBase || location.origin;
+      var url = pay.checkoutUrl +
+        '?product=hsk' +
+        '&plan=' + encodeURIComponent(tier.id) +
+        '&uid=' + encodeURIComponent(user.id) +
+        '&email=' + encodeURIComponent(user.email || A.email || '') +
+        '&return=' + encodeURIComponent(base + '/quiz/?pay=success') +
+        '&cancel=' + encodeURIComponent(base + '/quiz/?pay=cancel');
+      closeOverlay();
+      clearTimer();
+      location.href = url;
+    }).catch(function () { simulatePayment(tier, discount); });
+  }
+
+  // Simulated fallback (unconfigured preview only). Writes the canonical subscription shape
+  // locally so the success screen renders; never reaches Supabase (syncToProfile no-ops when
+  // unconfigured, and only the service-role may write profiles.subscription anyway).
   function simulatePayment(tier, discount) {
     setTimeout(function () {
-      markPurchased(tier, discount);
+      markPurchased(tier);
       closeOverlay();
       clearTimer();
       goById('s25');
     }, 1200);
   }
-  function markPurchased(tier, discount) {
-    var sub = { status: 'active', plan: tier.id, planLabel: tier.planLabel, price: tier.price, interval: tier.interval, discount: discount, simulated: true, ts: Date.now() };
+  function markPurchased(tier) {
+    var months = tier.months || 1;
+    var now = Date.now();
+    var sub = {
+      status: 'active', plan: tier.id, price: tier.price,
+      currency: (PRICING.currency || 'USD'), interval: tier.interval,
+      provider: 'simulated', order_id: 'sim_' + now,
+      paid_at: new Date(now).toISOString(),
+      expires_at: new Date(now + months * 30 * 24 * 3600 * 1000).toISOString()
+    };
     A.subscription = sub; save();
     lsSet(LS_SUB, JSON.stringify(sub));
     lsSet(LS_DONE, '1');
@@ -907,12 +941,14 @@
   }
 
   // ---------- profile migration ----------
+  // Persists ONLY onboarding answers. subscription is server-owned (grant-entitlement);
+  // the client neither writes nor clobbers it.
   function syncToProfile() {
     try {
       if (!window.HSKAuth || !HSKAuth.isConfigured() || !HSKAuth.updateProfile) return;
       HSKAuth.getUser().then(function (user) {
         if (!user) return;
-        HSKAuth.updateProfile({ onboarding: state.answers, subscription: A.subscription || null }).catch(function () {});
+        HSKAuth.updateProfile({ onboarding: state.answers }).catch(function () {});
       }).catch(function () {});
     } catch (e) {}
   }
