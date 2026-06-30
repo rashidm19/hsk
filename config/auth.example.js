@@ -7,10 +7,10 @@
  *   2. Authorized redirect URI: https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
  *   3. Paste Client ID + Client Secret into Supabase Google provider settings
  *   4. Authentication → URL Configuration:
- *        Site URL: https://hskprep.cc
+ *        Site URL: https://www.hskprep.cc
  *        Redirect URLs (add ALL — Google OAuth returns to "/", email confirmation to /auth/callback.html):
- *          https://hskprep.cc/
- *          https://hskprep.cc/auth/callback.html
+ *          https://www.hskprep.cc/
+ *          https://www.hskprep.cc/auth/callback.html
  *          http://localhost:PORT/                    (local dev — Google)
  *          http://localhost:PORT/auth/callback.html  (local dev — email confirm)
  *

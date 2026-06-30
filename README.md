@@ -1,7 +1,7 @@
 # HSK Prep — Free HSK 4 Mock Exams & Study Tools
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![HSK Level](https://img.shields.io/badge/HSK-Level%204-red)](https://hskprep.cc)
+[![HSK Level](https://img.shields.io/badge/HSK-Level%204-red)](https://www.hskprep.cc)
 [![Tests](https://img.shields.io/badge/Tests-14%20Complete%20Exams-blue)]()
 [![Questions](https://img.shields.io/badge/Questions-1%2C375-green)]()
 
@@ -9,7 +9,7 @@
 
 12 套完整的 HSK 4 模拟试题，涵盖听力、阅读、书写三大部分，JSON 格式，可直接用于 App 开发、刷题工具或学习系统。
 
-> Created by [**HSK Prep**](https://hskprep.cc) — Free HSK 4 mock exams and study tools.
+> Created by [**HSK Prep**](https://www.hskprep.cc) — Free HSK 4 mock exams and study tools.
 
 ---
 
@@ -127,13 +127,13 @@ The HSK (汉语水平考试 / Hanyu Shuiping Kaoshi) is the standardized Chinese
 - Communicate comfortably with native Chinese speakers
 - Understand approximately 1,200 vocabulary words
 
-Learn more about HSK preparation at [HSK Prep](https://hskprep.cc).
+Learn more about HSK preparation at [HSK Prep](https://www.hskprep.cc).
 
 ## Related Resources
 
-- [Online HSK 4 Practice Tests](https://hskprep.cc) — Take these tests online with full audio support
-- [HSK 4 Vocabulary List](https://hskprep.cc) — Complete word list for HSK 4
-- [Learn Chinese Online](https://hskprep.cc) — 1-on-1 online Chinese classes
+- [Online HSK 4 Practice Tests](https://www.hskprep.cc) — Take these tests online with full audio support
+- [HSK 4 Vocabulary List](https://www.hskprep.cc) — Complete word list for HSK 4
+- [Learn Chinese Online](https://www.hskprep.cc) — 1-on-1 online Chinese classes
 
 ## Contributing
 
@@ -150,7 +150,7 @@ Please open an issue or submit a pull request.
 
 This work is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 
-You are free to share and adapt this material for non-commercial purposes, as long as you give appropriate credit to [HSK Prep](https://hskprep.cc) and distribute your contributions under the same license.
+You are free to share and adapt this material for non-commercial purposes, as long as you give appropriate credit to [HSK Prep](https://www.hskprep.cc) and distribute your contributions under the same license.
 
 ---
 
@@ -162,8 +162,8 @@ Platform pages require a free account when Supabase is configured.
 2. Run [`supabase/schema.sql`](supabase/schema.sql) in the SQL Editor.
 3. Copy config: `cp config/auth.example.js config/auth.js` and add your **Project URL** and **anon key**.
 4. In Supabase → Authentication → URL configuration, add:
-   - **Site URL:** `https://hskprep.cc`
-   - **Redirect URLs:** add **both** `https://hskprep.cc/` (Google OAuth returns here) and `https://hskprep.cc/auth/callback.html` (email confirmation returns here) — plus `http://localhost:8080/` and `http://localhost:8080/auth/callback.html` for local dev
+   - **Site URL:** `https://www.hskprep.cc`
+   - **Redirect URLs:** add **both** `https://www.hskprep.cc/` (Google OAuth returns here) and `https://www.hskprep.cc/auth/callback.html` (email confirmation returns here) — plus `http://localhost:8080/` and `http://localhost:8080/auth/callback.html` for local dev
 5. Deploy with `config/auth.js` on the server (gitignored locally).
 
 Until `config/auth.js` is filled in, the platform stays open for static preview. After configuration, visitors sign in on the landing page and user profiles are stored in the `profiles` table.
@@ -172,4 +172,4 @@ To wire auth scripts into new platform HTML pages: `node scripts/inject-auth.js`
 
 ---
 
-**Made with ❤️ by [HSK Prep](https://hskprep.cc) — Free HSK 4 practice tests & study tools**
+**Made with ❤️ by [HSK Prep](https://www.hskprep.cc) — Free HSK 4 practice tests & study tools**

@@ -30,4 +30,4 @@ Disallow: /
 User-agent: MJ12bot
 Disallow: /
 
-Sitemap: https://hskprep.cc/sitemap.xml
+Sitemap: https://www.hskprep.cc/sitemap.xml
