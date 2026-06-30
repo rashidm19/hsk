@@ -33,7 +33,19 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
-  function fmtPrice(n) { return '$' + Number(n).toFixed(2); }
+  function fmtPrice(n) {
+    var amt = Number(n) || 0;
+    var cur = (PRICING && PRICING.currency) || 'USD';
+    if (cur === 'KZT') {
+      // integer tenge, space-grouped thousands, ₸ suffix → "39 000 ₸"
+      return Math.round(amt).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₸';
+    }
+    return '$' + amt.toFixed(2);
+  }
+  // Analytics seam — wired in the conversion-tracking fast-follow (GA4 + Yandex Metrika).
+  function obTrack(event, params) {
+    try { if (window.OB_DEBUG) console.log('[ob:track]', event, params || {}); } catch (e) {}
+  }
   function param(name) {
     try { return new URLSearchParams(location.search).get(name); } catch (e) { return null; }
   }
