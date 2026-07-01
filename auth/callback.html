@@ -55,9 +55,12 @@
 
       var next = HSKAuth.safeNextPath(params.get('next'));
       var client = HSKAuth.getClient();
-      if (!params.get('code')) throw new Error('No sign-in code found. Try again.');
+      var code = params.get('code');
+      if (!code) throw new Error('No sign-in code found. Try again.');
 
-      var result = await client.auth.exchangeCodeForSession(window.location.href);
+      // Pass the bare auth code, NOT the full URL: auth-js sends this argument
+      // verbatim as `auth_code`, so a URL makes GoTrue return "flow_state_not_found".
+      var result = await client.auth.exchangeCodeForSession(code);
       if (result.error) throw result.error;
 
       var user = await HSKAuth.getUser();
