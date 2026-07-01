@@ -321,10 +321,19 @@ body.ob .theme-toggle { display: none !important; }
 /* ---- Growth curve ---- */
 .ob-growth {
   background: var(--surface); border: 1px solid var(--mist);
-  border-radius: var(--radius); padding: 16px; margin: 4px 0 10px;
+  border-radius: 16px; padding: 14px 14px 8px; margin: 6px 0 10px;
 }
 .ob-growth svg { width: 100%; height: auto; display: block; }
-.ob-growth-cap { text-align: center; font-size: var(--fs-xs); color: var(--stone); margin-top: 6px; }
+.ob-growth-cap { text-align: center; font-size: var(--fs-xs); color: var(--stone); margin-top: 4px; }
+/* Draw the line in, then fade the area + dots + labels in sequence. */
+.ob-growth-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ob-draw 1.15s cubic-bezier(.5,0,.2,1) .25s forwards; }
+@keyframes ob-draw { to { stroke-dashoffset: 0; } }
+.ob-growth-area { opacity: 0; animation: ob-fade .8s ease .95s forwards; }
+.ob-growth-dot, .ob-growth-lbl { opacity: 0; animation: ob-fade .45s ease forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .ob-growth-line { animation: none; stroke-dashoffset: 0; }
+  .ob-growth-area, .ob-growth-dot, .ob-growth-lbl { animation: none; opacity: 1; }
+}
 
 /* ---- Timeline ---- */
 .ob-timeline { list-style: none; padding: 0; margin: 6px 0 0; }
@@ -402,18 +411,49 @@ body.ob .theme-toggle { display: none !important; }
   background: var(--surface); border: 1px solid var(--mist);
   border-radius: 999px; padding: 6px 12px;
 }
+/* Faux HSK score-report certificate */
 .ob-cert {
-  position: relative; text-align: center;
-  background: var(--surface-sunken); border: 1px dashed var(--mist);
-  border-radius: var(--radius); padding: 22px 16px; margin-bottom: 14px;
-  color: var(--stone);
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--mist);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
 }
-.ob-cert-score { font-size: var(--fs-2xl); font-weight: 800; color: var(--jade); }
-.ob-cert-note {
-  position: absolute; top: 6px; right: 8px;
-  font-size: 10px; text-transform: uppercase; letter-spacing: .5px;
-  color: var(--stone); background: var(--surface); padding: 2px 6px; border-radius: 4px;
+.ob-cert-tag {
+  position: absolute; top: 8px; right: 8px; z-index: 1;
+  font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px;
+  color: var(--stone); background: var(--surface); border: 1px solid var(--mist);
+  padding: 3px 7px; border-radius: 999px;
 }
+.ob-cert-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--mist);
+  background: var(--accent-soft);
+}
+.ob-cert-seal {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .5px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ob-cert-zh { font-family: 'Noto Serif SC', serif; font-weight: 700; font-size: 15px; color: var(--ink); }
+.ob-cert-sub { font-size: 12px; color: var(--stone); margin-top: 2px; }
+.ob-cert-scores { padding: 8px 16px 4px; }
+.ob-cert-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; border-bottom: 1px dashed var(--border-subtle);
+  font-size: 13px; color: var(--stone);
+}
+.ob-cert-row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ob-cert-total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 11px 16px; background: var(--surface-sunken);
+}
+.ob-cert-total > span:first-child { font-size: 13px; color: var(--stone); }
+.ob-cert-total-num { font-size: 26px; font-weight: 800; color: var(--wrong); font-variant-numeric: tabular-nums; }
+.ob-cert-total-num em { font-size: 14px; font-weight: 600; color: var(--stone); font-style: normal; }
+.ob-cert-foot { padding: 8px 16px 12px; font-size: 11px; color: var(--stone); text-align: center; }
 .ob-social { text-align: center; color: var(--stone); font-size: var(--fs-sm); margin-bottom: 12px; }
 
 .ob-tiers { display: flex; flex-direction: column; gap: 10px; }

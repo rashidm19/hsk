@@ -635,25 +635,40 @@
   }
   function parseLevel(s) { var m = String(s || '').match(/([\d.]+)/); return m ? parseFloat(m[1]) : 3; }
   function growthSVG(now, target, c) {
-    var nowV = parseLevel(now), tgtV = parseLevel(target);
-    if (tgtV <= nowV) tgtV = nowV + 0.6; // always show upward motion
-    var W = 320, H = 180, padX = 34, padB = 34, padT = 24;
-    var x0 = padX, x1 = W - padX, y0 = H - padB, y1 = padT;
-    var path = 'M' + x0 + ',' + y0 + ' C' + (x0 + 90) + ',' + y0 + ' ' + (x1 - 120) + ',' + (y1 + 6) + ' ' + x1 + ',' + y1;
+    var W = 360, H = 262, x0 = 30, x1 = 315, y0 = 220, y1 = 48;
+    // Convex, accelerating rise (like the genre's "hockey-stick").
+    var p0 = { x: x0, y: y0 },
+        p1 = { x: x0 + (x1 - x0) * 0.5, y: y0 },
+        p2 = { x: x1 - (x1 - x0) * 0.14, y: y0 - (y0 - y1) * 0.34 },
+        p3 = { x: x1, y: y1 };
+    function cub(t) { var u = 1 - t; return { x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x, y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y }; }
+    var mid = cub(0.58);
+    var path = 'M' + p0.x + ',' + p0.y + ' C' + p1.x + ',' + p1.y + ' ' + p2.x.toFixed(1) + ',' + p2.y.toFixed(1) + ' ' + p3.x + ',' + p3.y;
     var area = path + ' L' + x1 + ',' + y0 + ' L' + x0 + ',' + y0 + ' Z';
-    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Projected progress from ' + esc(now) + ' to ' + esc(target) + '">' +
-      '<defs><linearGradient id="obg" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0" stop-color="var(--accent)" stop-opacity="0.22"/>' +
-      '<stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>' +
+    var grid = '';
+    for (var i = 1; i <= 3; i++) { var gy = y1 + (y0 - y1) * i / 4; grid += '<line x1="' + x0 + '" y1="' + gy.toFixed(1) + '" x2="' + x1 + '" y2="' + gy.toFixed(1) + '" stroke="var(--border-subtle)" stroke-width="1"/>'; }
+    var d = function (v) { return ' style="animation-delay:' + v + 's"'; };
+    return '<svg class="ob-growth-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Projected path from ' + esc(now) + ' to ' + esc(target) + '">' +
+      '<defs>' +
+      '<linearGradient id="obLine" x1="0" y1="1" x2="1" y2="0">' +
+      '<stop offset="0" stop-color="var(--stone)"/><stop offset="0.42" stop-color="var(--jade)"/>' +
+      '<stop offset="0.72" stop-color="var(--gold)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient>' +
+      '<linearGradient id="obArea" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="var(--accent)" stop-opacity="0.20"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient>' +
+      '</defs>' + grid +
       '<line x1="' + x0 + '" y1="' + y0 + '" x2="' + x1 + '" y2="' + y0 + '" stroke="var(--mist)" stroke-width="1"/>' +
-      '<path d="' + area + '" fill="url(#obg)"/>' +
-      '<path d="' + path + '" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/>' +
-      '<circle cx="' + x0 + '" cy="' + y0 + '" r="5" fill="var(--stone)"/>' +
-      '<circle cx="' + x1 + '" cy="' + y1 + '" r="6" fill="var(--accent)"/>' +
-      '<text x="' + x0 + '" y="' + (y0 + 20) + '" fill="var(--stone)" font-size="11" text-anchor="middle">' + esc((c.nowLabel || 'You now')) + '</text>' +
-      '<text x="' + x0 + '" y="' + (y0 - 12) + '" fill="var(--stone)" font-size="12" font-weight="700" text-anchor="middle">' + esc(now) + '</text>' +
-      '<text x="' + x1 + '" y="' + (y1 - 10) + '" fill="var(--accent)" font-size="12" font-weight="800" text-anchor="middle">' + esc(target) + '</text>' +
-      '<text x="' + x1 + '" y="' + (y0 + 20) + '" fill="var(--stone)" font-size="11" text-anchor="middle">' + esc((c.targetLabel || 'Target')) + '</text>' +
+      '<path d="' + area + '" fill="url(#obArea)" class="ob-growth-area"/>' +
+      '<path d="' + path + '" pathLength="1" fill="none" stroke="url(#obLine)" stroke-width="4" stroke-linecap="round" class="ob-growth-line"/>' +
+      '<circle cx="' + p0.x + '" cy="' + p0.y + '" r="6" fill="var(--surface)" stroke="var(--stone)" stroke-width="3" class="ob-growth-dot"' + d(0.55) + '/>' +
+      '<text x="' + p0.x + '" y="' + (y0 + 18) + '" fill="var(--stone)" font-size="11" text-anchor="middle" class="ob-growth-lbl"' + d(0.55) + '>' + esc(c.nowLabel || 'You now') + '</text>' +
+      '<text x="' + p0.x + '" y="' + (y0 - 14) + '" fill="var(--ink)" font-size="13" font-weight="700" text-anchor="middle" class="ob-growth-lbl"' + d(0.55) + '>' + esc(now) + '</text>' +
+      '<circle cx="' + mid.x.toFixed(1) + '" cy="' + mid.y.toFixed(1) + '" r="5" fill="var(--surface)" stroke="var(--gold)" stroke-width="3" class="ob-growth-dot"' + d(0.95) + '/>' +
+      '<text x="' + mid.x.toFixed(1) + '" y="' + (mid.y - 13).toFixed(1) + '" fill="var(--stone)" font-size="10.5" text-anchor="middle" class="ob-growth-lbl"' + d(0.95) + '>' + esc(c.midLabel || 'Week 4') + '</text>' +
+      '<circle cx="' + p3.x + '" cy="' + p3.y + '" r="7" fill="var(--accent)" stroke="var(--paper)" stroke-width="3" class="ob-growth-dot"' + d(1.25) + '/>' +
+      '<g class="ob-growth-lbl"' + d(1.25) + '>' +
+      '<rect x="' + (p3.x - 30) + '" y="' + (p3.y - 36) + '" width="60" height="25" rx="12.5" fill="var(--accent)"/>' +
+      '<text x="' + p3.x + '" y="' + (p3.y - 18.5) + '" fill="#fff" font-size="13" font-weight="800" text-anchor="middle">' + esc(target) + '</text></g>' +
+      '<text x="' + p3.x + '" y="' + (y0 + 18) + '" fill="var(--accent)" font-size="11" font-weight="600" text-anchor="middle" class="ob-growth-lbl"' + d(1.25) + '>' + esc(c.targetLabel || 'Target') + '</text>' +
       '</svg>';
   }
 
@@ -746,6 +761,23 @@
     return '<svg class="ob-wheel" viewBox="0 0 200 200" aria-hidden="true">' + parts + '</svg>';
   }
 
+  // Faux HSK 成绩报告 (score report) — an aspirational example, clearly marked.
+  function certCard(c) {
+    var t = targetLevel();
+    function row(label, val) { return '<div class="ob-cert-row"><span>' + label + '</span><b>' + val + '</b></div>'; }
+    return '<div class="ob-cert" role="img" aria-label="Example HSK score report for ' + esc(t) + '">' +
+      '<span class="ob-cert-tag">' + esc(c.certNote || 'Example') + '</span>' +
+      '<div class="ob-cert-head"><div class="ob-cert-seal" aria-hidden="true">HSK</div>' +
+      '<div><div class="ob-cert-zh">汉语水平考试 · 成绩报告</div>' +
+      '<div class="ob-cert-sub">HSK Score Report · ' + esc(t) + '</div></div></div>' +
+      '<div class="ob-cert-scores">' +
+      row('听力 · Listening', '92') + row('阅读 · Reading', '88') + row('书写 · Writing', '84') +
+      '</div>' +
+      '<div class="ob-cert-total"><span>总分 · Total</span><span class="ob-cert-total-num">264 <em>/ 300</em></span></div>' +
+      '<div class="ob-cert-foot">' + esc(c.certFoot || 'Aspirational target — example only') + '</div>' +
+      '</div>';
+  }
+
   // S22 — paywall
   function sPaywall() {
     var c = S.s22 || {};
@@ -769,8 +801,7 @@
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
       '<p class="ob-sub">' + subst(c.subtag) + '</p>' +
       '<div class="ob-chips"><span class="ob-chip">' + subst(c.goalChip) + '</span><span class="ob-chip">' + subst(c.focusChip) + '</span></div>' +
-      '<div class="ob-cert"><span class="ob-cert-note">' + esc(c.certNote || 'Example') + '</span>' +
-      '<div>HSK Score Report</div><div class="ob-cert-score">' + esc(targetLevel()) + ' · 240+/300</div><div class="ob-note">Aspirational target — example only</div></div>' +
+      certCard(c) +
       '<div class="ob-social">' + subst(c.social) + '</div>' +
       '<div class="ob-tiers" role="radiogroup" aria-label="Choose a plan">' + tiers + '</div>' +
       '<p class="ob-fineprint">' + esc(c.riskReversal || '') + '</p>' +
