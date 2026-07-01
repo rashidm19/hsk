@@ -80,6 +80,8 @@ body.ob .theme-toggle { display: none !important; }
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
+  overflow-x: hidden;   /* the spinning wheel's square box would otherwise
+                           expand past the width and add a horizontal scroll */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -211,6 +213,11 @@ body.ob .theme-toggle { display: none !important; }
   margin-bottom: 16px;
 }
 .ob-logo { width: 120px; margin-bottom: 18px; }
+/* logo.svg is dark-ink (for light bg); logo-light.svg is near-white (for dark bg).
+   Show whichever matches the active theme so the wordmark is always legible. */
+.ob-logo--dk { display: none; }
+[data-theme="dark"] .ob-logo--lt { display: none; }
+[data-theme="dark"] .ob-logo--dk { display: inline-block; }
 
 /* ---- Social proof cards ---- */
 .ob-quote {

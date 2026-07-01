@@ -267,7 +267,8 @@
   function sWelcome() {
     var c = S.s0 || {};
     var el = screenEl(
-      '<img src="/logo.svg" alt="HSK Prep" class="ob-logo">' +
+      '<img src="/logo.svg" alt="HSK Prep" class="ob-logo ob-logo--lt">' +
+      '<img src="/logo-light.svg" alt="" aria-hidden="true" class="ob-logo ob-logo--dk">' +
       '<div class="ob-pill">' + subst(c.badge) + '</div>' +
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
       '<p class="ob-sub">' + subst(c.sub) + '</p>' +
