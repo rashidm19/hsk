@@ -43,7 +43,8 @@
     "terms": "To qualify, complete at least 90% of your assigned plan during your subscription, sit the official HSK within 60 days of finishing, and submit your official score report. Refund covers the subscription price paid. Not valid if the plan isn't completed or the official exam isn't taken."
   },
 
-  "levelScale": ["HSK 2.8", "HSK 3.1", "HSK 3.4", "HSK 3.7", "HSK 4.1", "HSK 4.4"],
+  "_levelScale_comment": "Numeric anchor per #correct (index 0..5). Displayed as a whole HSK level via natural rounding (Math.round) — HSK has no decimals. Rounds to: 0->2, 1->3, 2->3, 3->3, 4->4, 5->4 (only near-perfect reaches HSK 4, so typical scorers sit below an HSK-4 goal and the growth curve shows a real gap).",
+  "levelScale": [2.3, 2.9, 3.2, 3.4, 3.7, 4.1],
 
   "diagnostic": {
     "listening":  { "source": "test-01.json", "number": 11, "prompt": "Listen to the dialogue, then choose the correct answer." },

@@ -77,10 +77,16 @@
     for (var i = 0; i < DIAG.length; i++) { if (d[i] === DIAG[i].correctIndex) c++; }
     return c;
   }
+  // HSK levels are whole numbers (1–6, no decimals). levelScale holds a numeric
+  // anchor per #correct; we round it to the nearest integer for display.
   function diagnosticResult() {
     var scale = CFG.levelScale || [];
     var c = diagnosticCorrect();
-    return scale[c] || scale[scale.length - 1] || 'HSK 3';
+    var raw = scale[c] != null ? scale[c] : scale[scale.length - 1];
+    var n = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
+    if (!isFinite(n)) n = 3;
+    n = Math.max(1, Math.min(6, Math.round(n)));
+    return 'HSK ' + n;
   }
   function targetLevel() { return A.target || 'your goal level'; }
   function weakSection() { return (A.section && A.section.short) || 'your weakest section'; }
