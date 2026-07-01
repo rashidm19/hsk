@@ -148,13 +148,13 @@
   var COUNT_TOTAL = FLOW.filter(function (f) { return f.counts; }).length;
   function indexOfId(id) { for (var i = 0; i < FLOW.length; i++) if (FLOW[i].id === id) return i; return -1; }
 
-  var stage, backEl, progEl, barEl, countEl;
+  var stage, backEl, brandEl, progEl, barEl, countEl, footEl, topEl;
   var timerInt = null;
 
   function clearTimer() { if (timerInt) { clearInterval(timerInt); timerInt = null; } }
 
   function next() {
-    if (state.idx < FLOW.length - 1) { state.idx++; save(); render(); }
+    if (state.idx < FLOW.length - 1) { state.idx++; save(); render(1); }
   }
   function back() {
     if (state.idx <= 0) return;
@@ -163,33 +163,53 @@
     // back so the Back button from the mirror doesn't bounce forward off the timer.
     if (state.idx > 0 && FLOW[state.idx] && FLOW[state.idx].id === 's14') state.idx--;
     save();
-    render();
+    render(-1);
   }
-  function goById(id) { var i = indexOfId(id); if (i >= 0) { state.idx = i; save(); render(); } }
+  function goById(id) { var i = indexOfId(id); if (i >= 0) { state.idx = i; save(); render(0); } }
 
-  function render() {
+  // The primary CTA is a direct child .ob-cta (not a secondary .ob-ghost). We lift
+  // it into the pinned footer; interactive screens (wheel, email-gate) nest their
+  // CTA deeper, so they’re left inline — intentionally.
+  function directPrimaryCta(node) {
+    for (var i = 0; i < node.children.length; i++) {
+      var ch = node.children[i];
+      if (ch.classList && ch.classList.contains('ob-cta') && !ch.classList.contains('ob-ghost')) return ch;
+    }
+    return null;
+  }
+
+  function render(dir) {
     clearTimer();
     var f = FLOW[state.idx];
     var node = build(f.id);
+    if (dir === -1) node.setAttribute('data-anim', 'back');
+    else if (dir === 1) node.setAttribute('data-anim', 'fwd');
     stage.innerHTML = '';
     stage.appendChild(node);
 
-    // progress + back
+    // Pin the primary CTA to the bottom footer (moving the node keeps its handlers).
+    footEl.innerHTML = '';
+    var prim = directPrimaryCta(node);
+    if (prim) { footEl.appendChild(prim); footEl.hidden = false; } else { footEl.hidden = true; }
+    footEl.classList.toggle('is-wide', node.hasAttribute('data-wide'));
+
+    // Header: back, brand, progress, counter.
     var canBack = state.idx > 0 && f.back !== false;
     backEl.hidden = !canBack;
+    brandEl.hidden = (f.id === 's0');   // welcome leads with its own hero mark
     if (f.counts) {
       var num = 0;
       for (var i = 0; i <= state.idx; i++) if (FLOW[i].counts) num++;
-      progEl.style.display = '';
+      topEl.classList.add('is-quiz');
       barEl.style.width = (num / COUNT_TOTAL * 100) + '%';
       countEl.textContent = num + ' of ' + COUNT_TOTAL;
     } else {
-      progEl.style.display = 'none';
+      topEl.classList.remove('is-quiz');
       countEl.textContent = '';
     }
 
-    // focus + scroll
-    try { window.scrollTo(0, 0); } catch (e) {}
+    // focus + scroll (reset both page and the internal stage scroll)
+    try { window.scrollTo(0, 0); if (stage) stage.scrollTop = 0; } catch (e) {}
     var h = node.querySelector('.ob-h1, [data-focus]');
     if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); } }
   }
@@ -1026,14 +1046,21 @@
     root.innerHTML =
       '<div class="ob-app">' +
       '<div class="ob-top" id="ob-top">' +
+      '<div class="ob-top-row">' +
       '<button class="ob-back" id="ob-back" type="button" aria-label="Back" hidden>←</button>' +
-      '<div class="ob-progress" id="ob-prog"><div class="ob-progress-bar" id="ob-progbar"></div></div>' +
+      '<div class="ob-brand" id="ob-brand" hidden>' +
+      '<img src="/logo.svg" alt="HSK Prep" class="ob-brand-logo ob-logo--lt">' +
+      '<img src="/logo-light.svg" alt="" aria-hidden="true" class="ob-brand-logo ob-logo--dk">' +
+      '</div>' +
       '<div class="ob-step-count" id="ob-count"></div>' +
       '</div>' +
+      '<div class="ob-progress" id="ob-prog"><div class="ob-progress-bar" id="ob-progbar"></div></div>' +
+      '</div>' +
       '<div class="ob-stage" id="ob-stage"></div>' +
+      '<div class="ob-foot" id="ob-foot" hidden></div>' +
       '</div>';
-    stage = $('#ob-stage'); backEl = $('#ob-back');
-    progEl = $('#ob-prog'); barEl = $('#ob-progbar'); countEl = $('#ob-count');
+    stage = $('#ob-stage'); backEl = $('#ob-back'); brandEl = $('#ob-brand'); topEl = $('#ob-top');
+    progEl = $('#ob-prog'); barEl = $('#ob-progbar'); countEl = $('#ob-count'); footEl = $('#ob-foot');
     backEl.onclick = back;
 
     // guard against a stale idx
