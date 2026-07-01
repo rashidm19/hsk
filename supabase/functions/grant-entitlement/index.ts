@@ -43,23 +43,28 @@ Deno.serve(async (req) => {
 
   const sb = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });
 
-  // Idempotency: a known order_id is a no-op success (webhooks retry).
+  // Replay? (webhook retries + operator re-drives). We do NOT early-return: the entitlement is
+  // (re-)applied below on every call, so a re-drive reconciles a prior entitlement:false — the old
+  // short-circuit skipped the profile write, making a re-POST a no-op that never healed a failed grant.
   const existing = await sb.from("payments").select("order_id").eq("order_id", p.order_id).maybeSingle();
-  if (existing.data) { log({ order_id: p.order_id, result: "idempotent" }); return json(200, { ok: true, idempotent: true }); }
+  const isReplay = !!existing.data;
 
   const expires_at = computeExpiry(String(p.paid_at), plan.months);
 
-  // Audit first — survives even if the entitlement target is missing.
-  const ins = await sb.from("payments").insert({
-    order_id: p.order_id, user_id: p.uid, plan: p.plan, amount: plan.amount,
-    currency: "KZT", status: "paid", receipt: p.receipt ?? null, paid_at: p.paid_at, raw: p,
-  });
-  if (ins.error && ins.error.code !== "23505") { // 23505 = unique_violation (concurrent retry)
-    log({ order_id: p.order_id, result: "error", reject: "payments_insert", msg: ins.error.message });
-    return new Response("db error", { status: 500 });
+  // Audit ledger — write once. On replay the row already exists; tolerate the unique violation.
+  if (!isReplay) {
+    const ins = await sb.from("payments").insert({
+      order_id: p.order_id, user_id: p.uid, plan: p.plan, amount: plan.amount,
+      currency: "KZT", status: "paid", receipt: p.receipt ?? null, paid_at: p.paid_at, raw: p,
+    });
+    if (ins.error && ins.error.code !== "23505") { // 23505 = unique_violation (concurrent retry)
+      log({ order_id: p.order_id, result: "error", reject: "payments_insert", msg: ins.error.message });
+      return new Response("db error", { status: 500 });
+    }
   }
 
-  // Entitlement — upsert by uid (covers a missing profiles row).
+  // Entitlement — (re-)upsert by uid on EVERY call (idempotent: re-setting status:active is a no-op).
+  // This covers a missing profiles row AND reconciles a previous entitlement:false on re-drive.
   const subscription = {
     status: "active", plan: p.plan, price: plan.amount, currency: "KZT",
     interval: plan.interval, provider: "studybox", order_id: p.order_id,
@@ -67,10 +72,10 @@ Deno.serve(async (req) => {
   };
   const up = await sb.from("profiles").upsert({ id: p.uid, subscription }, { onConflict: "id" });
   if (up.error) {
-    log({ order_id: p.order_id, uid: p.uid, result: "warn", reject: "profile_upsert", msg: up.error.message });
-    return json(200, { ok: true, entitlement: false }); // payment recorded; reconcile via runbook
+    log({ order_id: p.order_id, uid: p.uid, result: "warn", reject: "profile_upsert", idempotent: isReplay, msg: up.error.message });
+    return json(200, { ok: true, idempotent: isReplay, entitlement: false }); // still un-granted; alert + re-drive
   }
 
-  log({ order_id: p.order_id, uid: p.uid, plan: p.plan, amount: plan.amount, hmac_ok: true, idempotent: false, result: "granted" });
-  return json(200, { ok: true });
+  log({ order_id: p.order_id, uid: p.uid, plan: p.plan, amount: plan.amount, hmac_ok: true, idempotent: isReplay, result: "granted" });
+  return json(200, { ok: true, idempotent: isReplay });
 });

@@ -214,7 +214,7 @@ sig = hmac.new(HSK_GRANT_HMAC_SECRET.encode(), body_str.encode(), hashlib.sha256
 |--------|------|---------|-------------|
 | 200 | `{"ok":true}` | Entitlement granted | Done. |
 | 200 | `{"ok":true,"idempotent":true}` | `order_id` already processed | Treat as success. |
-| 200 | `{"ok":true,"entitlement":false}` | Payment recorded, profile write failed | Treat as success but **alert** — HSK will reconcile (re-drive later works). |
+| 200 | `{"ok":true,"entitlement":false}` | Payment recorded, entitlement write failed | Treat as success but **alert**. A re-drive (same `order_id`, fresh `ts`) **re-applies** the entitlement, so re-POSTing heals a transient failure; if it keeps returning `entitlement:false`, the `uid`/profile is bad — escalate. |
 | 401 | `bad signature` | HMAC mismatch | **Do not retry blindly** — fix signing/secret. |
 | 400 | `unknown plan` / `bad currency` / `stale` / `missing fields` / `bad paid_at` / `bad json` | Permanent caller error | **Do not retry as-is.** `stale` → re-send with a fresh `ts`. |
 | 405 | `method not allowed` | Not a POST | Fix the request. |
@@ -273,7 +273,9 @@ they're HSK-internal. `expires_at` is computed on HSK's side from `plan`; you do
 - **Lost/failed grant call:** make it re-drivable — re-POST the same `order_id` with a **fresh `ts`**.
   It resolves to `{"ok":true,"idempotent":true}` if already applied, or grants if not.
 - **`entitlement:false` (200):** payment is recorded on HSK but the entitlement write didn't land
-  (rare). Alert an operator; a later re-drive (or HSK's manual runbook) reconciles it.
+  (rare). Alert an operator; a re-drive (same `order_id`, fresh `ts`) **re-applies** the entitlement
+  and reconciles a transient failure. A persistent `entitlement:false` means the `uid`/profile is
+  bad — escalate rather than re-driving forever.
 - **Clock:** keep StudyBox's clock in sync (NTP). The ±300 s `ts` window rejects stale/skewed calls;
   don't queue a webhook for more than ~5 minutes before calling without refreshing `ts`.
 
