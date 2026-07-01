@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 <script src="/auth-guard.js"></script>
+<script src="/auth-ui.js" defer></script>
+<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>不管…都/也… — HSK 4 Concessive Clauses | 让步状语从句 (no matter how/what)</title>
 <meta name="description" content="不管…都/也… is the HSK 4 concessive adverbial clause (让步状语从句) — equivalent to English 'no matter how/what/who'. Pairs with question words 什么/怎么/多/谁 to express that the result holds regardless. Examples, common errors, and how it relates to 即使…也 and 虽然…但是.">
-<link rel="canonical" href="https://www.hskprep.cc/grammar/patterns/buguan-dou/">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/grammar/patterns/buguan-dou/">
 
 <meta property="og:title" content="不管…都/也… — HSK 4 Concessive Clauses (让步状语从句)">
 <meta property="og:description" content="不管…都/也… is the HSK 4 concessive adverbial clause (让步状语从句) — equivalent to English 'no matter how/what/who'. Pairs with question words to express that the result holds regardless.">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://www.hskprep.cc/grammar/patterns/buguan-dou/">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/grammar/patterns/buguan-dou/">
 <meta property="og:site_name" content="HSK Prep">
 
 <script type="application/ld+json">
@@ -24,8 +26,8 @@
   "@type": "Article",
   "headline": "不管…都/也… — HSK 4 Concessive Adverbial Clause (让步状语从句)",
   "description": "不管…都/也… is the HSK 4 concessive adverbial clause (让步状语从句) — equivalent to English 'no matter how/what/who'. Pairs with question words 什么/怎么/多/谁 to express that the result holds regardless. Examples, common errors, and how it relates to 即使…也 and 虽然…但是.",
-  "url": "https://www.hskprep.cc/grammar/patterns/buguan-dou/",
-  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://www.hskprep.cc" },
+  "url": "https://hsk4.mandarinzone.com/grammar/patterns/buguan-dou/",
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
   "inLanguage": ["en", "zh-CN"],
   "educationalLevel": "Intermediate"
 }
@@ -184,7 +186,7 @@
       </a>
     </nav>
     <div class="app-sidebar-foot">
-      <a href="/" class="app-nav-link">
+      <a href="/exams/" class="app-nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Home
       </a>
@@ -207,10 +209,10 @@
         </button>
         <div class="app-profile" title="Sign in coming soon">
           <div class="app-profile-info">
-            <span class="app-profile-name">Alex Chen</span>
-            <span class="app-profile-email">student@example.com</span>
+            <span class="app-profile-name"></span>
+            <span class="app-profile-email"></span>
           </div>
-          <div class="app-profile-avatar" aria-hidden="true">AC</div>
+          <div class="app-profile-avatar" aria-hidden="true"></div>
         </div>
       </div>
     </header>
@@ -445,7 +447,6 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
-<script src="/auth-ui.js"></script>
 
 <script>
 function answer(btn, correct) {

@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 <script src="/auth-guard.js"></script>
+<script src="/auth-ui.js" defer></script>
+<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HSK 4 Writing Practice (写作) — 看图造句 &amp; 写短文 | 2026 Format</title>
 <meta name="description" content="Free interactive HSK 4 writing practice built for the 2026 exam format: a 看图造句 picture-sentence trainer with real exam prompts and a 写短文 short-essay trainer with model answers, scoring tips, and strategy.">
-<link rel="canonical" href="https://www.hskprep.cc/writing/">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/writing/">
 
 <!-- Open Graph -->
 <meta property="og:title" content="HSK 4 Writing (写作) — Interactive Practice for the 2026 Exam">
 <meta property="og:description" content="Practise the two HSK 4 writing tasks — 看图造句 (picture sentences) and 写短文 (short essay) — with interactive trainers, model answers, and a scoring guide based on the 2026 HSK syllabus.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.hskprep.cc/writing/">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/writing/">
 <meta property="og:site_name" content="HSK Prep">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="zh_CN">
@@ -33,14 +35,14 @@
   "@type": "EducationalApplication",
   "name": "HSK 4 Writing Practice (写作)",
   "description": "Interactive HSK 4 writing practice for the 2026 exam format: a 看图造句 picture-sentence trainer and a 写短文 short-essay trainer with model answers and a scoring guide.",
-  "url": "https://www.hskprep.cc/writing/",
+  "url": "https://hsk4.mandarinzone.com/writing/",
   "applicationCategory": "EducationalApplication",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "author": {
     "@type": "Organization",
     "name": "HSK Prep",
-    "url": "https://www.hskprep.cc"
+    "url": "https://hsk4.mandarinzone.com"
   },
   "inLanguage": ["en", "zh-CN"],
   "isAccessibleForFree": true,
@@ -507,7 +509,7 @@
       </a>
     </nav>
     <div class="app-sidebar-foot">
-      <a href="/" class="app-nav-link">
+      <a href="/exams/" class="app-nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Home
       </a>
@@ -530,10 +532,10 @@
         </button>
         <div class="app-profile" title="Sign in coming soon">
           <div class="app-profile-info">
-            <span class="app-profile-name">Alex Chen</span>
-            <span class="app-profile-email">student@example.com</span>
+            <span class="app-profile-name"></span>
+            <span class="app-profile-email"></span>
           </div>
-          <div class="app-profile-avatar" aria-hidden="true">AC</div>
+          <div class="app-profile-avatar" aria-hidden="true"></div>
         </div>
       </div>
     </header>
@@ -947,7 +949,6 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
-<script src="/auth-ui.js"></script>
 
 <script>
 /* ===== Part 1 trainer — 看图造句 / write a sentence with a word ===== */

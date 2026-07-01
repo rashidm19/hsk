@@ -6,6 +6,8 @@
   'use strict';
 
   var AUTH_NEXT_KEY = 'hsk_auth_next';
+  var PROFILE_CACHE_KEY = 'hsk_profile_cache';
+  var PROFILE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
   function cfg() {
     return global.HSK_AUTH_CONFIG || {};
@@ -51,6 +53,85 @@
     return data.session;
   }
 
+  function hasStoredSession() {
+    try {
+      var storage = global.localStorage;
+      if (!storage) return false;
+      for (var i = 0; i < storage.length; i++) {
+        var key = storage.key(i);
+        if (!key || key.indexOf('-auth-token') === -1) continue;
+        var raw = storage.getItem(key);
+        if (!raw) continue;
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.access_token) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function readProfileCache() {
+    try {
+      var raw = global.sessionStorage.getItem(PROFILE_CACHE_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || !data.userId) return null;
+      if (Date.now() - (data.cachedAt || 0) > PROFILE_CACHE_TTL_MS) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeProfileCache(profile) {
+    if (!profile || !profile.userId) return;
+    try {
+      profile.cachedAt = Date.now();
+      global.sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
+    } catch (e) {}
+  }
+
+  function clearProfileCache() {
+    try {
+      global.sessionStorage.removeItem(PROFILE_CACHE_KEY);
+    } catch (e) {}
+  }
+
+  function waitForSession(timeoutMs) {
+    timeoutMs = timeoutMs == null ? (hasStoredSession() ? 1200 : 4000) : timeoutMs;
+    return new Promise(function (resolve) {
+      var c = getClient();
+      if (!c) {
+        resolve(null);
+        return;
+      }
+      var settled = false;
+      function finish(session) {
+        if (settled) return;
+        settled = true;
+        resolve(session || null);
+      }
+      c.auth.getSession().then(function (result) {
+        if (result.data.session) finish(result.data.session);
+      }).catch(function () {
+        finish(null);
+      });
+      var sub = c.auth.onAuthStateChange(function (event, session) {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          finish(session);
+          sub.data.subscription.unsubscribe();
+        }
+      });
+      global.setTimeout(function () {
+        if (settled) return;
+        c.auth.getSession().then(function (result) {
+          finish(result.data.session);
+        }).catch(function () {
+          finish(null);
+        });
+      }, timeoutMs);
+    });
+  }
+
   async function getUser() {
     const session = await getSession();
     return session ? session.user : null;
@@ -83,8 +164,21 @@
     return safeNextPath(next);
   }
 
+  function isLocalOrigin(origin) {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin || '');
+  }
+
+  /** Canonical origin for OAuth/email redirects (production), or current origin locally. */
+  function authOrigin() {
+    var origin = global.location.origin;
+    if (isLocalOrigin(origin)) return origin;
+    var siteUrl = cfg().siteUrl;
+    if (siteUrl) return String(siteUrl).replace(/\/$/, '');
+    return origin;
+  }
+
   function oauthCallbackUrl(next) {
-    return global.location.origin + '/?next=' + encodeURIComponent(safeNextPath(next));
+    return authOrigin() + '/auth/callback.html?next=' + encodeURIComponent(safeNextPath(next));
   }
 
   function profileName(user, fields) {
@@ -134,11 +228,14 @@
       password,
       options: {
         data: { name, country },
-        emailRedirectTo: global.location.origin + '/auth/callback.html?next=' + encodeURIComponent('/exams/'),
+        emailRedirectTo: authOrigin() + '/auth/callback.html?next=' + encodeURIComponent('/exams/'),
       },
     });
     if (error) throw error;
-    if (data.user && data.session) await upsertProfile(data.user, { email, name, country });
+    if (data.user) {
+      await upsertProfile(data.user, { email, name, country });
+      cacheUserProfile(data.user, { name: name, email: email, country: country });
+    }
     return data;
   }
 
@@ -147,7 +244,10 @@
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
     const { data, error } = await c.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    if (data.user) await upsertProfile(data.user, {});
+    if (data.user) {
+      await upsertProfile(data.user, {});
+      cacheUserProfile(data.user, null);
+    }
     return data;
   }
 
@@ -225,6 +325,7 @@
   }
 
   async function signOut() {
+    clearProfileCache();
     const c = getClient();
     if (c) await c.auth.signOut();
   }
@@ -246,6 +347,18 @@
     return (profile && profile.name) || profileName(user, {}) || user?.email?.split('@')[0] || 'Student';
   }
 
+  function cacheUserProfile(user, profile) {
+    if (!user) return;
+    var name = displayName(user, profile);
+    var email = user.email || '';
+    writeProfileCache({
+      userId: user.id,
+      name: name,
+      email: email,
+      initials: initials(name, email),
+    });
+  }
+
   async function finishOAuthFromUrl() {
     if (!global.location || !isConfigured()) return false;
     // The dedicated /auth/callback.html page owns its own code exchange — don't double-exchange.
@@ -263,6 +376,7 @@
       if (result.error) throw result.error;
       if (result.data.session?.user) {
         await upsertProfile(result.data.session.user, {});
+        cacheUserProfile(result.data.session.user, null);
       }
       global.location.replace(next);
       return true;
@@ -282,11 +396,17 @@
     configError,
     getClient,
     getSession,
+    waitForSession,
+    hasStoredSession,
     getUser,
     getProfile,
     getSubscription,
+    readProfileCache,
+    writeProfileCache,
+    clearProfileCache,
     upsertProfile,
     safeNextPath,
+    authOrigin,
     oauthCallbackUrl,
     finishOAuthFromUrl,
     signUp,

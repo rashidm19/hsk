@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 <script src="/auth-guard.js"></script>
+<script src="/auth-ui.js" defer></script>
+<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HSK 4 Study Guide 2026 — Exam Format & Plan | 备考指南</title>
 <meta name="description" content="New HSK 4 exam guide (2026 syllabus): structure, scoring, study plan, HSK3→4 gap analysis, and self-assessment checklist.">
-<link rel="canonical" href="https://www.hskprep.cc/guide/">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/guide/">
 
 <!-- Open Graph -->
 <meta property="og:title" content="New HSK 4 Study Guide 2026 — Exam Format, Study Plan & Self-Assessment">
 <meta property="og:description" content="Complete guide to the new HSK 4 exam effective July 2026. Structure, scoring, study roadmap, and self-assessment tools.">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://www.hskprep.cc/guide/">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/guide/">
 <meta property="og:site_name" content="HSK Prep">
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="zh_CN">
@@ -33,13 +35,13 @@
   "@type": "Article",
   "headline": "New HSK 4 Study Guide 2026 — Complete Exam Preparation",
   "description": "Complete guide to the new HSK 4 exam effective July 2026. Based on the official 新版HSK考试大纲.",
-  "url": "https://www.hskprep.cc/guide/",
+  "url": "https://hsk4.mandarinzone.com/guide/",
   "datePublished": "2026-03-16",
   "dateModified": "2026-03-16",
   "author": {
     "@type": "Organization",
     "name": "HSK Prep",
-    "url": "https://www.hskprep.cc"
+    "url": "https://hsk4.mandarinzone.com"
   },
   "publisher": {
     "@type": "Organization",
@@ -491,7 +493,7 @@
       </a>
     </nav>
     <div class="app-sidebar-foot">
-      <a href="/" class="app-nav-link">
+      <a href="/exams/" class="app-nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Home
       </a>
@@ -514,10 +516,10 @@
         </button>
         <div class="app-profile" title="Sign in coming soon">
           <div class="app-profile-info">
-            <span class="app-profile-name">Alex Chen</span>
-            <span class="app-profile-email">student@example.com</span>
+            <span class="app-profile-name"></span>
+            <span class="app-profile-email"></span>
           </div>
-          <div class="app-profile-avatar" aria-hidden="true">AC</div>
+          <div class="app-profile-avatar" aria-hidden="true"></div>
         </div>
       </div>
     </header>
@@ -968,7 +970,6 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
-<script src="/auth-ui.js"></script>
 
 <script>
 // === CHECKLIST PERSISTENCE ===

@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 <script src="/auth-guard.js"></script>
+<script src="/auth-ui.js" defer></script>
+<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>100 HSK 4 Essential Sentences 高频万能句 | HSK Prep</title>
 <meta name="description" content="100 HSK 4 sentence patterns by 10 functions: opinion, suggestion, cause-effect, contrast, comparison, time, feelings. With pinyin and English translations.">
 <meta name="keywords" content="HSK 4 sentences, HSK 4 sentence patterns, HSK 4 writing, HSK 4 万能句, HSK4 高频句型, HSK 4 mock exam">
-<link rel="canonical" href="https://www.hskprep.cc/sentences/">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/sentences/">
 
 <meta property="og:title" content="100 HSK 4 Essential Sentences 高频万能句 | HSK Prep">
 <meta property="og:description" content="100 HSK 4 sentence patterns by 10 functions: opinion, suggestion, cause-effect, contrast, comparison, time, feelings. With pinyin and English translations.">
 <meta property="og:type" content="article">
-<meta property="og:url" content="https://www.hskprep.cc/sentences/">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/sentences/">
 <meta property="og:site_name" content="HSK Prep">
 
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +31,7 @@
   "@type": "Article",
   "headline": "100 HSK 4 Essential Sentences — High-Frequency Patterns | Mock Exam",
   "description": "100 HSK 4 sentence patterns by 10 functions: opinion, suggestion, cause-effect, contrast, comparison, time, feelings. With pinyin and English translations.",
-  "url": "https://www.hskprep.cc/sentences/",
+  "url": "https://hsk4.mandarinzone.com/sentences/",
   "author": {
     "@type": "Organization",
     "name": "HSK Prep"
@@ -54,13 +56,13 @@
       "@type": "ListItem",
       "position": 1,
       "name": "Home",
-      "item": "https://www.hskprep.cc/"
+      "item": "https://hsk4.mandarinzone.com/"
     },
     {
       "@type": "ListItem",
       "position": 2,
       "name": "HSK 4 Sentences",
-      "item": "https://www.hskprep.cc/sentences/"
+      "item": "https://hsk4.mandarinzone.com/sentences/"
     }
   ]
 }
@@ -188,7 +190,7 @@
       </a>
     </nav>
     <div class="app-sidebar-foot">
-      <a href="/" class="app-nav-link">
+      <a href="/exams/" class="app-nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Home
       </a>
@@ -211,10 +213,10 @@
         </button>
         <div class="app-profile" title="Sign in coming soon">
           <div class="app-profile-info">
-            <span class="app-profile-name">Alex Chen</span>
-            <span class="app-profile-email">student@example.com</span>
+            <span class="app-profile-name"></span>
+            <span class="app-profile-email"></span>
           </div>
-          <div class="app-profile-avatar" aria-hidden="true">AC</div>
+          <div class="app-profile-avatar" aria-hidden="true"></div>
         </div>
       </div>
     </header>
@@ -1325,7 +1327,6 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
-<script src="/auth-ui.js"></script>
 <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
 </body>
 </html>

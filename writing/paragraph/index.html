@@ -1,22 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 <script src="/auth-guard.js"></script>
+<script src="/auth-ui.js" defer></script>
+<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HSK 4 Paragraph Writing — Templates & Practice | 段落写作</title>
 <meta name="description" content="Build HSK 4 paragraphs with 4 reusable frameworks (opinion, comparison, narrative, problem-solution), a connector toolkit, and 6 guided practice challenges.">
-<link rel="canonical" href="https://www.hskprep.cc/writing/paragraph/">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/writing/paragraph/">
 
 <!-- Open Graph -->
 <meta property="og:title" content="HSK 4 Paragraph Writing — Templates & Practice Challenges">
 <meta property="og:description" content="Learn 4 reusable HSK 4 paragraph frameworks (opinion, comparison, narrative, problem-solution) with a connector toolkit and 6 guided practice challenges with sample paragraphs.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.hskprep.cc/writing/paragraph/">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/writing/paragraph/">
 <meta property="og:site_name" content="HSK Prep">
 
 <!-- Twitter Card -->
@@ -31,14 +33,14 @@
   "@type": "EducationalApplication",
   "name": "HSK 4 Paragraph Writing Guide",
   "description": "Paragraph writing templates and practice challenges for HSK 4 writing preparation.",
-  "url": "https://www.hskprep.cc/writing/paragraph/",
+  "url": "https://hsk4.mandarinzone.com/writing/paragraph/",
   "applicationCategory": "EducationalApplication",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "author": {
     "@type": "Organization",
     "name": "HSK Prep",
-    "url": "https://www.hskprep.cc"
+    "url": "https://hsk4.mandarinzone.com"
   },
   "inLanguage": ["en", "zh-CN"],
   "isAccessibleForFree": true,
@@ -403,7 +405,7 @@
       </a>
     </nav>
     <div class="app-sidebar-foot">
-      <a href="/" class="app-nav-link">
+      <a href="/exams/" class="app-nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Home
       </a>
@@ -426,10 +428,10 @@
         </button>
         <div class="app-profile" title="Sign in coming soon">
           <div class="app-profile-info">
-            <span class="app-profile-name">Alex Chen</span>
-            <span class="app-profile-email">student@example.com</span>
+            <span class="app-profile-name"></span>
+            <span class="app-profile-email"></span>
           </div>
-          <div class="app-profile-avatar" aria-hidden="true">AC</div>
+          <div class="app-profile-avatar" aria-hidden="true"></div>
         </div>
       </div>
     </header>
@@ -950,7 +952,6 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
-<script src="/auth-ui.js"></script>
 
 <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
 </body>

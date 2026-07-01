@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 <script src="/auth-guard.js"></script>
+<script src="/auth-ui.js" defer></script>
+<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>HSK 4 Confusable Words — Word Pairs Explained | 易混词</title>
 <meta name="description" content="Master easily confused HSK 4 Chinese word pairs: 关于vs对于, 忽然vs突然, 到底vs究竟, and more. Clear explanations with example sentences and interactive quizzes.">
-<link rel="canonical" href="https://www.hskprep.cc/words/">
+<link rel="canonical" href="https://hsk4.mandarinzone.com/words/">
 
 <meta property="og:title" content="HSK 4 Confusable Words — Common Chinese Word Pairs Explained">
 <meta property="og:description" content="Master easily confused HSK 4 word pairs with clear explanations and quizzes.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.hskprep.cc/words/">
+<meta property="og:url" content="https://hsk4.mandarinzone.com/words/">
 <meta property="og:site_name" content="HSK Prep">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HSK 4 Confusable Words — Word Pairs Explained with Quizzes">
@@ -26,11 +28,11 @@
   "@type": "EducationalApplication",
   "name": "HSK 4 Confusable Words",
   "description": "Interactive tool for mastering commonly confused HSK 4 Chinese word pairs with explanations and quizzes.",
-  "url": "https://www.hskprep.cc/words/",
+  "url": "https://hsk4.mandarinzone.com/words/",
   "applicationCategory": "EducationalApplication",
   "operatingSystem": "Any",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://www.hskprep.cc" },
+  "author": { "@type": "Organization", "name": "HSK Prep", "url": "https://hsk4.mandarinzone.com" },
   "inLanguage": ["en", "zh-CN"],
   "isAccessibleForFree": true,
   "educationalLevel": "Intermediate"
@@ -231,7 +233,7 @@
       </a>
     </nav>
     <div class="app-sidebar-foot">
-      <a href="/" class="app-nav-link">
+      <a href="/exams/" class="app-nav-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Home
       </a>
@@ -254,10 +256,10 @@
         </button>
         <div class="app-profile" title="Sign in coming soon">
           <div class="app-profile-info">
-            <span class="app-profile-name">Alex Chen</span>
-            <span class="app-profile-email">student@example.com</span>
+            <span class="app-profile-name"></span>
+            <span class="app-profile-email"></span>
           </div>
-          <div class="app-profile-avatar" aria-hidden="true">AC</div>
+          <div class="app-profile-avatar" aria-hidden="true"></div>
         </div>
       </div>
     </header>
@@ -995,7 +997,6 @@
 
 <div class="app-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 <script src="/shell.js"></script>
-<script src="/auth-ui.js"></script>
 
 <script>
 function togglePair(header) {
