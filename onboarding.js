@@ -428,7 +428,13 @@
     if (logos && logos.length) {
       return '<div class="ob-logos">' + logos.map(function (u) { return '<img src="' + esc(u) + '" alt="" height="28">'; }).join('') + '</div>';
     }
-    return '<div class="ob-logos"><span class="ob-logo-ph">Partner schools — coming soon</span></div>';
+    // Optional partner-source badges (only if provided) — no logos yet, so keep
+    // the screen clean rather than showing a "coming soon" placeholder.
+    var badges = (CFG.placeholders && CFG.placeholders.trustBadges) || [];
+    if (!badges.length) return '';
+    return '<div class="ob-trust-badges">' + badges.map(function (b) {
+      return '<span class="ob-trust-badge">' + esc(b) + '</span>';
+    }).join('') + '</div>';
   }
 
   // S6 — encouragement
@@ -482,13 +488,20 @@
     return el;
   }
 
-  // S14 — processing
+  // S14 — processing (staged steps tick off, then auto-advance)
   function sProcessing() {
     var c = S.s14 || {};
+    var steps = c.steps || ['Scoring your answers', 'Finding your weak spots', 'Building your study plan'];
     var el = screenEl(
       '<div class="ob-spinner" aria-hidden="true"></div>' +
-      '<h1 class="ob-h1" data-focus>' + esc(c.copy || 'Analyzing…') + '</h1>', { center: true });
-    setTimeout(function () { if (FLOW[state.idx].id === 's14') next(); }, 1600);
+      '<h1 class="ob-h1" data-focus>' + esc(c.copy || 'Analyzing your answers…') + '</h1>' +
+      '<ul class="ob-proc-steps">' + steps.map(function (s) {
+        return '<li class="ob-proc-step"><span class="ob-proc-dot" aria-hidden="true"></span>' + esc(s) + '</li>';
+      }).join('') + '</ul>', { center: true });
+    var lis = el.querySelectorAll('.ob-proc-step'), per = 560;
+    [].forEach.call(lis, function (li, i) { setTimeout(function () { li.classList.add('is-done'); }, 300 + i * per); });
+    var total = 300 + lis.length * per + 350;
+    setTimeout(function () { if (FLOW[state.idx].id === 's14') next(); }, Math.max(1700, total));
     return el;
   }
 
@@ -692,11 +705,14 @@
     var c = S.s20 || {}, g = CFG.guarantee || {};
     var el = screenEl(
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
-      (c.rows || []).map(function (r) {
-        return '<div class="ob-vrow"><span class="ob-check" aria-hidden="true">✓</span><div>' +
-          '<div class="ob-vrow-title">' + subst(r.title) + '</div>' +
-          '<div class="ob-vrow-text">' + subst(r.text) + '</div></div></div>';
-      }).join('') +
+      (function () {
+        var icons = ['🗂️', '🧭', '📚', '🎧', '✍️'];
+        return (c.rows || []).map(function (r, i) {
+          return '<div class="ob-vrow"><span class="ob-vrow-icon" aria-hidden="true">' + esc(r.icon || icons[i] || '✓') + '</span><div>' +
+            '<div class="ob-vrow-title">' + subst(r.title) + '</div>' +
+            '<div class="ob-vrow-text">' + subst(r.text) + '</div></div></div>';
+        }).join('');
+      })() +
       '<div class="ob-guarantee"><div class="ob-guarantee-title">✅ ' + esc(g.headline || 'Pass guarantee') + '</div>' +
       '<div>' + esc(g.short || '') + '</div>' +
       '<details class="ob-guarantee-terms"><summary>Terms apply</summary>' + esc(g.terms || '') + '</details></div>' +
@@ -746,19 +762,27 @@
     return el;
   }
   function wheelSVG(segs) {
-    var R = 96, C = 100, n = segs.length, step = 360 / n;
+    var C = 100, Rpie = 80, Rrim = 90, n = segs.length, step = 360 / n;
     var fills = ['var(--accent)', 'var(--gold)', 'var(--jade)', 'var(--accent-hover)', 'var(--stone)', 'var(--accent-btn-hover)'];
     // angle measured clockwise from top (0deg = top)
     function P(ang, r) { var a = ang * Math.PI / 180; return [C + r * Math.sin(a), C - r * Math.cos(a)]; }
-    var parts = '';
+    var segsHtml = '';
     for (var i = 0; i < n; i++) {
       var a0 = i * step, a1 = (i + 1) * step, mid = a0 + step / 2;
-      var s = P(a0, R), e = P(a1, R), lc = P(mid, R * 0.64);
-      parts += '<path d="M' + C + ',' + C + ' L' + s[0].toFixed(2) + ',' + s[1].toFixed(2) +
-        ' A' + R + ',' + R + ' 0 0 1 ' + e[0].toFixed(2) + ',' + e[1].toFixed(2) + ' Z" fill="' + fills[i % fills.length] + '"/>';
-      parts += '<text x="' + lc[0].toFixed(2) + '" y="' + lc[1].toFixed(2) + '" fill="#fff" font-size="15" font-weight="800" text-anchor="middle" dominant-baseline="central">' + segs[i] + '%</text>';
+      var s = P(a0, Rpie), e = P(a1, Rpie), lc = P(mid, Rpie * 0.62);
+      segsHtml += '<path d="M' + C + ',' + C + ' L' + s[0].toFixed(2) + ',' + s[1].toFixed(2) +
+        ' A' + Rpie + ',' + Rpie + ' 0 0 1 ' + e[0].toFixed(2) + ',' + e[1].toFixed(2) + ' Z" fill="' + fills[i % fills.length] + '"/>';
+      segsHtml += '<text x="' + lc[0].toFixed(2) + '" y="' + lc[1].toFixed(2) + '" fill="#fff" font-size="15" font-weight="800" text-anchor="middle" dominant-baseline="central">' + segs[i] + '%</text>';
     }
-    return '<svg class="ob-wheel" viewBox="0 0 200 200" aria-hidden="true">' + parts + '</svg>';
+    // carnival bulbs around the rim
+    var bulbs = 16, bHtml = '';
+    for (var b = 0; b < bulbs; b++) {
+      var bp = P(b * 360 / bulbs, Rrim);
+      bHtml += '<circle cx="' + bp[0].toFixed(1) + '" cy="' + bp[1].toFixed(1) + '" r="2.6" fill="var(--gold)"/>';
+    }
+    return '<svg class="ob-wheel" viewBox="0 0 200 200" aria-hidden="true">' +
+      '<circle cx="100" cy="100" r="' + Rrim + '" fill="none" stroke="var(--accent)" stroke-width="9"/>' +
+      segsHtml + bHtml + '</svg>';
   }
 
   // Faux HSK 成绩报告 (score report) — an aspirational example, clearly marked.
