@@ -386,7 +386,7 @@
         global.history.replaceState({}, '', global.location.pathname);
       } catch (ignore) {}
       if (global.location.pathname.indexOf('/auth') === 0) return false;
-      global.location.replace('/auth/?oauth_error=1');
+      global.location.replace('/quiz/?oauth_error=1');
       return false;
     }
   }

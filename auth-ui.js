@@ -64,7 +64,7 @@
   document.getElementById('app-sign-out').addEventListener('click', function () {
     if (!window.HSKAuth) return;
     HSKAuth.signOut().then(function () {
-      window.location.href = '/auth/';
+      window.location.href = '/';
     });
   });
 

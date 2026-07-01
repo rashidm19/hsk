@@ -7,6 +7,7 @@
   if (!document.body.classList.contains('lp')) return;
 
   var APP_HOME = '/exams/';
+  var FUNNEL = '/quiz/';
 
   function refreshSignedInUI(session) {
     var cta = document.getElementById('lp-header-cta');
@@ -15,18 +16,19 @@
         cta.textContent = 'My workspace';
         cta.href = APP_HOME;
       } else {
-        cta.textContent = 'Sign in';
-        cta.href = '/auth/';
+        cta.textContent = 'Get started';
+        cta.href = FUNNEL;
       }
     }
 
-    document.querySelectorAll('a.lp-btn-primary[href="/auth/"]').forEach(function (link) {
+    // The large hero/section CTAs enter the funnel; once signed in they become a workspace shortcut.
+    document.querySelectorAll('a.lp-btn-primary--lg').forEach(function (link) {
       if (session) {
-        link.textContent = link.classList.contains('lp-btn-primary--lg') ? 'Go to workspace' : 'My workspace';
+        link.textContent = 'Go to workspace';
         link.href = APP_HOME;
       } else {
-        if (link.classList.contains('lp-btn-primary--lg')) link.textContent = 'Get started';
-        link.href = '/auth/';
+        link.textContent = 'Get started';
+        link.href = FUNNEL;
       }
     });
   }

@@ -19,10 +19,9 @@
     .then(function (session) {
       document.documentElement.classList.remove('hsk-auth-pending');
       if (session) return;
-      var next = encodeURIComponent(
-        window.location.pathname + window.location.search + window.location.hash
-      );
-      window.location.replace('/auth/?next=' + next);
+      // Single entry: unauthenticated visitors are sent through the onboarding funnel,
+      // which performs auth at screen s17. (Soft gating — session-only, no entitlement check.)
+      window.location.replace('/quiz/');
     })
     .catch(function () {
       document.documentElement.classList.remove('hsk-auth-pending');
