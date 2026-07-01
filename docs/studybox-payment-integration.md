@@ -141,8 +141,12 @@ Content-Type: application/json
 X-HSK-Signature: <lowercase hex HMAC-SHA256 of the RAW request body, keyed with HSK_GRANT_HMAC_SECRET>
 ```
 
-The function is deployed with `--no-verify-jwt`, so **no Supabase JWT/apikey is required** — the HMAC
-is the sole authentication. (HSK will confirm the exact URL form.)
+HSK intends to deploy the function with `--no-verify-jwt` so the **HMAC is the sole authentication**
+(no Supabase JWT / `apikey` needed). This is a deploy-time gateway setting, **not yet verified** —
+confirm at integration time that an unauthenticated POST (no `Authorization`/`apikey` header) actually
+reaches the function. Tell-tale: a `401` whose body is **not** the string `bad signature` means
+Supabase JWT verification is still on (a gateway rejection, not a signing bug) — flag it to HSK rather
+than chasing your signature. HSK will provide the exact URL.
 
 **Request body (JSON):**
 
@@ -182,7 +186,7 @@ what matters; only the fields above drive the grant.
 Node example:
 ```js
 const crypto = require("crypto");
-const bodyStr = JSON.stringify({ uid, plan, order_id, currency: "KZT", paid_at, ts, receipt });
+const bodyStr = JSON.stringify({ uid, plan, order_id, currency: "KZT", paid_at, ts });
 const sig = crypto.createHmac("sha256", HSK_GRANT_HMAC_SECRET).update(bodyStr).digest("hex");
 await fetch(HSK_GRANT_URL, {
   method: "POST",
@@ -201,6 +205,9 @@ sig = hmac.new(HSK_GRANT_HMAC_SECRET.encode(), body_str.encode(), hashlib.sha256
 # POST body_str verbatim with header X-HSK-Signature: sig
 ```
 
+> `receipt` is optional; if you include it, it must be **inside the signed body** — always sign
+> exactly the bytes you POST. (Both examples above sign the minimal required field set.)
+
 **Responses & retry policy:**
 
 | Status | Body | Meaning | Your action |
@@ -215,6 +222,10 @@ sig = hmac.new(HSK_GRANT_HMAC_SECRET.encode(), body_str.encode(), hashlib.sha256
 
 Rule of thumb: **retry only on 5xx** (with a fresh `ts`), never on 4xx (except `stale` → refresh `ts`).
 `order_id` idempotency makes retries safe.
+
+On a body with several problems at once, the **first failing check wins**, in this fixed order:
+signature → JSON parse → `plan` → `currency` → `ts` freshness → required fields (`uid`/`order_id`/`paid_at`)
+→ `paid_at` validity. Don't assert a specific error for a multiply-invalid body in your tests.
 
 ### 5.5 Return redirect
 - On success → `302` to the `return` URL (`.../quiz/?pay=success`).
@@ -283,6 +294,7 @@ they're HSK-internal. `expires_at` is computed on HSK's side from `plan`; you do
 - [ ] A successful test order calls `grant-entitlement` and returns `200 {"ok":true}`.
 - [ ] Re-sending the same `order_id` returns `{"idempotent":true}` (no double grant).
 - [ ] A tampered body or wrong secret returns `401` (signing verified).
+- [ ] An **unauthenticated** POST (no `Authorization`/`apikey`) reaches the function — the `401` body must be exactly `bad signature`, proving the HMAC gate (not the Supabase JWT gate) is what's running.
 - [ ] `stale` `ts`, wrong `currency`, and unknown `plan` each return `400`.
 - [ ] Decline/abandon redirects to the `cancel` URL; success redirects to the `return` URL.
 - [ ] After a real end-to-end test, HSK confirms `profiles.subscription.status = 'active'` for the `uid`.
