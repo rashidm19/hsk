@@ -223,8 +223,8 @@
   function screenEl(inner, opts) {
     opts = opts || {};
     var cls = 'ob-screen' + (opts.center ? ' ob-center' : '');
-    var wide = opts.wide ? ' data-wide' : '';
-    return mk('<div class="' + cls + '"' + wide + '>' + inner + '</div>');
+    var attr = (opts.wide ? ' data-wide' : '') + (opts.fill ? ' data-fill' : '');
+    return mk('<div class="' + cls + '"' + attr + '>' + inner + '</div>');
   }
   function ctaBtn(label, opts) {
     opts = opts || {};
@@ -690,12 +690,14 @@
     var c = S.s19 || {};
     var el = screenEl(
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
-      '<ul class="ob-timeline">' + (c.steps || []).map(function (s) {
-        return '<li><div class="ob-tl-when">' + esc(s.when) + '</div>' +
+      '<ul class="ob-timeline">' + (c.steps || []).map(function (s, i) {
+        return '<li class="ob-tl-item" style="animation-delay:' + (0.12 + i * 0.13).toFixed(2) + 's">' +
+          '<div class="ob-tl-when">' + esc(s.when) + '</div>' +
           '<div class="ob-tl-title">' + esc(s.title) + '</div>' +
           '<div class="ob-tl-text">' + esc(s.text) + '</div></li>';
       }).join('') + '</ul>' +
-      ctaBtn(c.cta || 'Continue', { id: 'go' }));
+      ctaBtn(c.cta || 'Continue', { id: 'go' }),
+      { fill: true });
     $('#go', el).onclick = next;
     return el;
   }
@@ -825,11 +827,11 @@
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
       '<p class="ob-sub">' + subst(c.subtag) + '</p>' +
       '<div class="ob-chips"><span class="ob-chip">' + subst(c.goalChip) + '</span><span class="ob-chip">' + subst(c.focusChip) + '</span></div>' +
-      certCard(c) +
-      '<div class="ob-social">' + subst(c.social) + '</div>' +
       '<div class="ob-tiers" role="radiogroup" aria-label="Choose a plan">' + tiers + '</div>' +
       '<p class="ob-fineprint">' + esc(c.riskReversal || '') + '</p>' +
       '<div class="ob-trustrow"><span>🔒 Secure payment</span><span>💳 Visa · Mastercard · Amex</span></div>' +
+      certCard(c) +
+      '<div class="ob-social">' + subst(c.social) + '</div>' +
       ctaBtn(c.cta || 'Get my plan', { id: 'go', lg: true }),
       { wide: true });
 

@@ -115,6 +115,8 @@ body.ob .theme-toggle { display: none !important; }
   flex-direction: column;
 }
 .ob-screen[data-wide] { max-width: 720px; }
+/* Fill the stage so inner content can anchor (title top) and center (body). */
+.ob-screen[data-fill] { min-height: 100%; margin: 0 auto; }
 /* Directional transitions: forward slides in from the right, back from the left. */
 .ob-screen[data-anim="fwd"]  { animation: ob-slide-fwd .28s cubic-bezier(.22,.61,.36,1) both; }
 .ob-screen[data-anim="back"] { animation: ob-slide-back .28s cubic-bezier(.22,.61,.36,1) both; }
@@ -286,15 +288,19 @@ body.ob .theme-toggle { display: none !important; }
 
 /* ---- Diagnostic ---- */
 .ob-dq-prog { font-size: var(--fs-sm); color: var(--stone); font-weight: 600; margin-bottom: 8px; }
+/* The question stem must read as the prompt, not another pickable card:
+   raised (surface-sunken) panel with an accent top rule and a clear gap. */
 .ob-dq-text {
   font-family: 'Noto Serif SC', serif;
-  font-size: var(--fs-lg);
-  line-height: 1.8;
-  background: var(--surface);
-  border: 1px solid var(--mist);
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  margin-bottom: 14px;
+  font-size: var(--fs-xl);
+  line-height: 1.9;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-top: 3px solid var(--accent);
+  border-radius: 4px 4px 14px 14px;
+  padding: 18px 20px;
+  margin-bottom: 22px;
+  color: var(--ink);
 }
 .ob-dq-audio { width: 100%; margin: 4px 0 14px; }
 .ob-dq .ob-opt { font-family: 'Noto Serif SC', serif; }
@@ -362,6 +368,11 @@ body.ob .theme-toggle { display: none !important; }
 
 /* ---- Timeline ---- */
 .ob-timeline { list-style: none; padding: 0; margin: 6px 0 0; }
+/* In the fill layout, the day list centers vertically between title and CTA. */
+.ob-screen[data-fill] .ob-timeline { margin: auto 0; }
+.ob-tl-item { opacity: 0; animation: ob-tl-in .42s ease both; }
+@keyframes ob-tl-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ob-tl-item { animation: none; opacity: 1; } }
 .ob-timeline li {
   position: relative; padding: 0 0 18px 26px; border-left: 2px solid var(--mist);
 }
