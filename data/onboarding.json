@@ -10,17 +10,17 @@
 
   "placeholders": {
     "learner_count": "1000",
-    "pass_rate": "{pass_rate}",
-    "n": "{n}",
+    "pass_rate": "80%",
+    "n": "857",
     "authority_logos": [],
     "starter_kit": "{starter_kit}"
   },
 
   "testimonials": [
-    { "name": "{testimonial_1_name}", "text": "{testimonial_1}" },
-    { "name": "{testimonial_2_name}", "text": "{testimonial_2}" }
+    { "name": "Aigerim", "text": "No way — I passed HSK 4 on my first try! 😭😭😭 OMG thank you so much! ❤️" },
+    { "name": "Damir", "text": "So convenient — every section in one place, with accurate auto-scored feedback on Listening, Reading, and Writing. The study plan is really well thought out." }
   ],
-  "mirrorTestimonial": { "name": "{testimonial_name}", "text": "{testimonial}" },
+  "mirrorTestimonial": { "name": "Aigerim", "text": "No way — I passed HSK 4 on my first try! 😭😭😭 OMG thank you so much! ❤️" },
 
   "pricing": {
     "currency": "KZT",
