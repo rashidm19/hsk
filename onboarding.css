@@ -458,7 +458,7 @@ body.ob .theme-toggle { display: none !important; }
   border: 1px solid var(--mist);
   border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 14px;
+  margin: 24px 0 14px;
   box-shadow: var(--shadow);
 }
 .ob-cert-tag {
