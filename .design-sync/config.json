@@ -1,0 +1,11 @@
+{
+  "shape": "static-css",
+  "styleOnly": true,
+  "bundleDir": "ds-bundle",
+  "readmeHeader": ".design-sync/conventions.md",
+  "sources": {
+    "closureCss": ["common.css", "dashboard.css"],
+    "referenceTokens": ["landing-v2/styles.css"]
+  },
+  "notes": "Off-script layout — see .design-sync/NOTES.md. projectId to be recorded when DesignSync auth is available."
+}
