@@ -23,6 +23,11 @@
   var LS_STATE = 'hsk_onboarding_v1';
   var LS_DONE = 'hsk_onboarding_complete';
   var LS_SUB = 'hsk_subscription';
+  // Set on a ?pay=success return, cleared once the server entitlement is
+  // confirmed (or on ?pay=cancel): "a payment was reported but the webhook
+  // hasn't landed yet" — blocks an accidental second charge in that window.
+  var LS_PAY_PENDING = 'hsk_pay_pending';
+  var PAY_PENDING_TTL_MS = 30 * 60 * 1000;
 
   var HANDOFF = CFG.handoffUrl || '/exams/';
 
@@ -52,6 +57,22 @@
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  // Same-origin entitlement cache read by auth-guard.js on app pages — warming
+  // it after a confirmed grant saves the guard a query and prevents ping-pong.
+  function warmSubCache(userId, sub) {
+    try { sessionStorage.setItem('hsk_sub_cache', JSON.stringify({ userId: userId, sub: sub, cachedAt: Date.now() })); } catch (e) {}
+  }
+  function payPendingFresh() {
+    var t = parseInt(lsGet(LS_PAY_PENDING) || '', 10);
+    return isFinite(t) && Date.now() - t < PAY_PENDING_TTL_MS;
+  }
+  // Confirmed server entitlement — persist every local trace of it in one place.
+  function recordEntitlement(userId, sub) {
+    warmSubCache(userId, sub);
+    lsSet(LS_SUB, JSON.stringify(sub));
+    lsSet(LS_DONE, '1');
+    lsDel(LS_PAY_PENDING);
+  }
 
   // ---------- state ----------
   function freshState() { return { idx: 0, answers: {} }; }
@@ -166,6 +187,51 @@
     render(-1);
   }
   function goById(id) { var i = indexOfId(id); if (i >= 0) { state.idx = i; save(); render(0); } }
+
+  // ---------- funnel gates ----------
+  // Funnel order is enforced: onboarding -> auth (s17) -> paywall (s22) -> app.
+  // The auth screen requires a completed assessment; every screen after it
+  // additionally requires a signed-in user (when Supabase is configured).
+  // In-flow navigation can't skip screens, so these clamps only fire on a
+  // restored idx (stale/hand-edited state, cleared cookies, another device).
+  var GATE_ANSWERS = [
+    ['s2',  function () { return !!A.goal; }],
+    ['s3',  function () { return !!A.target; }],
+    ['s5',  function () { return !!A.first; }],
+    ['s7',  function () { return !!(A.section && A.section.key); }],
+    ['s8',  function () { return !!(A.pain && A.pain.length); }],
+    ['s9',  function () { return !!A.examDate; }],
+    ['s11', function () { return !!A.daily; }],
+    ['s12', function () { return !!A.fear; }],
+    ['s13', function () { return DIAG.length === 0 || (Array.isArray(A.diag) && A.diag.length >= DIAG.length); }]
+  ];
+  function firstIncompleteIdx() {
+    for (var i = 0; i < GATE_ANSWERS.length; i++) {
+      if (!GATE_ANSWERS[i][1]()) return indexOfId(GATE_ANSWERS[i][0]);
+    }
+    return -1;
+  }
+  function authConfigured() {
+    try { return !!(window.HSKAuth && HSKAuth.isConfigured()); } catch (e) { return false; }
+  }
+  function subActive(sub) {
+    if (!sub || sub.status !== 'active') return false;
+    if (sub.expires_at) {
+      var t = Date.parse(sub.expires_at);
+      if (isFinite(t) && t <= Date.now()) return false;
+    }
+    return true;
+  }
+  // Clamp idx back to the furthest screen the state actually allows. The session
+  // check here is the synchronous token probe; init() re-verifies it async.
+  function gateIdx() {
+    var missing = firstIncompleteIdx();
+    if (missing >= 0 && state.idx > missing) { state.idx = missing; save(); return; }
+    var authAt = indexOfId('s17');
+    if (state.idx > authAt && authConfigured() && !(HSKAuth.hasStoredSession && HSKAuth.hasStoredSession())) {
+      state.idx = authAt; save();
+    }
+  }
 
   // The primary CTA is a direct child .ob-cta (not a secondary .ob-ghost). We lift
   // it into the pinned footer; interactive screens (wheel, email-gate) nest their
@@ -961,22 +1027,57 @@
     if (!window.HSKAuth || !HSKAuth.isConfigured() || !pay.checkoutUrl) {
       return simulatePayment(tier);
     }
+    // If the user dismisses the checkout modal while this async chain is in
+    // flight, every terminal action below must abort — a dismissed checkout may
+    // never redirect to the acquiring behind the user's back.
+    var ov = overlay;
+    function live() { return overlay === ov; }
     HSKAuth.getUser().then(function (user) {
-      if (!user) return simulatePayment(tier); // no session -> can't key the grant
-      // Fire begin_checkout only when a real cross-domain redirect is imminent.
-      obTrack('begin_checkout', { plan: tier.id, value: tier.price, currency: (PRICING.currency || 'USD') });
-      var base = pay.returnBase || location.origin;
-      var url = pay.checkoutUrl +
-        '?product=hsk' +
-        '&plan=' + encodeURIComponent(tier.id) +
-        '&uid=' + encodeURIComponent(user.id) +
-        '&email=' + encodeURIComponent(user.email || A.email || '') +
-        '&return=' + encodeURIComponent(base + '/quiz/?pay=success') +
-        '&cancel=' + encodeURIComponent(base + '/quiz/?pay=cancel');
-      closeOverlay();
-      clearTimer();
-      location.href = url;
-    }).catch(function () { simulatePayment(tier); });
+      if (!live()) return;
+      if (!user) {
+        // Session gone (expired/cleared): a real checkout can't be keyed to an
+        // account, and simulating would fake an entitlement. Re-authenticate.
+        closeOverlay(); clearTimer(); goById('s17');
+        return;
+      }
+      function proceed() {
+        if (!live()) return;
+        // Fire begin_checkout only when a real cross-domain redirect is imminent.
+        obTrack('begin_checkout', { plan: tier.id, value: tier.price, currency: (PRICING.currency || 'USD') });
+        var base = pay.returnBase || location.origin;
+        var url = pay.checkoutUrl +
+          '?product=hsk' +
+          '&plan=' + encodeURIComponent(tier.id) +
+          '&uid=' + encodeURIComponent(user.id) +
+          '&email=' + encodeURIComponent(user.email || A.email || '') +
+          '&return=' + encodeURIComponent(base + '/quiz/?pay=success') +
+          '&cancel=' + encodeURIComponent(base + '/quiz/?pay=cancel');
+        closeOverlay();
+        clearTimer();
+        location.href = url;
+      }
+      // A payment was reported minutes ago and its webhook hasn't landed yet:
+      // never start a second charge in that window — show success and re-poll.
+      if (payPendingFresh()) {
+        obTrack('checkout_duplicate_prevented', { plan: tier.id, reason: 'pay_pending' });
+        closeOverlay(); clearTimer(); goById('s25');
+        pollSubscription(0);
+        return;
+      }
+      // Last line of defense against a double charge: an entitlement may already
+      // exist (webhook landed after the return poll gave up, or another device).
+      if (!HSKAuth.getSubscriptionStatus) { proceed(); return; }
+      HSKAuth.getSubscriptionStatus(user.id).then(function (res) {
+        if (!live()) return;
+        if (!res.error && subActive(res.sub)) {
+          obTrack('checkout_duplicate_prevented', { plan: tier.id, reason: 'active' });
+          recordEntitlement(user.id, res.sub);
+          closeOverlay(); clearTimer(); goById('s25');
+          return;
+        }
+        proceed();
+      }).catch(proceed);
+    }).catch(function () { if (live()) openCheckout(); }); // transient getUser failure: fresh modal, user retries
   }
 
   // Simulated fallback (unconfigured preview only). Writes the canonical subscription shape
@@ -1001,6 +1102,7 @@
       expires_at: new Date(now + months * 30 * 24 * 3600 * 1000).toISOString()
     };
     A.subscription = sub; save();
+    lsDel(LS_PAY_PENDING);
     lsSet(LS_SUB, JSON.stringify(sub));
     lsSet(LS_DONE, '1');
     syncToProfile();
@@ -1040,21 +1142,27 @@
 
   // ---------- payment return handling (/quiz/?pay=success|cancel) ----------
   var POLL_MAX = 6;
-  function stripPayParam() {
+  function stripParam(name) {
     try {
       var u = new URL(location.href);
-      u.searchParams.delete('pay');
+      u.searchParams.delete(name);
       history.replaceState({}, '', u.pathname + (u.search || '') + u.hash);
     } catch (e) {}
   }
   function handlePayCancel() {
-    stripPayParam();
+    stripParam('pay');
+    lsDel(LS_PAY_PENDING); // the acquiring reported a cancel — nothing in flight
     obTrack('payment_cancelled', {});
-    goById('s22');        // back to the paywall
-    openExitIntent();     // recovery offer (function is hoisted in this closure)
+    state.idx = indexOfId('s22');   // back to the paywall…
+    gateIdx();                      // …unless the state doesn't actually allow it (crafted URL)
+    save(); render();
+    if (FLOW[state.idx] && FLOW[state.idx].id === 's22') openExitIntent(); // recovery offer
   }
   function handlePaySuccess() {
-    stripPayParam();
+    stripParam('pay');
+    // A real payment was just reported; until the webhook writes the entitlement,
+    // startCheckout must refuse to begin a second charge.
+    lsSet(LS_PAY_PENDING, String(Date.now()));
     clearTimer();
     goById('s25');        // show success optimistically (content is ungated)
     pollSubscription(0);  // confirm the server-written entitlement in the background
@@ -1064,7 +1172,9 @@
     HSKAuth.getUser().then(function (user) {
       if (!user) return finishSuccess(null); // null session on return -> stay optimistic
       HSKAuth.getSubscription(user.id).then(function (sub) {
-        if (sub && sub.status === 'active') return finishSuccess(sub);
+        // subActive (not bare status): nothing server-side flips active->expired,
+        // so a repurchase poll must not be satisfied by the stale previous row.
+        if (subActive(sub)) { warmSubCache(user.id, sub); return finishSuccess(sub); }
         if (attempt + 1 >= POLL_MAX) return finishSuccess(null); // proceed anyway (ungated)
         setTimeout(function () { pollSubscription(attempt + 1); }, 1000);
       }).catch(function () {
@@ -1074,8 +1184,9 @@
     }).catch(function () { finishSuccess(null); });
   }
   function finishSuccess(sub) {
-    if (sub && sub.status === 'active') {
+    if (subActive(sub)) {
       A.subscription = sub; save();
+      lsDel(LS_PAY_PENDING);
       lsSet(LS_SUB, JSON.stringify(sub));
       lsSet(LS_DONE, '1'); // only on confirmed server entitlement — never at checkout/timeout
       obTrack('purchase', { plan: sub.plan, value: sub.price, currency: sub.currency, order_id: sub.order_id });
@@ -1097,8 +1208,19 @@
     // Payment redirect return — handled below, after the shell renders. Read it BEFORE the
     // once-only guard so a returning payer is never bounced straight to the product.
     var payResult = param('pay');
-    // Once-only: completed onboarding -> straight to the product.
-    if (lsGet(LS_DONE) === '1' && !param('reset') && !payResult) { location.replace(HANDOFF); return; }
+    // Bounced off the app by auth-guard.js — must not short-circuit back to the
+    // product below, or the two redirects would loop. ?sub=required means the
+    // account has no active entitlement; ?signin=1 means the session is gone.
+    var subRequired = param('sub') === 'required';
+    var signinRequired = param('signin') === '1';
+    // Once-only: completed onboarding -> straight to the product. Requires a
+    // stored session token: with the flag set but no token, the app would just
+    // bounce the visitor back here (they land on the sign-in gate instead).
+    if (lsGet(LS_DONE) === '1' && !param('reset') && !payResult && !subRequired && !signinRequired &&
+        (!authConfigured() || (HSKAuth.hasStoredSession && HSKAuth.hasStoredSession()))) {
+      location.replace(HANDOFF); return;
+    }
+    if (signinRequired) { stripParam('signin'); obTrack('signin_required', {}); }
 
     root.innerHTML =
       '<div class="ob-app">' +
@@ -1122,6 +1244,9 @@
 
     // guard against a stale idx
     if (state.idx < 0 || state.idx >= FLOW.length) state.idx = 0;
+    // Funnel-order gates: no auth screen without a completed assessment, no
+    // post-auth screens (paywall included) without a session token.
+    gateIdx();
     render();
 
     // Payment return: success shows S25 + polls the server row; cancel re-offers the deal.
@@ -1130,14 +1255,94 @@
     if (payResult === 'success') handlePaySuccess();
     else if (payResult === 'cancel') handlePayCancel();
 
+    // Sent back by the app's subscription guard (auth-guard.js): no active
+    // entitlement on this account. Re-check the server once — a lagging payment
+    // webhook or a flaky read must not strand a paying user at the paywall —
+    // otherwise drop the stale local completion flags and reopen the funnel at
+    // the paywall (the gates may pull that back to auth or the assessment).
+    if (subRequired) {
+      stripParam('sub');
+      (function () {
+        // keepFlags: on a FAILED read we can't tell "no subscription" from a
+        // network blip, so show the paywall but keep the local completion flags —
+        // only a definite inactive row may wipe them.
+        function reopen(atAuth, keepFlags) {
+          if (!keepFlags) { lsDel(LS_DONE); lsDel(LS_SUB); delete A.subscription; }
+          closeOverlay(); clearTimer();
+          obTrack('sub_required', { outcome: 'reopened', at: atAuth ? 'auth' : 'paywall' });
+          state.idx = indexOfId(atAuth ? 's17' : 's22');
+          gateIdx();
+          save();
+          render();
+        }
+        // On a device without local funnel state, restore the answers saved on
+        // the profile so the user lands on the paywall, not back at question 1.
+        function hydrateThenReopen(user) {
+          if (firstIncompleteIdx() < 0 || !HSKAuth.getOnboarding) { reopen(false); return; }
+          HSKAuth.getOnboarding(user.id).then(function (ans) {
+            if (ans && typeof ans === 'object') {
+              // Empty arrays count as unanswered too: opening s8/s13 leaves
+              // A.pain=[] / A.diag=[] behind, which must not block the restore.
+              Object.keys(ans).forEach(function (k) {
+                var cur = A[k];
+                if (cur == null || (Array.isArray(cur) && !cur.length)) A[k] = ans[k];
+              });
+              save();
+            }
+            reopen(false);
+          }).catch(function () { reopen(false); });
+        }
+        if (!authConfigured() || !HSKAuth.getSubscriptionStatus) { reopen(false); return; }
+        HSKAuth.getUser().then(function (user) {
+          // No session (or a failed session read below): the subscription can't
+          // be checked at all, so keep the flags — only a definite inactive row
+          // may wipe them.
+          if (!user) { reopen(true, true); return; }
+          HSKAuth.getSubscriptionStatus(user.id).then(function (res) {
+            if (!res.error && subActive(res.sub)) {
+              // Entitlement is actually live (webhook landed / guard misread):
+              // restore the completion flags and send the user back in.
+              obTrack('sub_required', { outcome: 'restored' });
+              recordEntitlement(user.id, res.sub);
+              location.replace(HANDOFF);
+              return;
+            }
+            if (res.error) { reopen(false, true); return; }
+            hydrateThenReopen(user);
+          }).catch(function () { reopen(false, true); });
+        }).catch(function () { reopen(true, true); });
+      })();
+    }
+
     // Returning from OAuth (or already signed in): migrate answers and, if we're
     // sitting on the email-gate, skip past it.
     try {
-      if (window.HSKAuth && HSKAuth.isConfigured()) {
+      if (authConfigured()) {
         HSKAuth.getUser().then(function (user) {
-          if (!user) return;
-          syncToProfile();
-          if (FLOW[state.idx] && FLOW[state.idx].id === 's17') next();
+          if (user) {
+            // Only sync a COMPLETE answer set: an empty/partial local state (new
+            // device) must not clobber the answers saved on the profile — the
+            // sub=required hydration above reads them.
+            if (firstIncompleteIdx() < 0) syncToProfile();
+            if (!payResult && !subRequired && !param('reset') && HSKAuth.getSubscriptionStatus) {
+              // Self-heal: an entitlement may have landed after the pay-return
+              // poll gave up (lagging webhook), or exist from another device.
+              // Plain /quiz/ would otherwise never re-check it and could leave a
+              // paying user staring at the paywall.
+              HSKAuth.getSubscriptionStatus(user.id).then(function (res) {
+                if (!res.error && subActive(res.sub)) {
+                  recordEntitlement(user.id, res.sub);
+                  location.replace(HANDOFF);
+                }
+              }).catch(function () {});
+            }
+            if (FLOW[state.idx] && FLOW[state.idx].id === 's17') next();
+          } else if (!payResult && !subRequired && state.idx > indexOfId('s17')) {
+            // The stored token gateIdx() probed synchronously turned out to be
+            // dead — post-auth screens (paywall included) need a live session.
+            // (pay= returns keep their deliberate optimistic handling above.)
+            goById('s17');
+          }
         }).catch(function () {});
       }
     } catch (e) {}

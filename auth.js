@@ -220,6 +220,31 @@
     return (data && data.subscription) || null;
   }
 
+  // Like getSubscription, but distinguishes a definite "no subscription" (sub:null,
+  // error:false) from a failed read (error:true) so guards can fail open on
+  // transient errors instead of ejecting a possibly-paying user.
+  async function getSubscriptionStatus(userId) {
+    const c = getClient();
+    if (!c || !userId) return { error: true, sub: null };
+    try {
+      const { data, error } = await c.from('profiles').select('subscription').eq('id', userId).maybeSingle();
+      if (error) return { error: true, sub: null };
+      return { error: false, sub: (data && data.subscription) || null };
+    } catch (e) {
+      return { error: true, sub: null };
+    }
+  }
+
+  // Read the saved onboarding answers (written by updateProfile from the funnel) —
+  // lets /quiz/ rehydrate on a device that has no local funnel state.
+  async function getOnboarding(userId) {
+    const c = getClient();
+    if (!c || !userId) return null;
+    const { data, error } = await c.from('profiles').select('onboarding').eq('id', userId).maybeSingle();
+    if (error) return null;
+    return (data && data.onboarding) || null;
+  }
+
   async function signUp({ email, password, name, country }) {
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
@@ -401,6 +426,8 @@
     getUser,
     getProfile,
     getSubscription,
+    getSubscriptionStatus,
+    getOnboarding,
     readProfileCache,
     writeProfileCache,
     clearProfileCache,

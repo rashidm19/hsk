@@ -63,9 +63,10 @@ Edit the shell here, not in generated pages.
 
 **Auth (Supabase, client-side only):**
 - `auth.js` exposes the `HSKAuth` global (sign up / sign in / Google OAuth via PKCE, profile
-  upsert). `auth-guard.js` redirects unauthenticated visitors away from `body.app` pages to
-  `/auth/`. `auth-ui.js` / `landing-auth.js` render the UI; `auth/` holds the sign-in page and
-  OAuth callback.
+  upsert). `auth-guard.js` guards `body.app` pages: unauthenticated visitors are redirected to
+  the `/quiz/` funnel (auth happens at its s17 email gate); authenticated users without an
+  active `profiles.subscription` are redirected to `/quiz/?sub=required` (funnel reopens at the
+  paywall). `auth-ui.js` / `landing-auth.js` render the UI; `auth/` holds the OAuth callback.
 - Config is `config/auth.js` (copied from `config/auth.example.js`) holding the Supabase project
   URL + anon key. **When auth is unconfigured (placeholder values), the whole site stays open**
   for static preview — `isConfigured()` short-circuits the guard. So local dev needs no Supabase.
