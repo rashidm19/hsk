@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 .env
 .idea/
+.claude
 
 # Local scratch / screenshots (not part of the site)
 .playwright-mcp/

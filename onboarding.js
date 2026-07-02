@@ -26,6 +26,10 @@
   // Set on a ?pay=success return, cleared once the server entitlement is
   // confirmed (or on ?pay=cancel): "a payment was reported but the webhook
   // hasn't landed yet" — blocks an accidental second charge in that window.
+  // UX stopgap only (single device, clearable): the authoritative backstop is
+  // server-side — grant-entitlement STACKS a duplicate paid order onto the
+  // existing term and flags it for refund review (apply_hsk_entitlement in
+  // supabase/schema.sql), so a slipped-through second charge is never lost.
   var LS_PAY_PENDING = 'hsk_pay_pending';
   var PAY_PENDING_TTL_MS = 30 * 60 * 1000;
 

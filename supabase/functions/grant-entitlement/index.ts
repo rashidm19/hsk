@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { computeExpiry, derivePlan, freshTs, verifySig } from "./lib.ts";
+import { derivePlan, freshTs, verifySig } from "./lib.ts";
 
 const SECRET = Deno.env.get("HSK_GRANT_HMAC_SECRET") ?? "";
 const SB_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -49,12 +49,10 @@ Deno.serve(async (req) => {
   const existing = await sb.from("payments").select("order_id").eq("order_id", p.order_id).maybeSingle();
   const isReplay = !!existing.data;
 
-  const expires_at = computeExpiry(String(p.paid_at), plan.months);
-
   // Audit ledger — write once. On replay the row already exists; tolerate the unique violation.
   if (!isReplay) {
     const ins = await sb.from("payments").insert({
-      order_id: p.order_id, user_id: p.uid, plan: p.plan, amount: plan.amount,
+      order_id: p.order_id, user_id: p.uid, plan: p.plan, amount: plan.amount, months: plan.months,
       currency: "KZT", status: "paid", receipt: p.receipt ?? null, paid_at: p.paid_at, raw: p,
     });
     if (ins.error && ins.error.code !== "23505") { // 23505 = unique_violation (concurrent retry)
@@ -63,19 +61,27 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Entitlement — (re-)upsert by uid on EVERY call (idempotent: re-setting status:active is a no-op).
-  // This covers a missing profiles row AND reconciles a previous entitlement:false on re-drive.
-  const subscription = {
-    status: "active", plan: p.plan, price: plan.amount, currency: "KZT",
-    interval: plan.interval, provider: "studybox", order_id: p.order_id,
-    paid_at: p.paid_at, expires_at,
-  };
-  const up = await sb.from("profiles").upsert({ id: p.uid, subscription }, { onConflict: "id" });
-  if (up.error) {
-    log({ order_id: p.order_id, uid: p.uid, result: "warn", reject: "profile_upsert", idempotent: isReplay, msg: up.error.message });
+  // Entitlement — recomputed from the ledger on EVERY call. apply_hsk_entitlement() folds all
+  // status='paid' orders for the uid under a row lock: terms STACK (a duplicate real charge —
+  // new order_id, same uid — extends coverage instead of overwriting it) and the overlapping
+  // order is flagged review_status='double_charge' for refund review. Replays, out-of-order
+  // arrival, and re-drives converge; a missing profiles row and a previous entitlement:false
+  // are both healed here.
+  const grant = await sb.rpc("apply_hsk_entitlement", { p_uid: p.uid });
+  if (grant.error) {
+    log({ order_id: p.order_id, uid: p.uid, result: "warn", reject: "entitlement_apply", idempotent: isReplay, msg: grant.error.message });
     return json(200, { ok: true, idempotent: isReplay, entitlement: false }); // still un-granted; alert + re-drive
   }
+  const g = (grant.data ?? {}) as { expires_at?: string | null; orders?: number; flagged?: string[] };
+  const stacked = Array.isArray(g.flagged) && g.flagged.includes(String(p.order_id));
 
-  log({ order_id: p.order_id, uid: p.uid, plan: p.plan, amount: plan.amount, hmac_ok: true, idempotent: isReplay, result: "granted" });
-  return json(200, { ok: true, idempotent: isReplay });
+  log({
+    order_id: p.order_id, uid: p.uid, plan: p.plan, amount: plan.amount, hmac_ok: true,
+    idempotent: isReplay, expires_at: g.expires_at, orders: g.orders, stacked, result: "granted",
+  });
+  // expires_at / review are additive info keys — StudyBox parses by key (contract §5.4).
+  return json(200, {
+    ok: true, idempotent: isReplay, expires_at: g.expires_at ?? null,
+    ...(stacked ? { review: "double_charge" } : {}),
+  });
 });

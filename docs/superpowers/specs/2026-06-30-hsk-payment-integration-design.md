@@ -64,6 +64,44 @@ A multi-lens completeness review found six blockers; all are resolved below. Ver
 | B5 | Spec wrongly claimed HSK already reads `profiles.subscription`. It does **not** — `getProfile()` (`auth.js:113`) selects only `name,email,country`. | Add `HSKAuth.getSubscription(uid)` (§A.3). |
 | B6 | `init()` `LS_DONE` early-return (`onboarding.js:919`) short-circuits the `?pay=success` handler. | Read `?pay` before the guard; set `LS_DONE` only after the poll confirms `active` (§A.2). |
 
+## Policy addendum (2026-07-02) — duplicate real payments stack
+
+`order_id` idempotency only dedupes **retries of one order**. A user whose entitlement webhook is
+lagging can complete a **second real checkout** (new `order_id`, same `uid`); both charges are real
+money. The client stopgap (`LS_PAY_PENDING`, 30 min, in `startCheckout()`) is localStorage-bound —
+single device, clearable — so the server owns the policy:
+
+- **Entitlement is a pure function of the ledger.** The Edge Function no longer upserts
+  `profiles.subscription` directly; after inserting the `payments` row it calls
+  `apply_hsk_entitlement(uid)` (schema.sql), which folds **every** `status='paid'` payment for the
+  uid in `paid_at` order: each order extends coverage from `max(prior expiry, its own paid_at)`.
+  Terms **stack** — a duplicate charge buys extra time instead of overwriting the previous grant.
+  The fold runs under a `profiles` row lock (concurrent webhooks serialize; no lost extension) and
+  is deterministic: replays, out-of-order arrival, and operator re-drives all converge on one state.
+- **Flag for refund review.** An order paid while coverage was already running gets
+  `payments.review_status = 'double_charge'` plus a human-readable `review_note`. Operators
+  overwrite the status with their verdict (`'refunded'`, `'reviewed_ok'`, …); the recompute never
+  clobbers a non-null value. The function's 200 response gains additive keys (`expires_at`, and
+  `review: "double_charge"` when the order stacked) which StudyBox stores in
+  `HskGrant.last_response` — their parsing is key-based, so no contract break.
+- **Refund seam is now functional.** Refund at the acquiring → set `payments.status = 'refunded'`
+  → re-run `apply_hsk_entitlement(uid)`; coverage shrinks, or revokes to `subscription = null`
+  when no paid order remains. The `profiles_guard_subscription` trigger additionally admits the
+  function's transaction-local writer flag, so the SQL-editor runbook works without a service-role
+  JWT; direct manual `UPDATE`s stay blocked — `subscription` can never drift from the ledger.
+- **Rejected: blocking at the acquiring.** A pre-charge "is uid already active?" check against HSK
+  cannot close the very window it targets — during webhook lag the first payment isn't visible yet,
+  so the check would pass and the second charge proceed — while adding a synchronous cross-system
+  dependency to StudyBox's sell path. A StudyBox-internal same-uid cooldown (they already hold the
+  first order) is optional hardening, noted in the contract §8; not required for correctness.
+- **Data model:** `payments` gains `months` (term ledgered per order, from the plan map),
+  `review_status`, `review_note`, and an index on `(user_id, paid_at)`. Expiry maths moved from
+  the Edge Function's `computeExpiry()` (deleted) into SQL — Postgres month-addition has the
+  identical month-end clamp (Jan 31 + 1 mo = Feb 28/29), pinned to UTC inside the function.
+- **Verified** against the live Supabase project in a rolled-back transaction: stacking, flagging,
+  replay convergence, out-of-order arrival, refund shrink, full-refund revoke, month-end clamp,
+  and the guard trigger (assertions in `supabase/PAYMENTS_SETUP.md` § Duplicate charges & refunds).
+
 ## End-to-end flow
 
 1. User clicks **Pay** on `hskprep.cc/quiz/` (static).
@@ -162,8 +200,9 @@ Set `pricing.currency = "KZT"` and tier `price`/`base`/`perDay` to whole tenge
 - **Determinism:** re-derive `amount` / `interval` / `expires_at` from a server-side plan map keyed
   by the validated `plan` id; store the body's amount in `payments.raw` as audit; reject `currency != 'KZT'`.
 - **Write:** insert `payments` first (audit survives even if the entitlement target is missing), then
-  **upsert** `profiles` on `id=uid` (`insert … on conflict (id) do update set subscription=…`) so a
-  missing profile row doesn't silently no-op; log a warning if 0 rows updated.
+  call `apply_hsk_entitlement(uid)`, which recomputes `profiles.subscription` from the whole paid
+  ledger under a row lock — covers a missing profile row and stacks duplicate orders
+  (superseded the direct upsert; see the 2026-07-02 policy addendum).
 - **Logging:** one structured line per invocation (`order_id, uid, plan, amount, hmac_ok, idempotent,
   result, reject_reason`); persist failures durably (they outlive Edge log retention).
 
@@ -180,9 +219,10 @@ Set `pricing.currency = "KZT"` and tier `price`/`base`/`perDay` to whole tenge
   `{ status:'active', plan, price, currency:'KZT', interval, provider, order_id, paid_at, expires_at }`.
   Make `simulatePayment()` emit the same keys (`provider:'simulated'`, synthetic `order_id`, computed
   `expires_at`). Readers strictly require only `status`; everything else is display/support metadata.
-- **`expires_at`** is computed **by the Edge Function** from `paid_at + plan.months` (UTC) using the
-  plan map — not trusted from the body. For MVP nothing flips `active → expired` (gating is deferred)
-  — QA should not treat a permanently-active row as a bug.
+- **`expires_at`** is computed server-side (UTC) from the plan map — not trusted from the body.
+  Since 2026-07-02 the maths lives in SQL (`apply_hsk_entitlement` folds the paid ledger, so
+  stacked orders extend it; see the policy addendum). For MVP nothing flips `active → expired`
+  (gating is deferred) — QA should not treat a permanently-active row as a bug.
 - **Idempotent migration** — append `payments` + any policies guarded with
   `drop policy if exists …; create policy …` (mirroring the file's existing drop-if-exists for the
   trigger) so `schema.sql` stays re-runnable by hand.
@@ -227,6 +267,8 @@ Set `pricing.currency = "KZT"` and tier `price`/`base`/`perDay` to whole tenge
 - **Null session on return** (in-app webviews): guard the poll; show S25/handoff optimistically.
 - **Cancel / abandon:** `?pay=cancel` → `goById('s22')` + `openExitIntent()`.
 - **Double payment / webhook retries:** idempotent by `order_id`; `ts` freshness blocks stale replay.
+  A duplicate **real** order (distinct `order_id`, same `uid`) stacks the term and is flagged
+  `review_status='double_charge'` for refund review — see the 2026-07-02 policy addendum.
 - **Missing profiles row:** function upserts; always writes `payments` first.
 - **Lost webhook (support fire-drill):** `grant-entitlement` is safely replayable — support re-POSTs a
   known `order_id`; max (service-role) has a documented read/replay query; runbook: read the StudyBox
