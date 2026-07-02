@@ -1,0 +1,9 @@
+/* HSK Prep — design-system entry stylesheet.
+   Rendered designs receive exactly this file's @import closure:
+   1. Google Fonts (same families + weights the production site loads)
+   2. _ds_bundle.css (verbatim common.css + dashboard.css from the repo)
+   tokens/*.css are reference copies for reading — their definitions
+   already ship inside _ds_bundle.css. */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('./_ds_bundle.css');

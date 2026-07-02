@@ -1,0 +1,28 @@
+/* HSK Prep — MARKETING palette (landing-v2/styles.css). NOT part of the default closure:
+   it redefines --surface/--jade/--gold/--radius/--shadow with different values than the
+   platform palette. Use only for marketing/landing designs, never mixed with platform UI. */
+
+:root {
+  /* HSK Prep original palette */
+  --bg: #fffdf9;
+  --bg-soft: #f5f0e8;
+  --bg-dark: #1a1a2e;
+  --surface: #ffffff;
+  --text: #1a1a2e;
+  --muted: #5c5c6a;
+  --muted-light: #8a8a96;
+  --primary: #c23b22;
+  --primary-hover: #a83220;
+  --primary-soft: #fde8e4;
+  --jade: #2d6a4f;
+  --jade-soft: #d8f3dc;
+  --gold: #b7791f;
+  --border: rgba(26, 26, 46, 0.15);
+  --radius: 16px;
+  --radius-pill: 999px;
+  --max: 1200px;
+  --font-body: 'Poppins', system-ui, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --shadow: 0 8px 32px rgba(26, 26, 46, 0.08);
+  --shadow-lg: 0 24px 64px rgba(26, 26, 46, 0.12);
+}

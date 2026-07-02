@@ -1,0 +1,32 @@
+<!-- @dsCard group="Foundations" name="Typography" subtitle="DM Sans + Noto Serif SC / Noto Sans SC, fluid scale" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../../styles.css">
+<style>
+  body { padding: 24px; }
+  .type-row { display: flex; align-items: baseline; gap: 16px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); }
+  .type-row code { min-width: 90px; font-size: 11px; color: var(--stone); }
+</style>
+</head>
+<body>
+  <h2 class="section-title" style="margin-top:0">Latin — DM Sans (400/500/600/700)</h2>
+  <div class="type-row"><code>--fs-2xl</code><span style="font-size:var(--fs-2xl);font-weight:700">Pass HSK 4 with real mock exams</span></div>
+  <div class="type-row"><code>--fs-xl</code><span style="font-size:var(--fs-xl);font-weight:600">Section heading</span></div>
+  <div class="type-row"><code>--fs-lg</code><span style="font-size:var(--fs-lg);font-weight:600">Card title</span></div>
+  <div class="type-row"><code>--fs-md</code><span style="font-size:var(--fs-md)">Emphasised body copy</span></div>
+  <div class="type-row"><code>--fs-base</code><span style="font-size:var(--fs-base)">Body text — the default reading size</span></div>
+  <div class="type-row"><code>--fs-sm</code><span style="font-size:var(--fs-sm);color:var(--stone)">Secondary / meta text</span></div>
+  <div class="type-row"><code>--fs-xs</code><span style="font-size:var(--fs-xs);color:var(--stone)">Captions and labels</span></div>
+
+  <h2 class="section-title">Chinese text helpers</h2>
+  <div class="type-row"><code>.chinese</code><span class="chinese" style="font-size:var(--fs-xl)">汉语水平考试四级 — Noto Sans SC</span></div>
+  <div class="type-row"><code>.serif-cn</code><span class="serif-cn" style="font-size:var(--fs-xl)">熟能生巧 — Noto Serif SC（display / hero use）</span></div>
+  <p style="font-size:var(--fs-sm);color:var(--stone);margin-top:12px">
+    All sizes are fluid <code>clamp()</code> tokens (320px → 1440px viewport). Always wrap Chinese
+    text in <code>.chinese</code> (sans, UI/body) or <code>.serif-cn</code> (serif, display).
+  </p>
+</body>
+</html>

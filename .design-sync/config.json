@@ -1,4 +1,6 @@
 {
+  "projectId": "876e620f-258b-427a-afdd-b71c188dbfb8",
+  "projectName": "HSK Prep",
   "shape": "static-css",
   "styleOnly": true,
   "bundleDir": "ds-bundle",
@@ -7,5 +9,5 @@
     "closureCss": ["common.css", "dashboard.css"],
     "referenceTokens": ["landing-v2/styles.css"]
   },
-  "notes": "Off-script layout — see .design-sync/NOTES.md. projectId to be recorded when DesignSync auth is available."
+  "notes": "Off-script layout — see .design-sync/NOTES.md."
 }

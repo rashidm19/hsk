@@ -1,0 +1,46 @@
+<!-- @dsCard group="Foundations" name="Colors" subtitle="Warm parchment platform palette + semantic states" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../../styles.css">
+<style>
+  /* card scaffolding only — all colors come from the DS tokens */
+  body { padding: 24px; }
+  .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .sw { border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); }
+  .sw-chip { height: 56px; }
+  .sw-meta { padding: 8px 10px; font-size: var(--fs-xs); }
+  .sw-meta code { display: block; color: var(--stone); font-size: 11px; }
+</style>
+</head>
+<body>
+  <h2 class="section-title" style="margin-top:0">Core palette</h2>
+  <div class="sw-grid">
+    <div class="sw"><div class="sw-chip" style="background:var(--ink)"></div><div class="sw-meta"><strong>Ink</strong><code>--ink #1a1614</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--paper)"></div><div class="sw-meta"><strong>Paper</strong><code>--paper #f9f4ec</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--surface)"></div><div class="sw-meta"><strong>Surface</strong><code>--surface #fffdf8</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--surface-sunken)"></div><div class="sw-meta"><strong>Surface sunken</strong><code>--surface-sunken #efe6d9</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--accent)"></div><div class="sw-meta"><strong>Accent</strong><code>--accent #b84e2e</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--accent-hover)"></div><div class="sw-meta"><strong>Accent hover</strong><code>--accent-hover #9a4026</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--accent-soft)"></div><div class="sw-meta"><strong>Accent soft</strong><code>--accent-soft #f3e0d8</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--jade)"></div><div class="sw-meta"><strong>Jade</strong><code>--jade #2f6349</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--jade-soft)"></div><div class="sw-meta"><strong>Jade soft</strong><code>--jade-soft #d8ebe1</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--gold)"></div><div class="sw-meta"><strong>Gold</strong><code>--gold #8a6420</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--gold-soft)"></div><div class="sw-meta"><strong>Gold soft</strong><code>--gold-soft #f5ead0</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--mist)"></div><div class="sw-meta"><strong>Mist (borders)</strong><code>--mist #d4c9bc</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--stone)"></div><div class="sw-meta"><strong>Stone (muted text)</strong><code>--stone #574f49</code></div></div>
+  </div>
+
+  <h2 class="section-title">Semantic states</h2>
+  <div class="sw-grid">
+    <div class="sw"><div class="sw-chip" style="background:var(--ok-bg)"></div><div class="sw-meta"><strong>OK background</strong><code>--ok-bg / --ok-ink / --ok-border</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--correct)"></div><div class="sw-meta"><strong>Correct</strong><code>--correct (= jade)</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--bad-bg)"></div><div class="sw-meta"><strong>Bad background</strong><code>--bad-bg / --bad-ink</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--wrong)"></div><div class="sw-meta"><strong>Wrong</strong><code>--wrong (= accent red)</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--invert-bg)"></div><div class="sw-meta"><strong>Invert bg</strong><code>--invert-bg / --invert-fg</code></div></div>
+    <div class="sw"><div class="sw-chip" style="background:var(--accent-tint)"></div><div class="sw-meta"><strong>Accent tint</strong><code>--accent-tint</code></div></div>
+  </div>
+</body>
+</html>

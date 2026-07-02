@@ -22,6 +22,8 @@
 - **Fonts**: no font files in the repo; production loads Google Fonts
   (DM Sans 400–700, Noto Sans SC 300–700, Noto Serif SC 400/700). styles.css uses the
   same Google Fonts @import instead of a fonts/ dir.
-- **Auth**: DesignSync authorization unavailable in the desktop/headless session on
-  2026-07-02 (`/design-login` needs an interactive terminal). Bundle built + verified
-  locally; project creation + upload deferred until the user authorizes.
+- **Uploaded 2026-07-02** after the user ran `/login` interactively: created project
+  **"HSK Prep"** (`876e620f-258b-427a-afdd-b71c188dbfb8`, recorded in config.json) and
+  wrote all 16 bundle files; remote listing verified. No `register_assets` — the five
+  `@dsCard` first-line markers drive the card index. A re-sync should diff against the
+  remote via `list_files` + finalize a plan against this projectId.
