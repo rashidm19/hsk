@@ -1,5 +1,12 @@
 /**
- * Landing page — session-aware header + redirect signed-in users to workspace.
+ * Landing page — session-aware header/CTAs only.
+ *
+ * The landing is public and must stay reachable by everyone, regardless of
+ * session or subscription — so this NEVER redirects. It only relabels the
+ * CTAs (signed-in visitors get a "workspace" shortcut; the app itself stays
+ * subscription-gated by auth-guard.js). Auto-forwarding signed-in users to
+ * /exams/ would also collide with that gate (a logged-in, unsubscribed user
+ * would bounce / -> /exams/ -> /quiz/?sub=required and never see the page).
  */
 (function () {
   'use strict';
@@ -37,26 +44,17 @@
     if (!window.HSKAuth || !HSKAuth.isConfigured()) return;
 
     var params = new URLSearchParams(window.location.search);
+    // OAuth in progress (?code=): let auth.js finish the exchange; don't touch the UI mid-flight.
     if (params.get('code')) return;
 
     var session = HSKAuth.waitForSession
       ? await HSKAuth.waitForSession()
       : await HSKAuth.getSession();
 
-    if (session) {
-      var next = HSKAuth.safeNextPath(params.get('next'));
-      if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-        window.location.replace(next);
-        return;
-      }
-    }
-
+    // No redirect — the landing is public. Only reflect session state in the CTAs,
+    // and keep them in sync if the user signs in/out while the page is open.
     refreshSignedInUI(session);
     HSKAuth.onAuthStateChange(function (_e, s) {
-      if (s.session && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
-        window.location.replace(APP_HOME);
-        return;
-      }
       refreshSignedInUI(s.session);
     });
   })();
