@@ -1,0 +1,170 @@
+/**
+ * HSK Prep — landing redesign behaviors.
+ * Ported from the Claude Design file's DCLogic component to plain,
+ * dependency-free JS. Drives: generic hover, the HSK level picker,
+ * the platform tab switcher, the FAQ accordion, count-up stats,
+ * scroll reveal, and hero parallax. All motion respects
+ * prefers-reduced-motion.
+ */
+(function () {
+  'use strict';
+
+  var motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- generic hover (was the design's style-hover="…", now data-hover="…")
+     Re-applies the captured original inline style on leave, so it reverts
+     correctly no matter which property the hover overrode. ---- */
+  document.querySelectorAll('[data-hover]').forEach(function (el) {
+    var hov = el.getAttribute('data-hover');
+    var orig = el.getAttribute('style') || '';
+    var enter = function () { el.setAttribute('style', orig + ';' + hov); };
+    var leave = function () { el.setAttribute('style', orig); };
+    el.addEventListener('mouseenter', enter);
+    el.addEventListener('mouseleave', leave);
+    el.addEventListener('focus', enter);
+    el.addEventListener('blur', leave);
+  });
+
+  /* ---- HSK level picker ---- */
+  function applyLevel(n) {
+    document.querySelectorAll('[data-levelchips] [data-level]').forEach(function (btn) {
+      var active = parseInt(btn.getAttribute('data-level'), 10) === n;
+      btn.style.background = active ? '#c23b22' : '#ffffff';
+      btn.style.color = active ? '#fffdf9' : '#5c5c6a';
+      btn.style.borderColor = active ? '#c23b22' : 'rgba(26,26,46,.15)';
+    });
+    document.querySelectorAll('[data-levelpanel]').forEach(function (p) {
+      p.style.display = p.getAttribute('data-levelpanel') === String(n) ? 'block' : 'none';
+    });
+  }
+  document.querySelectorAll('[data-levelchips] [data-level]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyLevel(parseInt(btn.getAttribute('data-level'), 10));
+    });
+  });
+
+  /* ---- platform tab switcher ---- */
+  function applyTab(n) {
+    var urls = ['exams', 'vocabulary', 'characters', 'grammar', 'strategies', 'traps'];
+    document.querySelectorAll('[data-tabchips] [data-tab]').forEach(function (btn) {
+      var active = parseInt(btn.getAttribute('data-tab'), 10) === n;
+      btn.style.background = active ? '#fde8e4' : 'transparent';
+      btn.style.color = active ? '#c23b22' : '#5c5c6a';
+      btn.style.borderColor = active ? 'transparent' : 'rgba(26,26,46,.14)';
+      btn.style.fontWeight = active ? '600' : '500';
+    });
+    document.querySelectorAll('[data-tabpanel]').forEach(function (p) {
+      p.style.display = p.getAttribute('data-tabpanel') === String(n) ? 'block' : 'none';
+    });
+    document.querySelectorAll('[data-appnav-i]').forEach(function (el) {
+      var active = parseInt(el.getAttribute('data-appnav-i'), 10) === n;
+      el.style.color = active ? '#b84e2e' : '#574f49';
+      el.style.fontWeight = active ? '600' : '400';
+    });
+    var url = document.querySelector('[data-urlbar]');
+    if (url) url.textContent = 'hskprep.cc/' + urls[n] + '/';
+  }
+  document.querySelectorAll('[data-tabchips] [data-tab]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      applyTab(parseInt(btn.getAttribute('data-tab'), 10));
+    });
+  });
+
+  /* ---- FAQ accordion ---- */
+  document.querySelectorAll('[data-faq-q]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var item = btn.closest('[data-faq]');
+      var ans = item.querySelector('[data-faq-a]');
+      var chev = item.querySelector('[data-faq-chev]');
+      var open = ans.style.display !== 'none';
+      document.querySelectorAll('[data-faq]').forEach(function (el) {
+        var a = el.querySelector('[data-faq-a]');
+        var c = el.querySelector('[data-faq-chev]');
+        if (a) a.style.display = 'none';
+        if (c) c.style.transform = 'rotate(0deg)';
+      });
+      if (!open) {
+        ans.style.display = 'block';
+        chev.style.transform = 'rotate(180deg)';
+      }
+    });
+  });
+
+  /* ---- reduced motion: pause CSS float/marquee ---- */
+  if (!motion) {
+    document.querySelectorAll('[data-anim]').forEach(function (el) {
+      el.style.animationPlayState = 'paused';
+    });
+  }
+
+  /* ---- count-up stats ---- */
+  var fmt = function (v, dec) {
+    return dec ? v.toFixed(dec) : Math.round(v).toLocaleString('en-US');
+  };
+  var runCounter = function (el) {
+    var target = parseFloat(el.getAttribute('data-count'));
+    var dec = parseInt(el.getAttribute('data-dec') || '0', 10);
+    if (!motion) { el.textContent = fmt(target, dec); return; }
+    var t0 = performance.now();
+    var dur = 1400;
+    var step = function (t) {
+      var p = Math.min(1, (t - t0) / dur);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(target * eased, dec);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  if ('IntersectionObserver' in window) {
+    var cObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { runCounter(en.target); cObs.unobserve(en.target); }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(function (el) { cObs.observe(el); });
+  } else {
+    document.querySelectorAll('[data-count]').forEach(runCounter);
+  }
+
+  /* ---- scroll reveal ---- */
+  if (motion && 'IntersectionObserver' in window) {
+    var rObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          en.target.style.opacity = '1';
+          en.target.style.transform = 'translateY(0)';
+          rObs.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('[data-reveal]').forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top > window.innerHeight * 0.92) {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(26px)';
+        el.style.transition = 'opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1)';
+        rObs.observe(el);
+      }
+    });
+  }
+
+  /* ---- hero parallax ---- */
+  if (motion) {
+    var plx = Array.prototype.slice.call(document.querySelectorAll('[data-plx]'));
+    if (plx.length) {
+      var ticking = false;
+      window.addEventListener('scroll', function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          var y = window.scrollY;
+          plx.forEach(function (el) {
+            var f = parseFloat(el.getAttribute('data-plx'));
+            el.style.transform = 'translateY(' + (-y * f) + 'px)';
+          });
+          ticking = false;
+        });
+      }, { passive: true });
+    }
+  }
+})();

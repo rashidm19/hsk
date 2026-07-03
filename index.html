@@ -1,326 +1,851 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>(function(){try{var t=localStorage.getItem('hsk4_theme');if(t==='dark'||(!t&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pass HSK 4 on your first try — Free Mock Exams | HSK Prep</title>
-<meta name="description" content="Free HSK 4 prep — 14 mock exams, 1,000-word vocabulary, grammar drills, and strategy guides. Auto-scored practice tests aligned with the 2026 syllabus. By HSK Prep.">
+<meta name="description" content="Structured HSK prep — 14 full mock exams with real audio, the 1,200-word vocabulary, characters, grammar patterns, strategies and trap drills. Eleven tools in one platform.">
 <link rel="canonical" href="https://www.hskprep.cc/">
-
-<meta property="og:title" content="Pass HSK 4 on your first try — Free Mock Exams">
-<meta property="og:description" content="14 free HSK 4 mock exams plus vocabulary, grammar, and practice drills. By HSK Prep.">
+<meta property="og:title" content="Reach the HSK level your university asks for — on your first try">
+<meta property="og:description" content="14 full HSK 4 mock exams plus vocabulary, characters, grammar, strategies and trap drills. Eleven tools in one platform. By HSK Prep.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.hskprep.cc/">
 <meta property="og:site_name" content="HSK Prep">
 
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/landing.css">
+<!-- OAuth callback lands on the landing when promoted to root; hide it until auth resolves -->
 <script>
 (function () {
   if (location.search.indexOf('code=') === -1) return;
   document.documentElement.classList.add('hsk-oauth-pending');
 })();
 </script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&display=swap">
+<link rel="stylesheet" href="/landing.css">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 </head>
 <body class="lp">
 
-<header class="lp-header">
-  <div class="lp-header-inner">
-    <a href="/" class="lp-logo">
-      <img src="/logo.svg" alt="HSK Prep" width="108" height="36">
-    </a>
-    <nav class="lp-nav" aria-label="Sections">
-      <a href="#platform">Platform</a>
-      <a href="#tools">Tools</a>
-      <a href="#why">Why us</a>
-      <a href="#faq">FAQ</a>
+<!-- ============================================================
+  HSK Prep — landing redesign (single polished variant)
+  Structure mirrors ielts.gg: hero claim → certificates → universities →
+  how it works → HSK level picker → platform tabs → tutor comparison →
+  reviews → guarantee → FAQ → creator banner → footer.
+  Palette = marketing tokens: bg #fffdf9, soft #f5f0e8,
+  dark #1a1a2e, primary #c23b22, jade #2d6a4f, gold #b7791f.
+  Type: Poppins (body) + Instrument Serif (display) + Noto Serif/Sans SC.
+  In-app mockups use the PLATFORM palette (#f9f4ec paper, #b84e2e accent, DM Sans).
+  NOTE: all stats, certificate scores, review names and prices are
+  PLACEHOLDERS to be swapped for real data.
+============================================================ -->
+<div id="top" style="background:#fffdf9;color:#1a1a2e;font-family:'Poppins',system-ui,sans-serif;font-size:16px;line-height:1.6;overflow-x:clip;">
+
+  <!-- ================= NAV ================= -->
+  <header style="position:sticky;top:0;z-index:50;background:rgba(255,253,249,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(26,26,46,.08);">
+    <nav style="max-width:1200px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:32px;">
+      <a href="#top" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#1a1a2e;">
+        <span class="serif-cn" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:#c23b22;color:#fffdf9;border-radius:8px;font-family:'Noto Serif SC',serif;font-size:17px;font-weight:600;">汉</span>
+        <span style="font-weight:600;font-size:17px;letter-spacing:-.01em;">HSK Prep</span>
+      </a>
+      <div class="mkt-navlinks" style="display:flex;gap:26px;margin-left:auto;align-items:center;">
+        <a href="#platform" style="color:#5c5c6a;text-decoration:none;font-size:14.5px;font-weight:500;">Platform</a>
+        <a href="#reviews" style="color:#5c5c6a;text-decoration:none;font-size:14.5px;font-weight:500;">Reviews</a>
+        <a href="#guarantee" style="color:#5c5c6a;text-decoration:none;font-size:14.5px;font-weight:500;">Guarantee</a>
+        <a href="#faq" style="color:#5c5c6a;text-decoration:none;font-size:14.5px;font-weight:500;">FAQ</a>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <a href="/quiz/?signin=1" class="mkt-link" style="background:none;border:none;color:#1a1a2e;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:500;padding:10px 14px;cursor:pointer;">Log in</a>
+        <a href="/quiz/" id="lp-header-cta" class="mkt-link" style="background:#c23b22;color:#fffdf9;border:none;border-radius:999px;padding:11px 22px;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(194,59,34,.25);" data-hover="background:#a83220;">Start <span style="font-weight:400;">→</span></a>
+      </div>
     </nav>
-    <div class="lp-header-actions">
-      <a href="/quiz/" class="lp-btn-primary" id="lp-header-cta">Get started</a>
-    </div>
-  </div>
-</header>
+  </header>
 
-<main>
-  <!-- Hero -->
-  <section class="lp-hero">
-    <div class="lp-score-pill">
-      <strong>180+</strong>
-      Pass mark · 300 points total
+  <!-- ================= HERO ================= -->
+  <section style="position:relative;padding:88px 28px 96px;overflow:clip;">
+    <!-- floating background characters (parallax) -->
+    <div data-plx="0.18" style="position:absolute;top:40px;left:4%;pointer-events:none;">
+      <span data-anim="1" class="serif-cn" style="display:block;font-family:'Noto Serif SC',serif;font-weight:900;font-size:190px;color:rgba(194,59,34,.055);animation:floatY 9s ease-in-out infinite;">汉</span>
     </div>
-    <h1>Get the HSK score you want — on your first try</h1>
-    <p class="lp-hero-sub">Mock exams, vocabulary, grammar, and drills in one app!.</p>
-    <div class="lp-hero-cta">
-      <a href="/quiz/" class="lp-btn-primary lp-btn-primary--lg">Get started</a>
-      <a href="#platform" class="lp-btn-outline">See the platform</a>
+    <div data-plx="0.10" style="position:absolute;top:300px;right:5%;pointer-events:none;">
+      <span data-anim="1" class="serif-cn" style="display:block;font-family:'Noto Serif SC',serif;font-weight:900;font-size:150px;color:rgba(194,59,34,.05);animation:floatY 11s ease-in-out 1.2s infinite;">语</span>
     </div>
-    <div class="lp-trust">
-      <div class="lp-trust-item">
-        <div class="lp-trust-num">46</div>
-        <div class="lp-trust-label">Mock exams</div>
-      </div>
-      <div class="lp-trust-item">
-        <div class="lp-trust-num">1,000</div>
-        <div class="lp-trust-label">Vocabulary</div>
-      </div>
-      <div class="lp-trust-item">
-        <div class="lp-trust-num">6,000+</div>
-        <div class="lp-trust-label">Students taught</div>
-      </div>
-      <div class="lp-trust-item">
-        <div class="lp-trust-num">98%</div>
-        <div class="lp-trust-label">HSK pass rate</div>
-      </div>
+    <div data-plx="0.26" style="position:absolute;top:620px;left:10%;pointer-events:none;">
+      <span data-anim="1" class="serif-cn" style="display:block;font-family:'Noto Serif SC',serif;font-weight:900;font-size:120px;color:rgba(183,121,31,.06);animation:floatY 10s ease-in-out .6s infinite;">水</span>
     </div>
-  </section>
 
-  <!-- Platform preview -->
-  <section class="lp-section lp-section--alt" id="platform">
-    <div class="lp-section-inner">
-      <h2>Take a look inside the platform</h2>
-      <p class="lp-section-lead">Everything you need for listening, reading, and writing — free account, full access.</p>
-
-      <div class="lp-tabs" role="tablist" aria-label="Platform features">
-        <button class="lp-tab is-active" role="tab" aria-selected="true" data-tab="mocks">Mock exams</button>
-        <button class="lp-tab" role="tab" aria-selected="false" data-tab="vocab">Vocabulary</button>
-        <button class="lp-tab" role="tab" aria-selected="false" data-tab="grammar">Grammar</button>
-        <button class="lp-tab" role="tab" aria-selected="false" data-tab="practice">Practice drills</button>
-        <button class="lp-tab" role="tab" aria-selected="false" data-tab="strategy">Strategy</button>
-      </div>
-
-      <div class="lp-preview">
-        <div class="lp-preview-bar">
-          <div class="lp-preview-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-          hskprep.cc
+    <div style="max-width:1200px;margin:0 auto;text-align:center;position:relative;">
+      <!-- giant claim with exam seal -->
+      <div style="position:relative;display:inline-block;">
+        <div style="font-family:'Instrument Serif',Georgia,serif;font-size:clamp(96px,15vw,186px);line-height:.95;letter-spacing:-.02em;color:#1a1a2e;">HSK 5<span style="color:#c23b22;">+</span></div>
+        <div style="position:absolute;top:-18px;right:-74px;transform:rotate(11deg);width:92px;height:92px;border:3px solid rgba(194,59,34,.75);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#c23b22;">
+          <span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:900;font-size:34px;line-height:1;">通过</span>
+          <span style="font-size:8.5px;font-weight:600;letter-spacing:.18em;">PASSED</span>
         </div>
-        <div class="lp-preview-body">
-          <div class="lp-panel is-active" id="panel-mocks" role="tabpanel">
-            <h3>46+ full mock exams <span lang="zh-CN" style="color:var(--lp-accent);font-weight:400;">模拟考试</span></h3>
-            <p>Real exam format: 45 listening, 40 reading, 15 writing. Auto-scored with instant results, timer, and answer review.</p>
-            <ul class="lp-panel-list">
-              <li>Official Hanban papers (H41220, H41221) with real audio</li>
-              <li>Progress saved on your device — resume anytime</li>
-              <li>Section-by-section score breakdown</li>
-            </ul>
-            <div class="lp-mock-grid" aria-hidden="true">
-              <div class="lp-mock-card"><strong>Test 01</strong>Sample Quiz</div>
-              <div class="lp-mock-card"><strong>Test 12</strong>Sample Quiz</div>
-              <div class="lp-mock-card"><strong>Test 34</strong>Sample Quiz</div>
+      </div>
+
+      <h1 style="margin:34px auto 0;max-width:760px;font-size:clamp(30px,4.4vw,52px);line-height:1.14;letter-spacing:-.025em;font-weight:600;">Reach the level your university asks for — on your first try</h1>
+      <p style="margin:20px auto 0;max-width:560px;color:#5c5c6a;font-size:clamp(16px,1.6vw,19px);line-height:1.6;">Structured prep for the Chinese Proficiency Test.<br>11 tools in one platform — mock exams to trap drills.</p>
+
+      <div style="display:flex;gap:14px;justify-content:center;margin-top:34px;flex-wrap:wrap;">
+        <a href="/quiz/" class="mkt-link" style="background:#c23b22;color:#fffdf9;border:none;border-radius:999px;padding:17px 34px;font-family:'Poppins',sans-serif;font-size:16.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 12px 32px rgba(194,59,34,.3);" data-hover="background:#a83220;">Start preparing <span style="font-weight:400;">→</span></a>
+        <a href="#platform" style="background:#ffffff;color:#1a1a2e;border:1px solid rgba(26,26,46,.15);border-radius:999px;padding:17px 34px;font-size:16.5px;font-weight:500;cursor:pointer;text-decoration:none;" data-hover="border-color:rgba(26,26,46,.35);">Explore the platform</a>
+      </div>
+      <p style="margin:22px 0 0;color:#8a8a96;font-size:13.5px;">Aligned with the official HSK standard · 14 full mock exams with real audio</p>
+
+      <!-- certificates -->
+      <!-- ⚠ PLACEHOLDER DATA — fabricated student certificate score-cards (illustrative mockups) — replace with real data before launch -->
+<p style="margin:88px 0 30px;font-size:12.5px;font-weight:600;letter-spacing:.22em;color:#8a8a96;text-transform:uppercase;">Real HSK certificates of our students</p>
+      <div data-reveal="1" style="display:flex;gap:34px;justify-content:center;flex-wrap:wrap;">
+
+        <!-- certificate 1 · HSK 4 -->
+        <div style="position:relative;width:400px;max-width:92vw;background:#fffdf8;border:1px solid rgba(26,26,46,.12);border-radius:12px;box-shadow:0 24px 64px rgba(26,26,46,.12);padding:24px 26px 22px;text-align:left;transform:rotate(-1.4deg);">
+          <div style="display:flex;justify-content:space-between;gap:14px;">
+            <div>
+              <div class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:900;font-size:19px;color:#1a1a2e;">汉语水平考试</div>
+              <div style="font-size:9.5px;letter-spacing:.14em;color:#8a8a96;margin-top:3px;text-transform:uppercase;">Chinese Proficiency Test · HSK Level 4 · Score Report</div>
             </div>
-            <p class="lp-panel-cta"><a href="/exams/" class="lp-btn-primary">Browse mock exams →</a></p>
+            <div style="width:52px;height:64px;background:#efece4;border:1px solid rgba(26,26,46,.1);border-radius:3px;flex:none;display:flex;align-items:center;justify-content:center;color:#b9b4a8;font-size:9px;">PHOTO</div>
           </div>
-          <div class="lp-panel" id="panel-vocab" role="tabpanel" hidden>
-            <h3>1,000 HSK 4 words <span lang="zh-CN" style="color:var(--lp-accent);font-weight:400;">词汇表</span></h3>
-            <p>Every Level 4 word with pinyin, English meaning, example sentences, and topic tags — aligned with the 2026 syllabus.</p>
-            <ul class="lp-panel-list">
-              <li>Flashcard, quiz, and dictation study modes</li>
-              <li>Filter by topic, part of speech, or mastery</li>
-              <li>Progress tracked in your browser</li>
-            </ul>
-            <p class="lp-panel-cta"><a href="/vocabulary/" class="lp-btn-primary">Open vocabulary →</a></p>
+          <div style="height:1px;background:rgba(26,26,46,.1);margin:14px 0;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;font-size:11.5px;color:#5c5c6a;">
+            <div>姓名 Name<span style="display:block;height:11px;width:110px;background:#e5e1d7;border-radius:3px;margin-top:4px;"></span></div>
+            <div>准考证号 Ticket No.<span style="display:block;height:11px;width:130px;background:#e5e1d7;border-radius:3px;margin-top:4px;"></span></div>
+            <div>国籍 Nationality<span style="display:block;margin-top:3px;color:#1a1a2e;font-weight:500;">KAZAKHSTAN</span></div>
+            <div>考试日期 Date<span style="display:block;height:11px;width:84px;background:#e5e1d7;border-radius:3px;margin-top:4px;"></span></div>
           </div>
-          
-          <div class="lp-panel" id="panel-practice" role="tabpanel" hidden>
-            <h3>Targeted drills <span lang="zh-CN" style="color:var(--lp-accent);font-weight:400;">练习</span></h3>
-            <p>Practice Center with mixed 选词填空 drills, sentence ordering, writing exercises, and character stroke order.</p>
-            <ul class="lp-panel-list">
-              <li>156 shuffled fill-in-the-blank questions</li>
-              <li>30 topic scenarios (family, work, health…)</li>
-              <li>100 essential sentence templates for writing</li>
-            </ul>
+          <div style="height:1px;background:rgba(26,26,46,.1);margin:14px 0;"></div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#1a1a2e;"><span style="width:104px;color:#5c5c6a;">听力 Listening</span><span style="flex:1;height:5px;background:#efece4;border-radius:99px;overflow:hidden;"><span style="display:block;width:96%;height:100%;background:#2d6a4f;"></span></span><span style="font-weight:600;width:26px;text-align:right;">96</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#1a1a2e;"><span style="width:104px;color:#5c5c6a;">阅读 Reading</span><span style="flex:1;height:5px;background:#efece4;border-radius:99px;overflow:hidden;"><span style="display:block;width:94%;height:100%;background:#2d6a4f;"></span></span><span style="font-weight:600;width:26px;text-align:right;">94</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#1a1a2e;"><span style="width:104px;color:#5c5c6a;">书写 Writing</span><span style="flex:1;height:5px;background:#efece4;border-radius:99px;overflow:hidden;"><span style="display:block;width:86%;height:100%;background:#2d6a4f;"></span></span><span style="font-weight:600;width:26px;text-align:right;">86</span></div>
           </div>
-          <div class="lp-panel" id="panel-strategy" role="tabpanel" hidden>
-            <h3>Exam strategy <span lang="zh-CN" style="color:var(--lp-accent);font-weight:400;">备考</span></h3>
-            <p>9 strategy guides covering every question type, plus an 8-week study plan and 2026 syllabus overview.</p>
-            <ul class="lp-panel-list">
-              <li>Listening signal words and judgment tips</li>
-              <li>Reading ordering templates with answer keys</li>
-              <li>HSK 4 vs HSK 3 / HSK 5 comparison guides</li>
-            </ul>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid rgba(26,26,46,.1);">
+            <span style="font-size:12px;color:#5c5c6a;">总分 Total Score</span>
+            <span style="display:flex;align-items:baseline;gap:8px;"><span style="font-family:'Instrument Serif',serif;font-size:34px;line-height:1;color:#1a1a2e;">276</span><span style="font-size:12px;color:#8a8a96;">/ 300</span><span style="font-size:10px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:99px;padding:3px 9px;">PASS ≥ 180</span></span>
+          </div>
+          <div style="position:absolute;bottom:64px;right:18px;width:82px;height:82px;border:3px solid rgba(194,59,34,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(9deg);pointer-events:none;">
+            <div style="width:68px;height:68px;border:1px solid rgba(194,59,34,.45);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:rgba(194,59,34,.75);">
+              <span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:900;font-size:16px;line-height:1.1;">汉考国际</span>
+              <span style="font-size:7px;letter-spacing:.14em;margin-top:2px;">HSK · CTI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- certificate 2 · HSK 5 -->
+        <div style="position:relative;width:400px;max-width:92vw;background:#fffdf8;border:1px solid rgba(26,26,46,.12);border-radius:12px;box-shadow:0 24px 64px rgba(26,26,46,.12);padding:24px 26px 22px;text-align:left;transform:rotate(1.2deg);">
+          <div style="display:flex;justify-content:space-between;gap:14px;">
+            <div>
+              <div class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:900;font-size:19px;color:#1a1a2e;">汉语水平考试</div>
+              <div style="font-size:9.5px;letter-spacing:.14em;color:#8a8a96;margin-top:3px;text-transform:uppercase;">Chinese Proficiency Test · HSK Level 5 · Score Report</div>
+            </div>
+            <div style="width:52px;height:64px;background:#efece4;border:1px solid rgba(26,26,46,.1);border-radius:3px;flex:none;display:flex;align-items:center;justify-content:center;color:#b9b4a8;font-size:9px;">PHOTO</div>
+          </div>
+          <div style="height:1px;background:rgba(26,26,46,.1);margin:14px 0;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;font-size:11.5px;color:#5c5c6a;">
+            <div>姓名 Name<span style="display:block;height:11px;width:96px;background:#e5e1d7;border-radius:3px;margin-top:4px;"></span></div>
+            <div>准考证号 Ticket No.<span style="display:block;height:11px;width:130px;background:#e5e1d7;border-radius:3px;margin-top:4px;"></span></div>
+            <div>国籍 Nationality<span style="display:block;margin-top:3px;color:#1a1a2e;font-weight:500;">UZBEKISTAN</span></div>
+            <div>考试日期 Date<span style="display:block;height:11px;width:84px;background:#e5e1d7;border-radius:3px;margin-top:4px;"></span></div>
+          </div>
+          <div style="height:1px;background:rgba(26,26,46,.1);margin:14px 0;"></div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#1a1a2e;"><span style="width:104px;color:#5c5c6a;">听力 Listening</span><span style="flex:1;height:5px;background:#efece4;border-radius:99px;overflow:hidden;"><span style="display:block;width:88%;height:100%;background:#2d6a4f;"></span></span><span style="font-weight:600;width:26px;text-align:right;">88</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#1a1a2e;"><span style="width:104px;color:#5c5c6a;">阅读 Reading</span><span style="flex:1;height:5px;background:#efece4;border-radius:99px;overflow:hidden;"><span style="display:block;width:85%;height:100%;background:#2d6a4f;"></span></span><span style="font-weight:600;width:26px;text-align:right;">85</span></div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#1a1a2e;"><span style="width:104px;color:#5c5c6a;">书写 Writing</span><span style="flex:1;height:5px;background:#efece4;border-radius:99px;overflow:hidden;"><span style="display:block;width:70%;height:100%;background:#2d6a4f;"></span></span><span style="font-weight:600;width:26px;text-align:right;">70</span></div>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid rgba(26,26,46,.1);">
+            <span style="font-size:12px;color:#5c5c6a;">总分 Total Score</span>
+            <span style="display:flex;align-items:baseline;gap:8px;"><span style="font-family:'Instrument Serif',serif;font-size:34px;line-height:1;color:#1a1a2e;">243</span><span style="font-size:12px;color:#8a8a96;">/ 300</span><span style="font-size:10px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:99px;padding:3px 9px;">PASS ≥ 180</span></span>
+          </div>
+          <div style="position:absolute;bottom:64px;right:18px;width:82px;height:82px;border:3px solid rgba(194,59,34,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-7deg);pointer-events:none;">
+            <div style="width:68px;height:68px;border:1px solid rgba(194,59,34,.45);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:rgba(194,59,34,.75);">
+              <span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:900;font-size:16px;line-height:1.1;">汉考国际</span>
+              <span style="font-size:7px;letter-spacing:.14em;margin-top:2px;">HSK · CTI</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="lp-cta-row">
-        <a href="/quiz/" class="lp-btn-primary lp-btn-primary--lg">Get started</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Tools grid -->
-  <section class="lp-section" id="tools">
-    <h2>7 tools in one app!</h2>
-    <p class="lp-section-lead">
-      Build vocabulary, grammar, and exam stamina together.</p>
-    <div class="lp-features">
-      <div class="lp-feature">
-        <div class="lp-feature-icon" aria-hidden="true">🎯</div>
-        <h3>Mock exams</h3>
-        <p>46 timed practice tests with auto-scoring, question navigator, and wrong-answer review.</p>
-      </div>
-      <div class="lp-feature">
-        <div class="lp-feature-icon" aria-hidden="true">📚</div>
-        <h3>Vocabulary</h3>
-        <p>1,000+ words with examples, grouped by topic. Flashcards and quizzes included.</p>
-      </div>
-      <div class="lp-feature">
-        <div class="lp-feature-icon" aria-hidden="true">✏️</div>
-        <h3>Grammar</h3>
-        <p>14 topics with interactive exercises. Covers every pattern tested at HSK 4.</p>
-      </div>
-      <div class="lp-feature">
-        <div class="lp-feature-icon" aria-hidden="true">🔀</div>
-        <h3>Mixed practice</h3>
-        <p>156 grammar + confusable-word questions shuffled like the real reading section.</p>
-      </div>
-      <div class="lp-feature">
-        <div class="lp-feature-icon" aria-hidden="true">🖊️</div>
-        <h3>Writing drills</h3>
-        <p>Sentence ordering, 完成句子, and 150 handwriting characters with stroke order.</p>
-      </div>
-      <div class="lp-feature">
-        <div class="lp-feature-icon" aria-hidden="true">📋</div>
-        <h3>Study guide</h3>
-        <p>Exam format, scoring rules, self-assessment checklist, and 8-week plan.</p>
-      </div>
-      <div class="lp-feature">
-        <div class="lp-feature-icon" aria-hidden="true">🎓</div>
-        <h3>Strategy &amp; topics</h3>
-        <p>9 exam strategy guides and 30 communicative task scenarios with vocabulary.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Why HSK Prep -->
-  <section class="lp-section lp-section--alt" id="why">
-    <div class="lp-section-inner">
-      <h2>Why learners choose us?</h2>
-      <p class="lp-section-lead">A complete toolkit — not just a word list or a single mock test.</p>
-      <div class="lp-why">
-        <div class="lp-why-card">
-          <div class="lp-trust-num">46</div>
-          <p style="color:var(--lp-muted);margin:8px 0 0;line-height:1.6;font-size:15px;">Full mock exams with auto-scoring, plus vocabulary, grammar, and drills — all free, no account required.</p>
+      <!-- stats strip (placeholder numbers) -->
+      <div data-reveal="1" style="display:flex;gap:clamp(28px,6vw,84px);justify-content:center;margin-top:84px;flex-wrap:wrap;">
+        <!-- ⚠ PLACEHOLDER DATA — invented headline stats (student count / sections / rating) — replace with real data before launch -->
+<div>
+          <div style="font-family:'Instrument Serif',serif;font-size:46px;line-height:1;color:#1a1a2e;"><span data-count="12400">12,400</span>+</div>
+          <div style="font-size:13px;color:#8a8a96;margin-top:6px;">students preparing</div>
         </div>
-        <ul class="lp-why-list">
-          <li><strong>Official syllabus aligned</strong> — vocabulary and tasks mapped to the 2026 HSK 3.0 outline.</li>
-          <li><strong>Real exam papers</strong> — includes official Hanban mocks with listening audio and transcripts.</li>
-        </ul>
+        <div>
+          <div style="font-family:'Instrument Serif',serif;font-size:46px;line-height:1;color:#1a1a2e;"><span data-count="38000">38,000</span>+</div>
+          <div style="font-size:13px;color:#8a8a96;margin-top:6px;">mock sections completed</div>
+        </div>
+        <div>
+          <div style="font-family:'Instrument Serif',serif;font-size:46px;line-height:1;color:#1a1a2e;"><span data-count="4.8" data-dec="1">4.8</span><span style="color:#b7791f;font-size:30px;"> ★</span></div>
+          <div style="font-size:13px;color:#8a8a96;margin-top:6px;">average student rating</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section class="lp-section" id="faq">
-    <h2>Frequently asked questions</h2>
-    <p class="lp-section-lead">Quick answers before you start your first mock.</p>
-    <div class="lp-faq">
-      <div class="lp-faq-item">
-        <button class="lp-faq-q" type="button" aria-expanded="false">
-          Is this really free?
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="lp-faq-a">Yes. All 46+ mock exams and study tools are free with no sign-up. The dataset is open source (CC BY-NC-SA 4.0) by HSK Prep.</div>
-      </div>
-      <div class="lp-faq-item">
-        <button class="lp-faq-q" type="button" aria-expanded="false">
-          What is the HSK 4 pass mark?
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="lp-faq-a">You need 180 out of 300 (60%) to pass. Many universities require 240+ (80%). Aim for 70%+ on these mocks to build a comfortable margin.</div>
-      </div>
-      <div class="lp-faq-item">
-        <button class="lp-faq-q" type="button" aria-expanded="false">
-          How is this different from other HSK sites?
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="lp-faq-a">Most sites offer bare word lists or a single mock. Here you get 46 full exams, interactive vocabulary with example sentences, grammar exercises, confusable-word drills, and strategy guides — all linked together.</div>
-      </div>
-      <div class="lp-faq-item">
-        <button class="lp-faq-q" type="button" aria-expanded="false">
-          Does it match the 2026 syllabus?
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="lp-faq-a">Vocabulary and grammar follow the new HSK 3.0 syllabus (effective July 2026). The mock exam format matches the current 100-question test administered through June 2026 — listening, reading, and writing.</div>
-      </div>
-      <div class="lp-faq-item">
-        <button class="lp-faq-q" type="button" aria-expanded="false">
-          How long should I prepare?
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="lp-faq-a">Most learners with an HSK 3 foundation pass in 8 weeks: one mock per week for weeks 1–4, target your weakest section in weeks 5–8, then 2–3 timed full tests in the final fortnight.</div>
+  <!-- ================= UNIVERSITIES MARQUEE ================= -->
+  <section style="background:#f5f0e8;padding:56px 0;border-top:1px solid rgba(26,26,46,.06);border-bottom:1px solid rgba(26,26,46,.06);">
+    <!-- ⚠ PLACEHOLDER DATA — unverified "our students got into <university>" claim — replace with real data before launch -->
+<p style="text-align:center;margin:0 0 34px;font-size:12.5px;font-weight:600;letter-spacing:.22em;color:#8a8a96;text-transform:uppercase;">Our students got into</p>
+    <div style="overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);">
+      <div data-marquee="1" data-anim="1" style="display:flex;width:max-content;animation:mq 38s linear infinite;">
+        <div style="display:flex;gap:72px;padding-right:72px;align-items:center;">
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">清华大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Tsinghua University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">北京大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Peking University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">复旦大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Fudan University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">上海交通大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Shanghai Jiao Tong</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">浙江大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Zhejiang University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">南京大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Nanjing University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">北京语言大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">BLCU</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">武汉大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Wuhan University</span></span>
+        </div>
+        <div style="display:flex;gap:72px;padding-right:72px;align-items:center;">
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">清华大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Tsinghua University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">北京大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Peking University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">复旦大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Fudan University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">上海交通大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Shanghai Jiao Tong</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">浙江大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Zhejiang University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">南京大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Nanjing University</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">北京语言大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">BLCU</span></span>
+          <span style="display:flex;align-items:baseline;gap:10px;white-space:nowrap;"><span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:600;font-size:22px;color:#5c5c6a;">武汉大学</span><span style="font-size:12px;letter-spacing:.12em;color:#8a8a96;text-transform:uppercase;">Wuhan University</span></span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Final CTA -->
-  <section class="lp-cta-band">
-    <h2>Ready to start your HSK preparation?</h2>
-    <p>Start with Test 01 or drill the 1,000-word vocabulary list — both free, no sign-up.</p>
-    <div class="lp-cta-row">
-      <a href="/quiz/" class="lp-btn-primary lp-btn-primary--lg">Get started</a>
+  <!-- ================= HOW IT WORKS ================= -->
+  <section style="padding:112px 28px;">
+    <div style="max-width:1200px;margin:0 auto;">
+      <h2 style="margin:0;font-size:clamp(30px,3.6vw,44px);line-height:1.15;letter-spacing:-.02em;font-weight:600;max-width:560px;">Three steps between you and a pass</h2>
+      <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:56px;">
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:34px 30px;position:relative;overflow:hidden;">
+          <span class="serif-cn" style="position:absolute;top:-24px;right:-6px;font-family:'Noto Serif SC',serif;font-weight:900;font-size:110px;line-height:1;color:#fde8e4;pointer-events:none;">一</span>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#c23b22;text-transform:uppercase;">Step 1</div>
+          <h3 style="margin:12px 0 10px;font-size:21px;font-weight:600;letter-spacing:-.01em;position:relative;">Take a diagnostic mock</h3>
+          <p style="margin:0;color:#5c5c6a;font-size:15px;line-height:1.65;position:relative;">A full timed HSK exam, scored section by section. Know exactly where you stand today — no guessing.</p>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:34px 30px;position:relative;overflow:hidden;">
+          <span class="serif-cn" style="position:absolute;top:-24px;right:-6px;font-family:'Noto Serif SC',serif;font-weight:900;font-size:110px;line-height:1;color:#fde8e4;pointer-events:none;">二</span>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#c23b22;text-transform:uppercase;">Step 2</div>
+          <h3 style="margin:12px 0 10px;font-size:21px;font-weight:600;letter-spacing:-.01em;position:relative;">Train the weak spots</h3>
+          <p style="margin:0;color:#5c5c6a;font-size:15px;line-height:1.65;position:relative;">Vocabulary, characters, grammar patterns, task strategies and trap drills — in the order that moves your score.</p>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:34px 30px;position:relative;overflow:hidden;">
+          <span class="serif-cn" style="position:absolute;top:-24px;right:-6px;font-family:'Noto Serif SC',serif;font-weight:900;font-size:110px;line-height:1;color:#fde8e4;pointer-events:none;">三</span>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#c23b22;text-transform:uppercase;">Step 3</div>
+          <h3 style="margin:12px 0 10px;font-size:21px;font-weight:600;letter-spacing:-.01em;position:relative;">Sit the real exam calm</h3>
+          <p style="margin:0;color:#5c5c6a;font-size:15px;line-height:1.65;position:relative;">After 14 full mocks the format holds no surprises. Walk in knowing every question type — and every trap.</p>
+        </div>
+      </div>
     </div>
   </section>
-</main>
 
-<footer class="lp-footer">
-  <div class="lp-footer-inner">
-    <div>
-      <strong style="color:var(--lp-text);">HSK Prep</strong> · Free HSK 4 practice tests &amp; study tools
-      <div style="margin-top:6px;font-size:12px;">HSK® is a registered trademark. This site is not affiliated with Hanban / CTI.</div>
-    </div>
-    <div class="lp-footer-links">
-      <a href="/exams/">Mock exams</a>
-      <a href="/vocabulary/">Vocabulary</a>
-      <a href="/grammar/">Grammar</a>
-      <a href="/guide/">Guide</a>
-      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
-    </div>
-  </div>
-</footer>
+  <!-- ================= HSK LEVEL PICKER ================= -->
+  <section style="background:#f5f0e8;padding:112px 28px;border-top:1px solid rgba(26,26,46,.06);border-bottom:1px solid rgba(26,26,46,.06);">
+    <div style="max-width:1200px;margin:0 auto;">
+      <h2 style="margin:0;font-size:clamp(30px,3.6vw,44px);line-height:1.15;letter-spacing:-.02em;font-weight:600;">Which HSK do you need?</h2>
+      <p style="margin:14px 0 0;color:#5c5c6a;font-size:16.5px;max-width:520px;">Six levels, one standard. Pick yours to see what it takes — and what it unlocks.</p>
 
+      <div data-levelchips="1" style="display:flex;gap:10px;margin-top:36px;flex-wrap:wrap;">
+        <button data-level="1" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">HSK 1</button>
+        <button data-level="2" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">HSK 2</button>
+        <button data-level="3" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">HSK 3</button>
+        <button data-level="4" style="border:1px solid #c23b22;background:#c23b22;color:#fffdf9;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">HSK 4</button>
+        <button data-level="5" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">HSK 5</button>
+        <button data-level="6" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">HSK 6</button>
+      </div>
+
+      <!-- level panels -->
+      <div data-levelpanel="1" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 1</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Your first milestone — greetings, numbers, everyday phrases in pinyin-supported reading.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">150</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">174</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~40<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">A foundation level — not accepted for university admission, but the fastest confidence boost in the sequence. Sections: listening + reading.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="2" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 2</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Simple, direct communication on daily routines — shopping, directions, plans.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">300</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">347</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~55<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">Still a beginner tier — proof you can survive daily life in Chinese. Sections: listening + reading.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="3" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 3</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Conversational basics for life, study and work — the first level with a writing section.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">600</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">617</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~90<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">The minimum some universities accept for foundation-year programs. Sections: listening + reading + writing.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="4" style="display:block;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 4</div>
+              <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#c23b22;background:#fde8e4;border-radius:999px;padding:6px 12px;text-transform:uppercase;">Full course on HSK Prep</span>
+            </div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Discuss a wide range of topics with fluency. The level that opens university doors.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">1,200</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">1,064</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~105<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">The common requirement for Chinese-taught bachelor's programs. Sections: listening + reading + writing.</p>
+            <p style="margin:14px 0 0;font-size:14px;line-height:1.6;color:#5c5c6a;">On HSK Prep: 14 full mock exams with real audio, the complete 1,200-word list, grammar patterns, strategies and trap drills.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="5" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 5</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Read newspapers, follow films, deliver full presentations in Chinese.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">2,500</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">1,685</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~125<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">Requested by top universities for competitive programs — and a strong card for CSC scholarships. Sections: listening + reading + writing.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="6" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 6</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Effortless comprehension of nearly anything you hear or read.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">5,000+</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">2,663</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~140<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">The gold standard — elite programs, scholarships and full academic freedom. Sections: listening + reading + writing.</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin:22px 0 0;font-size:14px;color:#8a8a96;">Not sure? <span style="color:#c23b22;font-weight:500;">Take a free diagnostic mock</span> — it places you in one sitting.</p>
+    </div>
+  </section>
+
+  <!-- ================= PLATFORM ================= -->
+  <section id="platform" style="padding:112px 28px;">
+    <div style="max-width:1200px;margin:0 auto;">
+      <h2 style="margin:0;font-size:clamp(30px,3.6vw,44px);line-height:1.15;letter-spacing:-.02em;font-weight:600;">Look inside the platform</h2>
+      <p style="margin:14px 0 0;color:#5c5c6a;font-size:16.5px;max-width:600px;">Eleven tools, one subscription. Six of them below — click through.</p>
+
+      <div data-tabchips="1" style="display:flex;gap:8px;margin-top:36px;flex-wrap:wrap;">
+        <button data-tab="0" style="border:1px solid transparent;background:#fde8e4;color:#c23b22;border-radius:999px;padding:11px 20px;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:600;cursor:pointer;">Mock Exams</button>
+        <button data-tab="1" style="border:1px solid rgba(26,26,46,.14);background:transparent;color:#5c5c6a;border-radius:999px;padding:11px 20px;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:500;cursor:pointer;">Vocabulary</button>
+        <button data-tab="2" style="border:1px solid rgba(26,26,46,.14);background:transparent;color:#5c5c6a;border-radius:999px;padding:11px 20px;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:500;cursor:pointer;">Characters</button>
+        <button data-tab="3" style="border:1px solid rgba(26,26,46,.14);background:transparent;color:#5c5c6a;border-radius:999px;padding:11px 20px;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:500;cursor:pointer;">Grammar</button>
+        <button data-tab="4" style="border:1px solid rgba(26,26,46,.14);background:transparent;color:#5c5c6a;border-radius:999px;padding:11px 20px;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:500;cursor:pointer;">Strategies</button>
+        <button data-tab="5" style="border:1px solid rgba(26,26,46,.14);background:transparent;color:#5c5c6a;border-radius:999px;padding:11px 20px;font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:500;cursor:pointer;">Traps</button>
+      </div>
+
+      <!-- browser frame -->
+      <div data-reveal="1" style="margin-top:26px;background:#ffffff;border:1px solid rgba(26,26,46,.12);border-radius:16px;box-shadow:0 24px 64px rgba(26,26,46,.12);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(26,26,46,.08);background:#fbf8f2;">
+          <span style="width:11px;height:11px;border-radius:50%;background:#f26d5f;"></span>
+          <span style="width:11px;height:11px;border-radius:50%;background:#f2bd4b;"></span>
+          <span style="width:11px;height:11px;border-radius:50%;background:#59c26f;"></span>
+          <span data-urlbar="1" style="margin:0 auto;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:8px;padding:5px 44px;font-size:12px;color:#8a8a96;font-family:'DM Sans',sans-serif;">hskprep.cc/exams/</span>
+          <span style="width:33px;"></span>
+        </div>
+
+        <!-- app chrome (platform palette) -->
+        <div style="background:#f9f4ec;font-family:'DM Sans',sans-serif;color:#1a1614;">
+          <div style="display:flex;align-items:center;gap:22px;padding:13px 26px;background:#fffdf8;border-bottom:1px solid rgba(212,201,188,.5);">
+            <span style="display:flex;align-items:center;gap:8px;"><span class="serif-cn" style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;background:#b84e2e;color:#fffdf8;border-radius:6px;font-family:'Noto Serif SC',serif;font-size:12px;font-weight:600;">汉</span><span style="font-weight:700;font-size:13.5px;">HSK Prep</span></span>
+            <span data-appnav="1" style="display:flex;gap:16px;font-size:12.5px;color:#574f49;">
+              <span data-appnav-i="0" style="color:#b84e2e;font-weight:600;">Exams</span>
+              <span data-appnav-i="1">Vocabulary</span>
+              <span data-appnav-i="2">Characters</span>
+              <span data-appnav-i="3">Grammar</span>
+              <span data-appnav-i="4">Strategies</span>
+              <span data-appnav-i="5">Traps</span>
+            </span>
+            <span style="margin-left:auto;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#f3e0d8;color:#b84e2e;font-size:11px;font-weight:700;">A</span>
+          </div>
+
+          <!-- tab 0 · Mock Exams -->
+          <div data-tabpanel="0" style="display:block;padding:26px;">
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:18px;font-weight:700;">Mock Exams · HSK 4</span>
+              <span style="font-size:12px;color:#574f49;">14 full exams · real audio &amp; transcripts</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:18px;">
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;">
+                <div style="font-weight:700;font-size:13.5px;">Mock Exam 01</div>
+                <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;">
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">听力</span> 45q</span>
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">阅读</span> 40q</span>
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">书写</span> 15q</span>
+                </div>
+                <div style="margin-top:12px;"><span style="font-size:11px;font-weight:700;color:#2f6349;background:#d8ebe1;border-radius:99px;padding:4px 10px;">276 · Passed</span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;">
+                <div style="font-weight:700;font-size:13.5px;">Mock Exam 02</div>
+                <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;">
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">听力</span> 45q</span>
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">阅读</span> 40q</span>
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">书写</span> 15q</span>
+                </div>
+                <div style="margin-top:12px;"><span style="font-size:11px;font-weight:700;color:#2f6349;background:#d8ebe1;border-radius:99px;padding:4px 10px;">281 · Passed</span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;">
+                <div style="font-weight:700;font-size:13.5px;">Mock Exam 03</div>
+                <div style="display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;">
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">听力</span> 45q</span>
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">阅读</span> 40q</span>
+                  <span style="font-size:10.5px;background:#efe6d9;border-radius:99px;padding:3px 8px;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">书写</span> 15q</span>
+                </div>
+                <div style="margin-top:12px;"><span style="display:inline-block;font-size:11.5px;font-weight:700;color:#fffdf8;background:#b84e2e;border-radius:99px;padding:5px 14px;">Start →</span></div>
+              </div>
+            </div>
+            <div style="margin-top:16px;background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <span style="font-size:12.5px;font-weight:700;">Continue: Mock 03 · <span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">书写</span> part 2</span>
+              <span style="flex:1;min-width:120px;height:6px;background:#efe6d9;border-radius:99px;overflow:hidden;"><span style="display:block;width:45%;height:100%;background:#b84e2e;border-radius:99px;"></span></span>
+              <span style="font-size:11.5px;color:#574f49;">7 of 15</span>
+            </div>
+          </div>
+
+          <!-- tab 1 · Vocabulary -->
+          <div data-tabpanel="1" style="display:none;padding:26px;">
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:18px;font-weight:700;">Vocabulary · HSK 4</span>
+              <span style="font-size:12px;color:#574f49;">1,200 words · 38 thematic lists</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:18px;">
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;">
+                <div class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;font-weight:500;">安排</div>
+                <div style="font-size:11px;color:#8a6420;margin-top:2px;">ānpái</div>
+                <div style="font-size:12.5px;margin-top:4px;">to arrange</div>
+                <div style="margin-top:10px;height:4px;background:#efe6d9;border-radius:99px;overflow:hidden;"><span style="display:block;width:90%;height:100%;background:#2f6349;"></span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;">
+                <div class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;font-weight:500;">复杂</div>
+                <div style="font-size:11px;color:#8a6420;margin-top:2px;">fùzá</div>
+                <div style="font-size:12.5px;margin-top:4px;">complicated</div>
+                <div style="margin-top:10px;height:4px;background:#efe6d9;border-radius:99px;overflow:hidden;"><span style="display:block;width:65%;height:100%;background:#2f6349;"></span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;">
+                <div class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;font-weight:500;">顺便</div>
+                <div style="font-size:11px;color:#8a6420;margin-top:2px;">shùnbiàn</div>
+                <div style="font-size:12.5px;margin-top:4px;">by the way</div>
+                <div style="margin-top:10px;height:4px;background:#efe6d9;border-radius:99px;overflow:hidden;"><span style="display:block;width:40%;height:100%;background:#b84e2e;"></span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;">
+                <div class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;font-weight:500;">提醒</div>
+                <div style="font-size:11px;color:#8a6420;margin-top:2px;">tíxǐng</div>
+                <div style="font-size:12.5px;margin-top:4px;">to remind</div>
+                <div style="margin-top:10px;height:4px;background:#efe6d9;border-radius:99px;overflow:hidden;"><span style="display:block;width:78%;height:100%;background:#2f6349;"></span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;">
+                <div class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;font-weight:500;">无聊</div>
+                <div style="font-size:11px;color:#8a6420;margin-top:2px;">wúliáo</div>
+                <div style="font-size:12.5px;margin-top:4px;">boring</div>
+                <div style="margin-top:10px;height:4px;background:#efe6d9;border-radius:99px;overflow:hidden;"><span style="display:block;width:55%;height:100%;background:#b84e2e;"></span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;">
+                <div class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;font-weight:500;">差不多</div>
+                <div style="font-size:11px;color:#8a6420;margin-top:2px;">chàbuduō</div>
+                <div style="font-size:12.5px;margin-top:4px;">almost; about</div>
+                <div style="margin-top:10px;height:4px;background:#efe6d9;border-radius:99px;overflow:hidden;"><span style="display:block;width:95%;height:100%;background:#2f6349;"></span></div>
+              </div>
+            </div>
+            <div style="margin-top:14px;font-size:11.5px;color:#574f49;">Mastery: <span style="color:#2f6349;font-weight:700;">green</span> = solid · <span style="color:#b84e2e;font-weight:700;">terracotta</span> = review today</div>
+          </div>
+
+          <!-- tab 2 · Characters -->
+          <div data-tabpanel="2" style="display:none;padding:26px;">
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:18px;font-weight:700;">Characters · HSK 4</span>
+              <span style="font-size:12px;color:#574f49;">1,064 characters · stroke order &amp; radicals</span>
+            </div>
+            <div style="display:flex;gap:22px;margin-top:18px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="position:relative;width:132px;height:132px;background:#fffdf8;border:1.5px solid #b84e2e;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;">
+                <span style="position:absolute;left:50%;top:4px;bottom:4px;width:0;border-left:1px dashed rgba(184,78,46,.3);"></span>
+                <span style="position:absolute;top:50%;left:4px;right:4px;height:0;border-top:1px dashed rgba(184,78,46,.3);"></span>
+                <span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:900;font-size:84px;color:#1a1614;position:relative;">汉</span>
+              </div>
+              <div style="flex:1;min-width:240px;">
+                <div style="display:flex;align-items:baseline;gap:10px;"><span style="font-size:17px;font-weight:700;">hàn</span><span style="font-size:13px;color:#574f49;">— Chinese; Han</span></div>
+                <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                  <span style="font-size:11px;background:#efe6d9;border-radius:99px;padding:4px 10px;color:#574f49;">5 strokes</span>
+                  <span style="font-size:11px;background:#efe6d9;border-radius:99px;padding:4px 10px;color:#574f49;">radical <span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">氵</span> water</span>
+                  <span style="font-size:11px;background:#f5ead0;border-radius:99px;padding:4px 10px;color:#8a6420;">appears in 23 HSK 4 words</span>
+                </div>
+                <div style="margin-top:14px;font-size:12px;color:#574f49;">In words: <span class="chinese" style="font-family:'Noto Sans SC',sans-serif;color:#1a1614;">汉语 · 汉字 · 汉族</span></div>
+                <div style="display:flex;gap:8px;margin-top:16px;">
+                  <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#fffdf8;border:1px solid rgba(212,201,188,.8);border-radius:8px;font-family:'Noto Sans SC',sans-serif;font-size:24px;">语</span>
+                  <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#fffdf8;border:1px solid rgba(212,201,188,.8);border-radius:8px;font-family:'Noto Sans SC',sans-serif;font-size:24px;">水</span>
+                  <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#fffdf8;border:1px solid rgba(212,201,188,.8);border-radius:8px;font-family:'Noto Sans SC',sans-serif;font-size:24px;">平</span>
+                  <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#fffdf8;border:1px solid rgba(212,201,188,.8);border-radius:8px;font-family:'Noto Sans SC',sans-serif;font-size:24px;">考</span>
+                  <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#fffdf8;border:1px solid rgba(212,201,188,.8);border-radius:8px;font-family:'Noto Sans SC',sans-serif;font-size:24px;">试</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- tab 3 · Grammar -->
+          <div data-tabpanel="3" style="display:none;padding:26px;">
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:18px;font-weight:700;">Grammar · HSK 4</span>
+              <span style="font-size:12px;color:#574f49;">Patterns with structure + model sentences</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px;">
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+                <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#f3e0d8;color:#b84e2e;border-radius:10px;font-family:'Noto Sans SC',sans-serif;font-size:21px;font-weight:500;flex:none;">把</span>
+                <div style="flex:1;min-width:240px;">
+                  <div style="font-weight:700;font-size:13.5px;">把 + object + verb + complement</div>
+                  <div style="font-size:13px;margin-top:5px;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">请把窗户打开。</span> <span style="color:#574f49;">— Please open the window.</span></div>
+                </div>
+                <span style="font-size:11px;font-weight:700;color:#2f6349;background:#d8ebe1;border-radius:99px;padding:4px 10px;">mastered</span>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+                <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#f3e0d8;color:#b84e2e;border-radius:10px;font-family:'Noto Sans SC',sans-serif;font-size:14px;font-weight:500;flex:none;">越来越</span>
+                <div style="flex:1;min-width:240px;">
+                  <div style="font-weight:700;font-size:13.5px;">越来越 + adjective — "more and more"</div>
+                  <div style="font-size:13px;margin-top:5px;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">天气越来越冷了。</span> <span style="color:#574f49;">— The weather is getting colder and colder.</span></div>
+                </div>
+                <span style="font-size:11px;font-weight:700;color:#8a6420;background:#f5ead0;border-radius:99px;padding:4px 10px;">review</span>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+                <span class="chinese" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;background:#f3e0d8;color:#b84e2e;border-radius:10px;font-family:'Noto Sans SC',sans-serif;font-size:14px;font-weight:500;flex:none;">连…都</span>
+                <div style="flex:1;min-width:240px;">
+                  <div style="font-weight:700;font-size:13.5px;">连 + noun + 都/也 — "even…"</div>
+                  <div style="font-size:13px;margin-top:5px;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">他连早饭都没吃。</span> <span style="color:#574f49;">— He didn't even eat breakfast.</span></div>
+                </div>
+                <span style="font-size:11px;font-weight:700;color:#fffdf8;background:#b84e2e;border-radius:99px;padding:4px 10px;">new</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- tab 4 · Strategies -->
+          <div data-tabpanel="4" style="display:none;padding:26px;">
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:18px;font-weight:700;">Strategies · Listening</span>
+              <span style="font-size:12px;color:#574f49;">Per task type: dialogues, judgments, passages</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+              <span style="font-size:11.5px;font-weight:700;background:#b84e2e;color:#fffdf8;border-radius:99px;padding:5px 12px;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">听力</span> Listening</span>
+              <span style="font-size:11.5px;background:#efe6d9;color:#574f49;border-radius:99px;padding:5px 12px;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">阅读</span> Reading</span>
+              <span style="font-size:11.5px;background:#efe6d9;color:#574f49;border-radius:99px;padding:5px 12px;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;">书写</span> Writing</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;">
+                <span style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8ebe1;color:#2f6349;font-size:12px;font-weight:700;flex:none;">1</span>
+                <div style="font-size:13px;line-height:1.55;"><b>Read the options before the audio starts.</b> <span style="color:#574f49;">The 5-second gap is enough to predict the topic.</span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;">
+                <span style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8ebe1;color:#2f6349;font-size:12px;font-weight:700;flex:none;">2</span>
+                <div style="font-size:13px;line-height:1.55;"><b>In dialogues, the answer usually hides in the second speaker's line.</b> <span style="color:#574f49;">First line sets context; second decides.</span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;">
+                <span style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d8ebe1;color:#2f6349;font-size:12px;font-weight:700;flex:none;">3</span>
+                <div style="font-size:13px;line-height:1.55;"><b>Distrust literal matches.</b> <span style="color:#574f49;">If an option repeats the audio word-for-word, it's a trap more often than not.</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- tab 5 · Traps -->
+          <div data-tabpanel="5" style="display:none;padding:26px;">
+            <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;">
+              <span style="font-size:18px;font-weight:700;">Traps · Confusable pairs</span>
+              <span style="font-size:12px;color:#574f49;">The mistakes that cost real points</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px;">
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:7px;flex:none;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;">二</span><span style="font-size:10px;color:#8a8a96;font-weight:700;">VS</span><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;">两</span></span>
+                <div style="flex:1;min-width:240px;font-size:13px;line-height:1.55;color:#574f49;">Both mean "two" — but before a measure word it's always <span class="chinese" style="font-family:'Noto Sans SC',sans-serif;color:#2f6349;font-weight:500;">两个人 ✓</span>, never <span class="chinese" style="font-family:'Noto Sans SC',sans-serif;color:#b84a2e;">二个人 ✗</span></div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:7px;flex:none;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;">才</span><span style="font-size:10px;color:#8a8a96;font-weight:700;">VS</span><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;">就</span></span>
+                <div style="flex:1;min-width:240px;font-size:13px;line-height:1.55;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;color:#1a1614;">才</span> = later than expected · <span class="chinese" style="font-family:'Noto Sans SC',sans-serif;color:#1a1614;">就</span> = sooner than expected. The exam tests this constantly.</div>
+              </div>
+              <div style="background:#fffdf8;border:1px solid rgba(212,201,188,.6);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                <span style="display:flex;align-items:center;gap:7px;flex:none;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;">再</span><span style="font-size:10px;color:#8a8a96;font-weight:700;">VS</span><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;font-size:22px;">又</span></span>
+                <div style="flex:1;min-width:240px;font-size:13px;line-height:1.55;color:#574f49;"><span class="chinese" style="font-family:'Noto Sans SC',sans-serif;color:#1a1614;">再</span> = again (future) · <span class="chinese" style="font-family:'Noto Sans SC',sans-serif;color:#1a1614;">又</span> = again (already happened).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin:22px 0 0;text-align:center;font-size:14.5px;color:#8a8a96;">…plus Topics, Sentences, Confusable Words, Level Compare and a full study Guide — <span style="color:#1a1a2e;font-weight:600;">11 tools in one subscription.</span></p>
+      <div style="display:flex;justify-content:center;margin-top:30px;">
+        <a href="/quiz/" class="mkt-link" style="background:#c23b22;color:#fffdf9;border:none;border-radius:999px;padding:16px 32px;font-family:'Poppins',sans-serif;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 12px 32px rgba(194,59,34,.3);" data-hover="background:#a83220;">Start preparing <span style="font-weight:400;">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COMPARISON ================= -->
+  <section style="background:#f5f0e8;padding:112px 28px;border-top:1px solid rgba(26,26,46,.06);border-bottom:1px solid rgba(26,26,46,.06);">
+    <div style="max-width:1000px;margin:0 auto;">
+      <h2 style="margin:0;font-size:clamp(30px,3.6vw,44px);line-height:1.15;letter-spacing:-.02em;font-weight:600;">HSK Prep vs a private tutor</h2>
+      <p style="margin:14px 0 0;color:#5c5c6a;font-size:16.5px;max-width:560px;">A tutor is great company. The exam still wants reps, timing and the full format.</p>
+
+      <div data-reveal="1" style="margin-top:44px;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr;">
+          <div style="padding:18px 26px;border-bottom:1px solid rgba(26,26,46,.08);"></div>
+          <div style="padding:18px 20px;border-bottom:1px solid rgba(26,26,46,.08);background:#fde8e4;display:flex;align-items:center;gap:8px;justify-content:center;">
+            <span class="serif-cn" style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;background:#c23b22;color:#fffdf9;border-radius:6px;font-family:'Noto Serif SC',serif;font-size:12px;font-weight:600;">汉</span>
+            <span style="font-weight:600;font-size:14.5px;color:#c23b22;">HSK Prep</span>
+          </div>
+          <div style="padding:18px 20px;border-bottom:1px solid rgba(26,26,46,.08);text-align:center;font-weight:500;font-size:14.5px;color:#5c5c6a;">Private tutor</div>
+
+          <div style="padding:16px 26px;border-bottom:1px solid rgba(26,26,46,.06);font-size:14.5px;font-weight:500;">Full timed mock exams</div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);background:#fffaf9;text-align:center;font-size:14px;"><span style="color:#2d6a4f;font-weight:600;">14, with real audio</span></div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);text-align:center;font-size:14px;color:#8a8a96;">Rarely, if ever</div>
+
+          <div style="padding:16px 26px;border-bottom:1px solid rgba(26,26,46,.06);font-size:14.5px;font-weight:500;">Availability</div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);background:#fffaf9;text-align:center;font-size:14px;"><span style="color:#2d6a4f;font-weight:600;">24/7, any device</span></div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);text-align:center;font-size:14px;color:#8a8a96;">By appointment</div>
+
+          <div style="padding:16px 26px;border-bottom:1px solid rgba(26,26,46,.06);font-size:14.5px;font-weight:500;">Scoring &amp; feedback</div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);background:#fffaf9;text-align:center;font-size:14px;"><span style="color:#2d6a4f;font-weight:600;">Instant, per section</span></div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);text-align:center;font-size:14px;color:#8a8a96;">At the next lesson</div>
+
+          <div style="padding:16px 26px;border-bottom:1px solid rgba(26,26,46,.06);font-size:14.5px;font-weight:500;">Covers 听力 · 阅读 · 书写</div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);background:#fffaf9;text-align:center;font-size:14px;"><span style="color:#2d6a4f;font-weight:600;">All sections ✓</span></div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);text-align:center;font-size:14px;color:#8a8a96;">Depends on the tutor</div>
+
+          <div style="padding:16px 26px;border-bottom:1px solid rgba(26,26,46,.06);font-size:14.5px;font-weight:500;">Progress tracking</div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);background:#fffaf9;text-align:center;font-size:14px;"><span style="color:#2d6a4f;font-weight:600;">Automatic</span></div>
+          <div style="padding:16px 20px;border-bottom:1px solid rgba(26,26,46,.06);text-align:center;font-size:14px;color:#8a8a96;">In a notebook</div>
+
+          <div style="padding:16px 26px;font-size:14.5px;font-weight:500;">Monthly cost</div>
+          <div style="padding:16px 20px;background:#fffaf9;text-align:center;font-size:14px;"><span style="color:#2d6a4f;font-weight:600;">Less than one lesson</span></div>
+          <div style="padding:16px 20px;text-align:center;font-size:14px;color:#8a8a96;">$80–160+</div>
+        </div>
+      </div>
+      <p style="margin:18px 0 0;font-size:13px;color:#8a8a96;">Best of both worlds? Many of our students keep a tutor for speaking — and drill everything else here.</p>
+    </div>
+  </section>
+
+  <!-- ================= REVIEWS ================= -->
+  <section id="reviews" style="padding:112px 28px;">
+    <div style="max-width:1200px;margin:0 auto;">
+      <div style="text-align:center;">
+        <!-- ⚠ PLACEHOLDER DATA — invented review score + "1,200+ verified reviews" — replace with real data before launch -->
+<div style="font-family:'Instrument Serif',serif;font-size:clamp(72px,10vw,120px);line-height:1;color:#1a1a2e;">4.8</div>
+        <div style="color:#b7791f;font-size:22px;letter-spacing:6px;margin-top:6px;">★★★★★</div>
+        <p style="margin:10px 0 0;font-size:12.5px;font-weight:600;letter-spacing:.22em;color:#8a8a96;text-transform:uppercase;">1,200+ verified reviews</p>
+        <h2 style="margin:18px 0 0;font-size:clamp(30px,3.6vw,44px);line-height:1.15;letter-spacing:-.02em;font-weight:600;">Students who made it</h2>
+      </div>
+
+      <div data-reveal="1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:56px;">
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="color:#b7791f;font-size:15px;letter-spacing:3px;">★★★★★</div>
+          <p style="margin:0;font-size:15px;line-height:1.7;color:#1a1a2e;flex:1;">I needed HSK 5 for a Chinese-taught program at Tsinghua. After 14 mocks the real exam felt like just another Tuesday session — I finished listening with time to spare.</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(26,26,46,.08);padding-top:16px;">
+            <span style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#fde8e4;color:#c23b22;font-weight:600;font-size:14px;">A</span>
+            <span style="flex:1;"><span style="display:block;font-weight:600;font-size:14px;">Aigerim</span><span style="display:block;font-size:12.5px;color:#8a8a96;">Almaty</span></span>
+            <span style="font-size:12px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:999px;padding:5px 12px;">HSK 5 · 256</span>
+          </div>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="color:#b7791f;font-size:15px;letter-spacing:3px;">★★★★★</div>
+          <p style="margin:0;font-size:15px;line-height:1.7;color:#1a1a2e;flex:1;">Honestly thought it was another subscription trap. Then the Traps section alone saved me about 20 points — 才/就 and 再/又 were free kills for the examiners before.</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(26,26,46,.08);padding-top:16px;">
+            <span style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#d8f3dc;color:#2d6a4f;font-weight:600;font-size:14px;">T</span>
+            <span style="flex:1;"><span style="display:block;font-weight:600;font-size:14px;">Timur</span><span style="display:block;font-size:12.5px;color:#8a8a96;">Tashkent</span></span>
+            <span style="font-size:12px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:999px;padding:5px 12px;">HSK 4 · 281</span>
+          </div>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="color:#b7791f;font-size:15px;letter-spacing:3px;">★★★★★</div>
+          <p style="margin:0;font-size:15px;line-height:1.7;color:#1a1a2e;flex:1;">The vocabulary tool with mastery tracking beats my messy Anki decks. I knew exactly which of the 1,200 words were still weak. Passed three months ahead of my plan.</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(26,26,46,.08);padding-top:16px;">
+            <span style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#f5f0e8;color:#5c5c6a;font-weight:600;font-size:14px;">M</span>
+            <span style="flex:1;"><span style="display:block;font-weight:600;font-size:14px;">Madina</span><span style="display:block;font-size:12.5px;color:#8a8a96;">Astana</span></span>
+            <span style="font-size:12px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:999px;padding:5px 12px;">HSK 4 · 267</span>
+          </div>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="color:#b7791f;font-size:15px;letter-spacing:3px;">★★★★★</div>
+          <p style="margin:0;font-size:15px;line-height:1.7;color:#1a1a2e;flex:1;">The listening strategies changed everything. I stopped panicking on dialogues once I learned the second-speaker rule — it's in the strategy cards, works almost every time.</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(26,26,46,.08);padding-top:16px;">
+            <span style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#fde8e4;color:#c23b22;font-weight:600;font-size:14px;">A</span>
+            <span style="flex:1;"><span style="display:block;font-weight:600;font-size:14px;">Artyom</span><span style="display:block;font-size:12.5px;color:#8a8a96;">Minsk</span></span>
+            <span style="font-size:12px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:999px;padding:5px 12px;">HSK 5 · 243</span>
+          </div>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="color:#b7791f;font-size:15px;letter-spacing:3px;">★★★★★</div>
+          <p style="margin:0;font-size:15px;line-height:1.7;color:#1a1a2e;flex:1;">14 full mocks with real audio — nothing else I tried has that. By exam day the format fear was simply gone. 书写 went from my worst section to my best.</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(26,26,46,.08);padding-top:16px;">
+            <span style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#d8f3dc;color:#2d6a4f;font-weight:600;font-size:14px;">Z</span>
+            <span style="flex:1;"><span style="display:block;font-weight:600;font-size:14px;">Zhansaya</span><span style="display:block;font-size:12.5px;color:#8a8a96;">Bishkek</span></span>
+            <span style="font-size:12px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:999px;padding:5px 12px;">HSK 4 · 274</span>
+          </div>
+        </div>
+        <div style="background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="color:#b7791f;font-size:15px;letter-spacing:3px;">★★★★★</div>
+          <p style="margin:0;font-size:15px;line-height:1.7;color:#1a1a2e;flex:1;">Used the grammar hub and confusable-words tool as my base for HSK 6 revision. The 近义词 breakdowns are better than any textbook I own — and I own too many.</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(26,26,46,.08);padding-top:16px;">
+            <span style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:#f5f0e8;color:#5c5c6a;font-weight:600;font-size:14px;">D</span>
+            <span style="flex:1;"><span style="display:block;font-weight:600;font-size:14px;">Daniel</span><span style="display:block;font-size:12.5px;color:#8a8a96;">Moscow</span></span>
+            <span style="font-size:12px;font-weight:600;color:#2d6a4f;background:#d8f3dc;border-radius:999px;padding:5px 12px;">HSK 6 · 224</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GUARANTEE ================= -->
+  <section id="guarantee" style="background:#1a1a2e;padding:112px 28px;">
+    <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:minmax(300px,1.5fr) minmax(220px,1fr);gap:56px;align-items:center;">
+      <div>
+        <div style="font-size:12px;font-weight:600;letter-spacing:.22em;color:rgba(255,253,249,.5);text-transform:uppercase;">The HSK Prep guarantee</div>
+        <!-- ⚠ PLACEHOLDER DATA — money-back guarantee — confirm terms exist before publishing — replace with real data before launch -->
+<h2 style="margin:16px 0 0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(38px,4.6vw,60px);line-height:1.08;letter-spacing:-.01em;color:#fffdf9;">Pass, or your <em style="color:#e05237;">money back.</em></h2>
+        <p style="margin:22px 0 0;font-size:17.5px;line-height:1.65;color:rgba(255,253,249,.75);max-width:520px;">Reach your target level, or we refund your subscription — and cover your retake fee.</p>
+        <p style="margin:12px 0 0;font-size:14px;color:rgba(255,253,249,.45);">We can afford this because the method works. Conditions apply.</p>
+        <div style="display:flex;gap:14px;margin-top:32px;flex-wrap:wrap;">
+          <a href="/quiz/" class="mkt-link" style="background:#c23b22;color:#fffdf9;border:none;border-radius:999px;padding:16px 32px;font-family:'Poppins',sans-serif;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 12px 32px rgba(194,59,34,.4);" data-hover="background:#a83220;">Start preparing <span style="font-weight:400;">→</span></a>
+          <button style="background:transparent;color:#fffdf9;border:1px solid rgba(255,253,249,.3);border-radius:999px;padding:16px 32px;font-family:'Poppins',sans-serif;font-size:16px;font-weight:500;cursor:pointer;" data-hover="border-color:rgba(255,253,249,.6);">Guarantee terms</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;">
+        <div data-anim="1" style="width:200px;height:200px;border:4px solid rgba(224,82,55,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-9deg);animation:floatY 8s ease-in-out infinite;">
+          <div style="width:172px;height:172px;border:1.5px solid rgba(224,82,55,.6);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+            <span class="serif-cn" style="font-family:'Noto Serif SC',serif;font-weight:900;font-size:56px;line-height:1;color:#e05237;">保证</span>
+            <span style="font-size:9px;font-weight:600;letter-spacing:.24em;color:rgba(224,82,55,.85);">MONEY-BACK</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section id="faq" style="padding:112px 28px;">
+    <div style="max-width:860px;margin:0 auto;">
+      <h2 style="margin:0;font-size:clamp(30px,3.6vw,44px);line-height:1.15;letter-spacing:-.02em;font-weight:600;">Frequent questions</h2>
+      <div data-faqlist="1" style="margin-top:40px;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:8px 30px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div data-faq="0" style="border-bottom:1px solid rgba(26,26,46,.08);">
+          <button data-faq-q="1" style="width:100%;background:none;border:none;padding:24px 0;display:flex;align-items:center;gap:16px;cursor:pointer;text-align:left;font-family:'Poppins',sans-serif;">
+            <span style="flex:1;font-size:16.5px;font-weight:600;color:#1a1a2e;">How is HSK Prep different from apps like Anki or Duolingo?</span>
+            <span data-faq-chev="1" style="color:#c23b22;font-size:18px;transition:transform .3s;flex:none;">▾</span>
+          </button>
+          <div data-faq-a="1" style="display:none;padding:0 0 24px;font-size:15px;line-height:1.7;color:#5c5c6a;">They teach the language; we prepare you for the exam. Every tool maps to the real HSK format: full timed mocks with official-style audio, task strategies per question type, and drills on the exact traps examiners reuse. You stop studying "Chinese in general" and start scoring points.</div>
+        </div>
+        <div data-faq="1" style="border-bottom:1px solid rgba(26,26,46,.08);">
+          <button data-faq-q="1" style="width:100%;background:none;border:none;padding:24px 0;display:flex;align-items:center;gap:16px;cursor:pointer;text-align:left;font-family:'Poppins',sans-serif;">
+            <span style="flex:1;font-size:16.5px;font-weight:600;color:#1a1a2e;">Are the mock exams really like the real HSK?</span>
+            <span data-faq-chev="1" style="color:#c23b22;font-size:18px;transition:transform .3s;flex:none;">▾</span>
+          </button>
+          <div data-faq-a="1" style="display:none;padding:0 0 24px;font-size:15px;line-height:1.7;color:#5c5c6a;">Yes — 14 full HSK 4 exams with the exact section structure (听力 45 · 阅读 40 · 书写 15), real-speed audio with transcripts, and the official timing. Scores are calibrated to the 300-point scale so your mock result predicts your real one.</div>
+        </div>
+        <div data-faq="2" style="border-bottom:1px solid rgba(26,26,46,.08);">
+          <button data-faq-q="1" style="width:100%;background:none;border:none;padding:24px 0;display:flex;align-items:center;gap:16px;cursor:pointer;text-align:left;font-family:'Poppins',sans-serif;">
+            <span style="flex:1;font-size:16.5px;font-weight:600;color:#1a1a2e;">What exactly does the money-back guarantee cover?</span>
+            <span data-faq-chev="1" style="color:#c23b22;font-size:18px;transition:transform .3s;flex:none;">▾</span>
+          </button>
+          <div data-faq-a="1" style="display:none;padding:0 0 24px;font-size:15px;line-height:1.7;color:#5c5c6a;">If you complete your study plan and still don't reach your target level on exam day, we refund your subscription in full and cover the fee for one retake. The conditions — plan completion and a registered exam attempt — are listed on the guarantee terms page.</div>
+        </div>
+        <div data-faq="3" style="border-bottom:1px solid rgba(26,26,46,.08);">
+          <button data-faq-q="1" style="width:100%;background:none;border:none;padding:24px 0;display:flex;align-items:center;gap:16px;cursor:pointer;text-align:left;font-family:'Poppins',sans-serif;">
+            <span style="flex:1;font-size:16.5px;font-weight:600;color:#1a1a2e;">Which HSK level should I aim for?</span>
+            <span data-faq-chev="1" style="color:#c23b22;font-size:18px;transition:transform .3s;flex:none;">▾</span>
+          </button>
+          <div data-faq-a="1" style="display:none;padding:0 0 24px;font-size:15px;line-height:1.7;color:#5c5c6a;">Check your target program's requirements first: most Chinese-taught bachelor's programs ask for HSK 4, competitive universities and CSC scholarships prefer HSK 5+. Not sure where you stand? The diagnostic mock places you in one sitting.</div>
+        </div>
+        <div data-faq="4">
+          <button data-faq-q="1" style="width:100%;background:none;border:none;padding:24px 0;display:flex;align-items:center;gap:16px;cursor:pointer;text-align:left;font-family:'Poppins',sans-serif;">
+            <span style="flex:1;font-size:16.5px;font-weight:600;color:#1a1a2e;">Can I cancel my subscription anytime?</span>
+            <span data-faq-chev="1" style="color:#c23b22;font-size:18px;transition:transform .3s;flex:none;">▾</span>
+          </button>
+          <div data-faq-a="1" style="display:none;padding:0 0 24px;font-size:15px;line-height:1.7;color:#5c5c6a;">Yes — cancel in two clicks from your account settings, no emails or calls. You keep full access until the end of the paid period.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CREATOR BANNER ================= -->
+  <!-- creator banner (design gated this behind a showCreatorBanner toggle; always shown here) -->
+    <section style="padding:0 28px 112px;">
+      <div style="max-width:1200px;margin:0 auto;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;padding:36px 40px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="flex:1;min-width:280px;">
+          <h3 style="margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em;">Become a UGC creator</h3>
+          <p style="margin:8px 0 0;color:#5c5c6a;font-size:15px;">Film short videos about your HSK journey with HSK Prep — and get paid for the views.</p>
+        </div>
+        <button style="background:#c23b22;color:#fffdf9;border:none;border-radius:999px;padding:14px 28px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;" data-hover="background:#a83220;">Apply <span style="font-weight:400;">↗</span></button>
+      </div>
+    </section>
+  
+
+  <!-- ================= FOOTER ================= -->
+  <footer style="background:#f5f0e8;border-top:1px solid rgba(26,26,46,.08);padding:56px 28px;">
+    <div style="max-width:1200px;margin:0 auto;display:flex;gap:48px;flex-wrap:wrap;justify-content:space-between;">
+      <div style="max-width:560px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="serif-cn" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:#c23b22;color:#fffdf9;border-radius:7px;font-family:'Noto Serif SC',serif;font-size:14px;font-weight:600;">汉</span>
+          <span style="font-weight:600;font-size:15px;">HSK Prep</span>
+        </div>
+        <p style="margin:16px 0 0;font-size:12.5px;line-height:1.7;color:#8a8a96;">HSK (汉语水平考试) is administered by Chinese Testing International (CTI). HSK Prep is an independent study platform and is not affiliated with or endorsed by CTI, Hanban, or the Center for Language Education and Cooperation.</p>
+        <p style="margin:14px 0 0;font-size:12.5px;color:#8a8a96;">© 2026 HSK Prep</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;">
+        <span style="font-size:13px;color:#5c5c6a;">Partnerships &amp; legal: <span style="color:#1a1a2e;font-weight:500;">business@hskprep.cc</span></span>
+        <div style="display:flex;gap:22px;margin-top:6px;">
+          <a href="#top" style="font-size:13px;color:#5c5c6a;text-decoration:none;">Terms</a>
+          <a href="#top" style="font-size:13px;color:#5c5c6a;text-decoration:none;">Privacy</a>
+          <a href="#top" style="font-size:13px;color:#5c5c6a;text-decoration:none;">Refunds</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Auth: session-aware header CTA + OAuth (shared with the production root landing) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 <script src="/landing-auth.js"></script>
-<script>
-(function () {
-  // Feature tabs
-  var tabs = document.querySelectorAll('.lp-tab');
-  var panels = document.querySelectorAll('.lp-panel');
-  tabs.forEach(function (tab) {
-    tab.addEventListener('click', function () {
-      var id = tab.getAttribute('data-tab');
-      tabs.forEach(function (t) {
-        t.classList.toggle('is-active', t === tab);
-        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
-      });
-      panels.forEach(function (p) {
-        var show = p.id === 'panel-' + id;
-        p.classList.toggle('is-active', show);
-        p.hidden = !show;
-      });
-    });
-  });
-
-  // FAQ accordion
-  document.querySelectorAll('.lp-faq-q').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var item = btn.closest('.lp-faq-item');
-      var open = item.classList.contains('is-open');
-      document.querySelectorAll('.lp-faq-item').forEach(function (i) {
-        i.classList.remove('is-open');
-        i.querySelector('.lp-faq-q').setAttribute('aria-expanded', 'false');
-      });
-      if (!open) {
-        item.classList.add('is-open');
-        btn.setAttribute('aria-expanded', 'true');
-      }
-    });
-  });
-})();
-</script>
-
-<button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+<script src="/landing.js"></script>
 </body>
 </html>
