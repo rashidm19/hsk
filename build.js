@@ -5146,7 +5146,10 @@ function injectTheme() {
       html = html.replace('<head>', '<head>\n' + loader);
       changed = true;
     }
-    if (html.indexOf('class="theme-toggle"') === -1 && html.indexOf('</body>') !== -1) {
+    // Only add the floating toggle where common.css styles it. The landing,
+    // admin, and ds-bundle pages ship their own CSS and have no dark theme, so
+    // an injected toggle there would render unstyled — skip them.
+    if (html.indexOf('class="theme-toggle"') === -1 && html.indexOf('</body>') !== -1 && html.indexOf('common.css') !== -1) {
       html = html.replace('</body>', toggle + '\n</body>');
       changed = true;
     }
