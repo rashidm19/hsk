@@ -618,7 +618,7 @@
     var el = screenEl(
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
       '<p class="ob-sub">' + esc(c.sub) + '</p>' +
-      '<input class="ob-input" id="nm" type="text" autocomplete="given-name" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.name || '') + '">' +
+      '<input class="ob-input ym-hide-content" id="nm" type="text" autocomplete="given-name" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.name || '') + '">' +
       ctaBtn(c.cta || 'Continue', { id: 'go' }) +
       '<button type="button" class="ob-link" id="skip">' + esc(c.skip || 'Skip') + '</button>');
     var nm = $('#nm', el);
@@ -646,7 +646,7 @@
       host.innerHTML =
         '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
         '<p class="ob-sub">' + subst(c.sub) + '</p>' +
-        '<input class="ob-input" id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.email || '') + '">' +
+        '<input class="ob-input ym-hide-content" id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.email || '') + '">' +
         '<div class="ob-error" id="emerr" role="alert" hidden></div>' +
         '<p class="ob-note">' + esc(c.trust) + '</p>' +
         ctaBtn(c.cta || 'Show my plan', { id: 'go' }) +
@@ -681,7 +681,7 @@
     function renderCode() {
       host.innerHTML =
         '<h1 class="ob-h1">' + esc(c.codeHeadline || 'Check your email') + '</h1>' +
-        '<p class="ob-sub">' + esc(c.codeSub || 'We sent a code to') + ' <strong>' + esc(A.email) + '</strong></p>' +
+        '<p class="ob-sub">' + esc(c.codeSub || 'We sent a code to') + ' <strong class="ym-hide-content">' + esc(A.email) + '</strong></p>' +
         '<input class="ob-input" id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="' + esc(c.codePlaceholder || 'Enter code') + '">' +
         '<div class="ob-error" id="cerr" role="alert" hidden></div>' +
         ctaBtn(c.verify || 'Verify & show my plan', { id: 'verify' }) +
