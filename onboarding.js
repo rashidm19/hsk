@@ -618,7 +618,7 @@
     var el = screenEl(
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
       '<p class="ob-sub">' + esc(c.sub) + '</p>' +
-      '<input class="ob-input ym-hide-content" id="nm" type="text" autocomplete="given-name" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.name || '') + '">' +
+      '<input class="ob-input ym-disable-keys ym-hide-content" id="nm" type="text" autocomplete="given-name" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.name || '') + '">' +
       ctaBtn(c.cta || 'Continue', { id: 'go' }) +
       '<button type="button" class="ob-link" id="skip">' + esc(c.skip || 'Skip') + '</button>');
     var nm = $('#nm', el);
@@ -646,7 +646,7 @@
       host.innerHTML =
         '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
         '<p class="ob-sub">' + subst(c.sub) + '</p>' +
-        '<input class="ob-input ym-hide-content" id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.email || '') + '">' +
+        '<input class="ob-input ym-disable-keys ym-hide-content" id="em" type="email" inputmode="email" autocomplete="email" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(A.email || '') + '">' +
         '<div class="ob-error" id="emerr" role="alert" hidden></div>' +
         '<p class="ob-note">' + esc(c.trust) + '</p>' +
         ctaBtn(c.cta || 'Show my plan', { id: 'go' }) +
