@@ -53,8 +53,21 @@
   }
   // Analytics seam — wired in the conversion-tracking fast-follow (GA4 + Yandex Metrika).
   function obTrack(event, params) {
-    try { if (window.OB_DEBUG) console.log('[ob:track]', event, params || {}); } catch (e) {}
+    var p = params || {};
+    try { if (window.OB_DEBUG) console.log('[ob:track]', event, p); } catch (e) {}
+    try {
+      var out = {}, k;
+      for (k in p) { if (Object.prototype.hasOwnProperty.call(p, k)) out[k] = p[k]; }
+      // Metrica goal revenue rides on the reserved `order_price` (+ currency),
+      // not `value` — remap so begin_checkout/purchase report money.
+      if (out.value != null && out.order_price == null) { out.order_price = out.value; delete out.value; }
+      if (window.ymGoal) window.ymGoal(event, out);
+    } catch (e) {}
   }
+  // Funnel stage goals, fired once per page load from render(). Screens are
+  // swapped in-place (no per-screen pageview), so goals stand in for them.
+  var STAGE_GOALS = { s0: 'ob_start', s17: 'ob_email_view', s22: 'paywall_view' };
+  var firedGoals = {};
   function param(name) {
     try { return new URLSearchParams(location.search).get(name); } catch (e) { return null; }
   }
@@ -251,6 +264,8 @@
   function render(dir) {
     clearTimer();
     var f = FLOW[state.idx];
+    var stageGoal = STAGE_GOALS[f.id];
+    if (stageGoal && !firedGoals[stageGoal]) { firedGoals[stageGoal] = 1; obTrack(stageGoal, {}); }
     var node = build(f.id);
     if (dir === -1) node.setAttribute('data-anim', 'back');
     else if (dir === 1) node.setAttribute('data-anim', 'fwd');
