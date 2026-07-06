@@ -66,7 +66,7 @@
   <!-- APP -->
   <div id="app" class="hidden">
     <h1>Выдача доступа авторам</h1>
-    <p class="sub">Создаёт аккаунт с активной подпиской (comp). Пароль показывается один раз — скопируйте сразу.</p>
+    <p class="sub">Создаёт аккаунт с активной подпиской (comp). Пароль выдаётся только для тестовых аккаунтов.</p>
 
     <div class="card">
       <h2>Новый аккаунт</h2>
@@ -74,6 +74,11 @@
       <input id="email" type="email" placeholder="creator@example.com" autocomplete="off">
       <label for="name">Имя (необязательно)</label>
       <input id="name" type="text" placeholder="Имя Фамилия" autocomplete="off">
+      <label for="acctType">Тип аккаунта</label>
+      <select id="acctType">
+        <option value="author" selected>Автор — вход по коду на почту / Google (passwordless)</option>
+        <option value="test">Тестовый — вход по паролю (для фейковых email)</option>
+      </select>
       <label for="plan">Срок доступа</label>
       <select id="plan">
         <option value="12mo" selected>12 месяцев</option>
@@ -164,7 +169,8 @@
     hide($("createErr")); hide($("createOut"));
     if (!email) { $("createErr").textContent = "Укажите email."; show($("createErr")); return; }
 
-    var payload = { email: email, name: name || undefined };
+    var isTest = ($("acctType").value === "test");
+    var payload = { email: email, name: name || undefined, with_password: isTest };
     if (planSel === "custom") {
       var m = parseInt($("months").value, 10);
       if (!(m > 0)) { $("createErr").textContent = "Укажите число месяцев."; show($("createErr")); return; }
@@ -177,16 +183,18 @@
     $("createBtn").disabled = true;
     try {
       var r = await call("create", payload);
-      var blurb = "Логин: " + email + (r.password ? ("  •  Пароль: " + r.password) : "") +
-                  "  •  Вход: " + SIGNIN_URL;
+      var blurb = isTest
+        ? ("Доступ к HSK Prep активен ✅\nEmail: " + email +
+           (r.password ? ("\nПароль: " + r.password) : "\nПароль: (используй ранее выданный)") +
+           "\nВход: " + SIGNIN_URL + " → «Log in with password»")
+        : ("Доступ к HSK Prep активен ✅\nEmail: " + email +
+           "\nВход: зайди на " + SIGNIN_URL + " и введи этот email — на почту придёт код. Или «Continue with Google».");
       var html = "<b>Готово.</b>" +
-        (r.already_comped ? " <em>(доступ уже был выдан ранее — пароль не менялся)</em>" : "") +
+        (r.already_comped ? " <em>(доступ уже был выдан ранее)</em>" : "") +
         '<div class="cred">Email: ' + esc(email) + "</div>" +
-        (r.password
-          ? '<div class="cred">Пароль: ' + esc(r.password) + "</div>"
-          : '<div class="cred">Пароль: (существующий аккаунт — не изменён)</div>') +
+        (r.password ? '<div class="cred">Пароль: ' + esc(r.password) + "</div>" : "") +
         '<div class="cred">Действует до: ' + esc(r.expires_at || "—") + "</div>" +
-        '<label>Готовое сообщение автору</label><div class="cred" id="blurb">' + esc(blurb) + "</div>" +
+        '<label>Готовое сообщение</label><div class="cred" id="blurb" style="white-space:pre-wrap;">' + esc(blurb) + "</div>" +
         '<button class="ghost" id="copyBtn">Скопировать сообщение</button>';
       $("createOut").innerHTML = html; show($("createOut"));
       $("copyBtn").addEventListener("click", function () {
