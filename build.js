@@ -16,6 +16,10 @@ const ROOT = __dirname;
 const DATA = path.join(ROOT, 'data');
 const { renderAppShellOpen, renderAppShellClose } = require('./scripts/app-shell');
 
+// Yandex Metrica counter id (public — embedded in the page snippet). Single
+// source of truth, injected into every page <head> by injectMetrika().
+const METRIKA_ID = 110455584;
+
 // --- Helpers ---
 
 function escHtml(str) {
@@ -5151,6 +5155,48 @@ function injectTheme() {
   console.log(`[theme] Injected into ${count} pages`);
 }
 
+function injectMetrika() {
+  console.log('[metrika] Injecting Yandex Metrica counter into all pages...');
+  const MARK = 'Yandex.Metrika counter';
+  const snippet =
+    '<!-- Yandex.Metrika counter -->\n' +
+    '<script type="text/javascript">\n' +
+    'window.dataLayer=window.dataLayer||[];\n' +
+    '(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();' +
+    'for(var j=0;j<e.scripts.length;j++){if(e.scripts[j].src===r){return;}}' +
+    'k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})' +
+    '(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");\n' +
+    'ym(' + METRIKA_ID + ',"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true,ecommerce:"dataLayer"});\n' +
+    'window.ymGoal=function(name,params){try{if(window.ym)ym(' + METRIKA_ID + ',"reachGoal",name,params||{});}catch(e){}};\n' +
+    '</script>\n' +
+    '<noscript><div><img src="https://mc.yandex.ru/watch/' + METRIKA_ID + '" style="position:absolute;left:-9999px;" alt="" /></div></noscript>\n' +
+    '<!-- /Yandex.Metrika counter -->';
+
+  // Same base as injectTheme(), plus ds-bundle/ (internal design-system HTML we
+  // don't want polluting analytics).
+  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle']);
+  function walk(dir, out) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (SKIP.has(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, out);
+      else if (entry.name.endsWith('.html')) out.push(full);
+    }
+    return out;
+  }
+
+  let count = 0;
+  walk(ROOT, []).forEach(f => {
+    let html = fs.readFileSync(f, 'utf8');
+    if (html.indexOf(MARK) !== -1) return;        // idempotent — already stamped
+    if (html.indexOf('</head>') === -1) return;   // no head to inject into
+    html = html.replace('</head>', snippet + '\n</head>');
+    fs.writeFileSync(f, html, 'utf8');
+    count++;
+  });
+  console.log('[metrika] Injected into ' + count + ' pages');
+}
+
 
 // ============================================================
 //  GENERATE LISTENING TRANSCRIPT STUDY PAGES: /test/NN/transcript/
@@ -5427,6 +5473,7 @@ buildPracticeHub();
 addTestLinksToHubs();
 buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, ...transcriptPages, { loc: '/practice/', priority: '0.8' }, { loc: '/writing/complete-sentence/', priority: '0.8' }, { loc: '/train/', priority: '0.9' }]);
 injectTheme();
+injectMetrika();
 const { injectAppShell } = require('./scripts/app-shell');
 injectAppShell();
 syncCounts();
