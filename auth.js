@@ -307,7 +307,7 @@
     const { data, error } = await c.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: true,
+        shouldCreateUser: opts.createUser !== false,
         emailRedirectTo: global.location.origin + '/auth/callback.html?next=' + encodeURIComponent(next),
       },
     });
@@ -416,6 +416,38 @@
     }
   }
 
+  function subActive(sub) {
+    if (!sub || sub.status !== 'active') return false;
+    if (sub.expires_at) {
+      var t = Date.parse(sub.expires_at);
+      if (isFinite(t) && t <= Date.now()) return false;
+    }
+    return true;
+  }
+
+  // Post-auth navigation. Requires /route-decision.js (window.HSKRoute) on the
+  // page (login + callback include it); falls back to an inline decision if it
+  // is missing so this never throws. Reads the server entitlement once, then
+  // hands the destination to the pure router.
+  async function routeAfterAuth(next) {
+    var target;
+    try {
+      var user = await getUser();
+      if (!user) {
+        global.location.replace('/login/?next=' + encodeURIComponent(safeNextPath(next)));
+        return;
+      }
+      var res = await getSubscriptionStatus(user.id);
+      var state = res.error ? 'error' : (subActive(res.sub) ? 'active' : 'none');
+      target = global.HSKRoute
+        ? global.HSKRoute.decideRoute({ sub: state, next: next })
+        : (state === 'none' ? '/quiz/?sub=required' : safeNextPath(next));
+    } catch (e) {
+      target = safeNextPath(next);
+    }
+    global.location.replace(target);
+  }
+
   global.HSKAuth = {
     isConfigured,
     configError,
@@ -427,6 +459,7 @@
     getProfile,
     getSubscription,
     getSubscriptionStatus,
+    routeAfterAuth,
     getOnboarding,
     readProfileCache,
     writeProfileCache,
