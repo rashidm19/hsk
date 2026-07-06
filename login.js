@@ -62,7 +62,8 @@
       '<button type="button" class="lg-btn" id="go">Send login code</button>' +
       '<div class="lg-or">OR</div>' +
       '<button type="button" class="lg-google" id="goog">' + googleSvg() + 'Continue with Google</button>' +
-      '<div class="lg-foot">New here? <a href="' + FUNNEL + '">Take the free assessment →</a></div>';
+      '<div class="lg-foot">New here? <a href="' + FUNNEL + '">Take the free assessment →</a></div>' +
+      '<button type="button" class="lg-link" id="pwtoggle" style="margin-top:2px;">Log in with password</button>';
     var em = byId('em'), err = byId('err');
     byId('go').onclick = function () {
       var v = em.value.trim();
@@ -82,6 +83,7 @@
       try { HSKAuth.signInWithGoogle({ next: NEXT }); } catch (e) {}
     };
     em.onkeydown = function (e) { if (e.key === 'Enter') byId('go').click(); };
+    byId('pwtoggle').onclick = function () { email = (em.value || '').trim(); renderPassword(); };
     em.focus();
   }
 
@@ -125,5 +127,36 @@
       '<a class="lg-btn" href="' + FUNNEL + '">Take the free assessment</a>' +
       '<button type="button" class="lg-link" id="tryagain">← Try a different email</button>';
     byId('tryagain').onclick = function () { renderEmail(); };
+  }
+
+  // Discreet password path — for internal test accounts provisioned with a password
+  // (fake/undeliverable emails that can't do OTP). Reuses HSKAuth.signIn; passwordless
+  // accounts correctly fail here (no password set).
+  function renderPassword() {
+    host.innerHTML =
+      '<h1 class="lg-h1">Log in with password</h1>' +
+      '<p class="lg-sub">For accounts set up with a password.</p>' +
+      '<input class="lg-input" id="pwem" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" value="' + esc(email) + '">' +
+      '<input class="lg-input" id="pw" type="password" autocomplete="current-password" placeholder="Password" style="margin-top:10px;">' +
+      '<div class="lg-error" id="pwerr" role="alert" hidden></div>' +
+      '<button type="button" class="lg-btn" id="pwgo">Log in</button>' +
+      '<button type="button" class="lg-link" id="backcode">← Use email code instead</button>';
+    var em = byId('pwem'), pw = byId('pw'), err = byId('pwerr');
+    byId('pwgo').onclick = function () {
+      var e = em.value.trim(), p = pw.value;
+      if (!validEmail(e)) { showErr(err, em, 'Please enter a valid email address.'); return; }
+      if (!p) { showErr(err, pw, 'Enter your password.'); return; }
+      err.hidden = true; em.classList.remove('is-error'); pw.classList.remove('is-error'); email = e;
+      var btn = byId('pwgo'); btn.disabled = true; btn.textContent = 'Logging in…';
+      HSKAuth.signIn({ email: e, password: p })
+        .then(function () { HSKAuth.routeAfterAuth(NEXT); })
+        .catch(function () {
+          btn.disabled = false; btn.textContent = 'Log in';
+          showErr(err, pw, 'Wrong email or password.');
+        });
+    };
+    byId('backcode').onclick = function () { renderEmail(); };
+    pw.onkeydown = function (e) { if (e.key === 'Enter') byId('pwgo').click(); };
+    em.focus();
   }
 })();
