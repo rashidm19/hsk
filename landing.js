@@ -11,6 +11,14 @@
 
   var motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---- analytics: landing CTA click (best-effort — the anchor navigates away,
+     so the async beacon may not flush; ob_start on /quiz/ is the reliable entry
+     signal). Delegated so it covers every current/future /quiz/ CTA. ---- */
+  document.addEventListener('click', function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[href^="/quiz"]') : null;
+    if (a) { try { if (window.ymGoal) window.ymGoal('landing_cta'); } catch (err) {} }
+  }, true);
+
   /* ---- generic hover (was the design's style-hover="…", now data-hover="…")
      Re-applies the captured original inline style on leave, so it reverts
      correctly no matter which property the hover overrode. ---- */
