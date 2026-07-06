@@ -56,9 +56,9 @@ Callers must parse by key, never strict-match the whole body.
 ## 5. Plan → KZT (must match data/onboarding.json)
 | plan | amount (₸) | months |
 |------|-----------:|:------:|
-| 1mo  | 39 000     | 1      |
-| 3mo  | 54 000     | 3      |
-| 12mo | 149 000    | 12     |
+| 1mo  | 7 990      | 1      |
+| 3mo  | 13 990     | 3      |
+| 12mo | 19 990     | 12     |
 
 ## Duplicate charges & refunds (policy)
 

@@ -14,7 +14,7 @@ Deno.test("verifySig rejects empty and length-mismatched signatures", async () =
 });
 
 Deno.test("derivePlan maps known plans and rejects unknown", () => {
-  assertEquals(derivePlan("3mo")?.amount, 54000);
+  assertEquals(derivePlan("3mo")?.amount, 13990);
   assertEquals(derivePlan("3mo")?.months, 3);
   assertEquals(derivePlan("12mo")?.months, 12);
   assertEquals(derivePlan("nope"), null);

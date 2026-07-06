@@ -1,7 +1,7 @@
 export const PLAN_MAP: Record<string, { amount: number; months: number }> = {
-  "1mo": { amount: 39000, months: 1 },
-  "3mo": { amount: 54000, months: 3 },
-  "12mo": { amount: 149000, months: 12 },
+  "1mo": { amount: 7990, months: 1 },
+  "3mo": { amount: 13990, months: 3 },
+  "12mo": { amount: 19990, months: 12 },
 };
 
 export function derivePlan(plan: string) {

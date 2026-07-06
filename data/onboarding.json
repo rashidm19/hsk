@@ -25,9 +25,9 @@
   "pricing": {
     "currency": "KZT",
     "tiers": [
-      { "id": "1mo",  "label": "1 month",   "planLabel": "1-month",  "interval": "1 month",   "months": 1,  "base": 78000,  "price": 39000,  "perDay": 1300 },
-      { "id": "3mo",  "label": "3 months",  "planLabel": "3-month",  "interval": "3 months",  "months": 3,  "base": 108000, "price": 54000,  "perDay": 600, "popular": true },
-      { "id": "12mo", "label": "12 months", "planLabel": "12-month", "interval": "12 months", "months": 12, "base": 298000, "price": 149000, "perDay": 408, "bestValue": true }
+      { "id": "1mo",  "label": "1 month",   "planLabel": "1-month",  "interval": "1 month",   "months": 1,  "base": 15980, "price": 7990,  "perDay": 266 },
+      { "id": "3mo",  "label": "3 months",  "planLabel": "3-month",  "interval": "3 months",  "months": 3,  "base": 27980, "price": 13990, "perDay": 155, "popular": true },
+      { "id": "12mo", "label": "12 months", "planLabel": "12-month", "interval": "12 months", "months": 12, "base": 39980, "price": 19990, "perDay": 55, "bestValue": true }
     ],
     "defaultTier": "3mo"
   },

@@ -242,9 +242,9 @@ One-time charge. These values are duplicated in HSK's `data/onboarding.json`; ke
 
 | `plan` | Amount (KZT) | Term |
 |--------|-------------:|------|
-| `1mo`  | **39 000**   | 1 month |
-| `3mo`  | **54 000**   | 3 months |
-| `12mo` | **149 000**  | 12 months |
+| `1mo`  | **7 990**    | 1 month |
+| `3mo`  | **13 990**   | 3 months |
+| `12mo` | **19 990**   | 12 months |
 
 If these ever change, HSK and StudyBox must change together (the displayed price on HSK must equal
 the charged price).
@@ -256,7 +256,7 @@ the charged price).
 On a valid `grant-entitlement` call, HSK writes to `profiles.subscription` (jsonb) for `uid`:
 
 ```json
-{ "status": "active", "plan": "3mo", "price": 54000, "currency": "KZT",
+{ "status": "active", "plan": "3mo", "price": 13990, "currency": "KZT",
   "interval": "3 months", "provider": "studybox", "order_id": "<your order_id>",
   "paid_at": "<paid_at>", "expires_at": "<paid_at + term, computed by HSK>" }
 ```
