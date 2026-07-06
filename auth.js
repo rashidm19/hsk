@@ -264,9 +264,18 @@
     return data;
   }
 
+  // Analytics: record that an explicit sign-in was just initiated, so the
+  // SIGNED_IN listener can tell a genuine login from a restored session / tab
+  // refocus (both also emit SIGNED_IN). localStorage survives the Google OAuth
+  // cross-origin round-trip; the timestamp bounds staleness to 10 minutes.
+  function markAuthPending() {
+    try { global.localStorage.setItem('hsk_auth_pending', String(Date.now())); } catch (e) {}
+  }
+
   async function signIn({ email, password }) {
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    markAuthPending();
     const { data, error } = await c.auth.signInWithPassword({ email, password });
     if (error) throw error;
     if (data.user) {
@@ -279,6 +288,7 @@
   async function signInWithGoogle({ redirectTo, next } = {}) {
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    markAuthPending();
     const nextPath = safeNextPath(next || '/exams/');
     storeAuthNext(nextPath);
     const { data, error } = await c.auth.signInWithOAuth({
@@ -320,6 +330,7 @@
   async function verifyEmailOtp(email, token) {
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    markAuthPending();
     const t = String(token).trim();
     // 'email' is the documented type for codes sent via signInWithOtp; some
     // Supabase configs issue a 'signup' token for brand-new addresses, so fall
@@ -480,6 +491,34 @@
     initials,
     displayName,
   };
+
+  // Analytics: fire the 'auth' funnel goal once per genuine sign-in. Centralized
+  // here (not per call-site) so the Google OAuth redirect return is captured too.
+  // Gated on the fresh markAuthPending() marker so stored-session/tab-refocus
+  // SIGNED_IN events do not count.
+  (function trackAuthGoal() {
+    function via() {
+      try {
+        var p = global.location.pathname || '';
+        if (p.indexOf('/quiz') === 0) return 'onboarding';
+        if (p.indexOf('/login') === 0) return 'login';
+        if (p.indexOf('/auth') === 0) return 'callback';
+        return 'app';
+      } catch (e) { return 'unknown'; }
+    }
+    try {
+      var c = getClient();
+      if (!c) return;
+      c.auth.onAuthStateChange(function (event) {
+        if (event !== 'SIGNED_IN') return;
+        var pend;
+        try { pend = global.localStorage.getItem('hsk_auth_pending');
+              global.localStorage.removeItem('hsk_auth_pending'); } catch (e) {}
+        if (!pend || (Date.now() - parseInt(pend, 10)) > 10 * 60 * 1000) return; // restore/refocus, not a login
+        try { if (global.ymGoal) global.ymGoal('auth', { via: via() }); } catch (e) {}
+      });
+    } catch (e) {}
+  })();
 
   finishOAuthFromUrl();
 })(window);
