@@ -19,12 +19,36 @@ Get end-to-end visibility on `www.hskprep.cc`:
 
 ## Decisions (locked)
 
-- **New counter**, created via the Metrica API for `www.hskprep.cc`, timezone
+- **New counter** for `www.hskprep.cc` (mirror `hskprep.cc`), timezone
   `Asia/Almaty`.
 - **Depth:** stage goals + key micro-conversions (~10 goals), not per-screen.
 - **Webvisor ON** with form-content masking (record behaviour, not field values).
 - **E-commerce ON:** `purchase` carries `order_price` in KZT + plan id.
 - No consent banner (Kazakhstan audience).
+
+### How each decision is actually configured (verified against the API)
+
+The available Metrica MCP tools (`create_counter`, `update_counter`) accept **only
+`name` / `site` / `mirrors`** — they cannot set timezone, Webvisor, e-commerce, or
+form masking. So configuration is split three ways:
+
+- **In the tracking snippet (no API/UI):** `clickmap:true`, `trackLinks:true`,
+  `accurateTrackBounce:true`, `ecommerce:"dataLayer"`, `webvisor:true`. These are
+  init options and take effect purely client-side.
+- **In field-level HTML markers (no API/UI):** PII masking of the email (`s17`) and
+  name (`s16`) inputs — mark those nodes so Webvisor does not capture their values
+  (see "PII masking" below). Preferred over the counter-wide toggle because it is
+  in-repo and does not depend on a UI setting.
+- **Manual step in the Metrica UI (not scriptable here):** timezone `Asia/Almaty`,
+  and confirming Webvisor is enabled/stored for the counter. Captured as an explicit
+  checklist in "Manual configuration" below.
+
+**Revenue mechanism — verified** against Metrica docs: `reachGoal` carries goal
+value via reserved params `order_price` (or `price`) + `currency` in the params
+object: `ym(id,'reachGoal',target,{order_price:19990,currency:'KZT'})`. The existing
+`obTrack('purchase',…)` passes `value`, **not** `order_price`, so the seam→`ymGoal`
+bridge **must** translate `value → order_price` (keeping `currency`). `order_id` is
+**not** a reserved goal param — it rides along as a plain visit param (harmless).
 
 ## Current state (verified in repo)
 
@@ -94,47 +118,74 @@ general analytics on SEO pages and hand-edits get overwritten by the build;
   `window.ymGoal(event, params)` (keep the `OB_DEBUG` log). In the bridge, map
   the revenue param: if `params.value` is set, pass `order_price: params.value`
   (and keep `currency`) so Metrica records goal revenue. Then add the missing
-  stage emits:
-  - `ob_start` — first render of `s0` (once per session).
+  render-driven stage emits, fired from a single spot in `render()` keyed on
+  `FLOW[state.idx].id`, de-duplicated per screen id per page load:
+  - `ob_start` — first render of `s0`.
   - `ob_email_view` — first render of `s17`.
-  - `auth` — on OTP verify success (`renderCode` success path) and on the Google
-    return. (`begin_checkout`, `purchase`, `payment_cancelled`,
-    `checkout_duplicate_prevented` already emit — no change beyond the bridge.)
   - `paywall_view` — first render of `s22`.
-  - Fire the render-driven goals from a single spot in `render()` keyed on
-    `FLOW[state.idx].id`, de-duplicated per screen id per page load.
-- **`landing.js`**: fire `ymGoal('landing_cta')` on click of the primary
-  "start assessment" CTAs. CTAs are anchors/buttons pointing at `/quiz/`; attach a
-  delegated `click` listener to elements linking to `/quiz` (fire before nav — the
-  async beacon tolerates unload).
-- **`login.js`**: fire `ymGoal('auth')` (and optionally `login_success` for the
-  returning-user cut) right before/after `HSKAuth.routeAfterAuth` on the OTP-verify
-  and password success paths.
+  - (`begin_checkout`, `purchase`, `payment_cancelled`,
+    `checkout_duplicate_prevented` already emit — no change beyond the bridge.)
+- **`auth` goal — centralized, NOT per-call-site.** Google sign-in redirects off
+  to `accounts.google.com` → `/auth/callback` → back, so a hook in the onboarding
+  OTP success path would miss it, and sprinkling emits across `onboarding.js` +
+  `login.js` + the callback is fragile. Instead, install **one** listener on the
+  Supabase client's `onAuthStateChange` (in `auth.js`, once): on event
+  `SIGNED_IN`, fire `ymGoal('auth')` guarded by a one-shot `sessionStorage` flag so
+  it counts once per fresh sign-in. Supabase v2 emits `INITIAL_SESSION` for restored
+  sessions and `TOKEN_REFRESHED` for refreshes (neither triggers the goal), so this
+  reliably covers OTP + Google + password across every page without double-counting.
+  `login.js` may additionally fire `login_success` for the returning-user cut, but
+  the funnel `auth` step comes solely from the centralized hook.
+- **`landing.js`**: fire `ymGoal('landing_cta')` on click of the primary CTAs. They
+  are plain `<a href="/quiz/">` anchors (`index.html` lines ~60/92/620/749);
+  attach a delegated `click` listener to `a[href^="/quiz"]`. **This is best-effort**
+  — the click navigates away immediately and the async beacon may not flush before
+  unload. The reliable "entered onboarding" signal is `ob_start` on the next page;
+  treat `landing_cta` as an approximate CTA-click rate, not an exact count.
 - **`app_enter`**: no code — modelled as a **URL page-visit goal** (path contains
   `/exams/`) in Metrica, so it also captures returning users landing straight in
   the app.
 
+### PII masking (Webvisor)
+
+The email (`s17`) and name (`s16`) inputs collect personal data. To keep their
+values out of Webvisor recordings, mark those input nodes in `onboarding.js` with
+Metrica's content-hiding marker (`class="ym-hide-content"` / the documented
+form-masking attribute) at render time. Verify at implementation which marker the
+current Webvisor version honours; fall back to the counter-wide "do not send form
+field values" UI setting if node-level masking proves insufficient.
+
 ### Goals (created via Metrica API)
+
+`create_goal` supports types `action` (JS event), `url` (page visit) and `step`
+(multi-step funnel) — all needed here. For `action` goals the JS-event identifier is
+passed in the goal's `conditions` (`{type:'action', …}`); confirm the exact key when
+creating the first one.
 
 | Goal id (JS event)          | Type        | Fires at | Funnel stage |
 |-----------------------------|-------------|----------|--------------|
-| `landing_cta`               | JS event    | `landing.js` CTA → /quiz/ | Landing |
-| `ob_start`                  | JS event    | `s0` render | Onboarding |
-| `ob_email_view`             | JS event    | `s17` render | Onboarding→Auth |
-| `auth`                      | JS event    | OTP/Google/password success | Auth |
-| `paywall_view`              | JS event    | `s22` render | Paywall |
-| `begin_checkout`            | JS event    | `openCheckout`/`startCheckout` (exists) | Paywall |
-| `purchase`                  | JS event    | `finishSuccess` (exists), `order_price` KZT + `plan` | Purchase |
-| `app_enter`                 | URL visit   | path contains `/exams/` | App |
+| `landing_cta`               | action (best-effort) | `landing.js` CTA → /quiz/ | Landing |
+| `ob_start`                  | action      | `s0` render | Onboarding |
+| `ob_email_view`             | action      | `s17` render | Onboarding→Auth |
+| `auth`                      | action      | centralized `onAuthStateChange` SIGNED_IN | Auth |
+| `paywall_view`              | action      | `s22` render | Paywall |
+| `begin_checkout`            | action      | `openCheckout`/`startCheckout` (exists) | Paywall |
+| `purchase`                  | action      | `finishSuccess` (exists), `order_price` KZT + `plan` | Purchase |
+| `app_enter`                 | url visit   | path contains `/exams/` | App |
 
 Auxiliary (not funnel steps, diagnostics): `payment_cancelled`,
 `checkout_duplicate_prevented`, optional `login_success`.
 
-**Funnel report:** after goals exist, assemble the ordered funnel
+**Plan-id note:** `begin_checkout` sends `plan: tier.id` (`1mo`/`3mo`/`12mo`) while
+`purchase` sends `plan: sub.plan` (the server's plan text from
+`apply_hsk_entitlement`). These may differ; when reading plan-level reports, treat
+`purchase.plan` as the authoritative (server) value.
+
+**Funnel report:** the API **does** support a composite funnel — create the eight
+individual goals above **plus** one `step` goal chaining the ordered funnel
 `landing_cta → ob_start → ob_email_view → auth → paywall_view → begin_checkout →
-purchase → app_enter`. Prefer a Metrica **composite/step goal** if the API supports
-step definitions; otherwise create the individual goals via API and build the
-funnel in the Reports → Funnels UI (documented in the plan).
+purchase → app_enter` for a ready-made conversion metric. (The Reports → Funnels UI
+remains available as a cross-check.)
 
 ## Data flow
 
@@ -154,14 +205,39 @@ funnel in the Reports → Funnels UI (documented in the plan).
   entitlement (`subActive(sub)`), so timeouts/optimistic S25 do not over-count.
 - Injection is idempotent (id-guarded) — safe to re-run `build.js` and
   `inject-auth.js` in any order.
+- **Goal-count inflation on reload:** the funnel state persists in `localStorage`,
+  so a reload on e.g. `s22` re-fires `paywall_view`. This does **not** distort the
+  funnel (Metrica de-duplicates a reached goal within a visit), but raw goal counts
+  will exceed unique users — read stage drop-off from the funnel report, not raw
+  counts. Correspondingly, `ob_start` fires only on a fresh `s0` render, so users
+  who resume mid-funnel from a prior session are not re-counted: `ob_start` means
+  "new funnel entries", not "all onboarding sessions".
+
+## Manual configuration (Metrica UI — not scriptable via the available tools)
+
+These cannot be set through `create_counter`/`update_counter` (name+site only) and
+must be done once in the Metrica dashboard after the counter is created:
+
+- Set **timezone** to `Asia/Almaty` (default is likely Moscow → otherwise report day
+  boundaries are off).
+- Confirm **Webvisor** is enabled/stored for the counter (the snippet's
+  `webvisor:true` requests recording; the counter setting governs retention/replay).
+- Confirm form-value masking: verify the `s16`/`s17` node-level markers suppress the
+  values in a real Webvisor recording; if not, enable the counter-wide "do not send
+  form field contents" option.
+- (Everything else — clickmap, trackLinks, accurateTrackBounce, ecommerce dataLayer
+  — is snippet-driven and needs no UI step.)
 
 ## Verification
 
 - Local: `preview_*` on the funnel pages; load with `?_ym_debug=1` and confirm in
-  the console that pageview + each `reachGoal` fires with expected params; confirm
-  no CSP/network errors to `mc.yandex.ru`.
+  the console that pageview + each `reachGoal` fires with expected params
+  (`purchase` shows `order_price`+`currency`); confirm no CSP/network errors to
+  `mc.yandex.ru`.
+- PII: confirm in a Webvisor recording that the email/name field values are masked.
 - Metrica: confirm the counter receives hits and goals register (API goal list /
-  dashboard) before closing out.
+  dashboard); confirm the `auth` goal fires exactly once for an OTP sign-in and once
+  for a Google sign-in (no double-count, and the Google path is captured).
 
 ## Out of scope
 
@@ -171,10 +247,14 @@ funnel in the Reports → Funnels UI (documented in the plan).
 
 ## Files touched
 
-- `build.js` — `METRIKA_ID` constant, `injectMetrika()`, call site.
-- `onboarding.js` — seam→`ymGoal` bridge + `ob_start`/`ob_email_view`/`auth`/
-  `paywall_view` emits.
-- `landing.js` — `landing_cta` on CTA.
-- `login.js` — `auth` / `login_success` on auth success.
+- `build.js` — `METRIKA_ID` constant, `injectMetrika()` (snippet + `window.ymGoal`),
+  call site next to `injectTheme()`.
+- `onboarding.js` — seam→`ymGoal` bridge (`value → order_price`) +
+  `ob_start`/`ob_email_view`/`paywall_view` render emits + `s16`/`s17` PII masking
+  markers.
+- `auth.js` — one-shot centralized `auth` goal on `onAuthStateChange('SIGNED_IN')`.
+- `landing.js` — best-effort `landing_cta` on the `/quiz/` CTAs.
+- `login.js` — optional `login_success` on returning-user auth success.
 - Regenerated `*.html` (~599) — counter snippet in `<head>` (committed).
-- Metrica (via API): 1 counter + goals (external, not in repo).
+- Metrica (via API): 1 counter + 8 goals + 1 `step` funnel goal (external, not in
+  repo). Timezone/Webvisor/masking confirmed manually per "Manual configuration".
