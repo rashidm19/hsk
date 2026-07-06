@@ -12,6 +12,7 @@
 
 - **No framework / bundler / npm / package.json.** `build.js` uses Node built-ins only. Do not add dependencies.
 - **Never hand-edit generated HTML** under `test/ words/ vocabulary/ characters/ grammar/ sentences/ topics/ traps/ compare/ practice/ train/ writing/` — they are overwritten by `build.js`. Edit `build.js` (or data), then run `node build.js` and commit the regenerated output.
+- **`build.js` regenerates body.app pages from scratch and does NOT run auth injection** — it strips the Supabase auth `<script>`s that `scripts/inject-auth.js` adds. **Every `node build.js` MUST be immediately followed by `node scripts/inject-auth.js`** or the committed app pages ship without auth/guard. Both are idempotent.
 - **No test runner and no linter exist.** Verification is by `grep` on output, `node build.js` re-run, browser preview with `?_ym_debug=1`, and the Metrica MCP API. Do not invent a test harness.
 - **Canonical domain is `www.hskprep.cc`** (apex `hskprep.cc` 301→www).
 - **Analytics must never break the funnel or a content page** — every `ymGoal`/seam call is `try/catch`-guarded and no-ops when `window.ym` is absent.
@@ -23,7 +24,7 @@
 
 - **`build.js`** (modify) — add `METRIKA_ID` constant (top-level, next to `ROOT`); add `injectMetrika()` next to `injectTheme()`; call it after `injectTheme()` at the bottom. Responsibility: stamp the counter snippet + `window.ymGoal` into every page `<head>`.
 - **`onboarding.js`** (modify) — route `obTrack()` into `window.ymGoal` with `value→order_price` mapping; fire `ob_start`/`ob_email_view`/`paywall_view` from `render()`; add Webvisor masking markers to the `s16` name and `s17` email nodes. Responsibility: onboarding→paywall→purchase funnel events.
-- **`auth.js`** (modify) — one-shot centralized `auth` goal on `onAuthStateChange('SIGNED_IN')`. Responsibility: the auth funnel step across OTP/Google/password on every page.
+- **`auth.js`** (modify) — a `markAuthPending()` marker set at the explicit sign-in entry points, plus a `SIGNED_IN` listener gated on that marker firing the `auth` goal. Responsibility: the auth funnel step across OTP/Google/password on every page, counting genuine sign-ins only (not stored-session/tab-refocus `SIGNED_IN`s).
 - **`landing.js`** (modify) — best-effort `landing_cta` on the `/quiz/` CTAs. Responsibility: landing CTA-click micro-conversion.
 - **Regenerated `*.html`** (build output, committed) — receive the counter snippet.
 - **External (Metrica MCP, not in repo)** — 1 counter + 8 goals + optional `step` funnel goal.
@@ -102,7 +103,9 @@ function injectMetrika() {
     '<noscript><div><img src="https://mc.yandex.ru/watch/' + METRIKA_ID + '" style="position:absolute;left:-9999px;" alt="" /></div></noscript>\n' +
     '<!-- /Yandex.Metrika counter -->';
 
-  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts']);
+  // Same base as injectTheme(), plus ds-bundle/ (internal design-system HTML we
+  // don't want polluting analytics).
+  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle']);
   function walk(dir, out) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       if (SKIP.has(entry.name)) continue;
@@ -126,7 +129,7 @@ function injectMetrika() {
 }
 ```
 
-Notes: placed **before `</head>`** (async, non-render-blocking) so it does not disturb the no-flash theme loader (top of head) or the auth-script ordering `scripts/inject-auth.js` depends on. `window.ymGoal` is defined here so page scripts never need the id.
+Notes: placed **before `</head>`** (async, non-render-blocking) so it does not disturb the no-flash theme loader (top of head) or the auth-script ordering `scripts/inject-auth.js` depends on. `window.ymGoal` is defined here so page scripts never need the id. `ecommerce:"dataLayer"` + `window.dataLayer` are enabled for future product-level e-commerce; **revenue for this task flows via the `purchase` goal's `order_price`** (Task 3), so the e-commerce report staying empty is expected, not a bug.
 
 - [ ] **Step 3: Call it after `injectTheme()`**
 
@@ -146,29 +149,32 @@ injectAppShell();
 syncCounts();
 ```
 
-- [ ] **Step 4: Rebuild**
+- [ ] **Step 4: Rebuild, then re-inject auth (mandatory pair)**
 
-Run: `node build.js`
-Expected: console shows `[metrika] Injected into <N> pages` with `N` in the high hundreds (~599).
+Run: `node build.js && node scripts/inject-auth.js`
+Expected: build prints `[metrika] Injected into <N> pages` (~599); inject-auth prints its injected-page count. **Both must run** — `node build.js` alone regenerates body.app pages without auth and would strip `auth-guard.js`/Supabase from them.
 
-- [ ] **Step 5: Verify the snippet landed and is idempotent**
+- [ ] **Step 5: Verify snippet landed, is idempotent, and auth survived**
 
 Run:
 ```bash
 grep -rl "Yandex.Metrika counter" --include=*.html . | grep -v node_modules | wc -l
 grep -c "mc.yandex.ru/metrika/tag.js" index.html quiz/index.html exams/index.html characters/index.html
-node build.js >/dev/null && grep -c "Yandex.Metrika counter" index.html
+grep -c "auth-guard.js" exams/index.html words/index.html
+node build.js >/dev/null && node scripts/inject-auth.js >/dev/null && grep -c "Yandex.Metrika counter" index.html
 ```
-Expected: first count is the ~599 page count; each named page reports `1` (exactly one snippet); the re-run still reports `1` in `index.html` (idempotent — not doubled). Also confirm the injected `ym(<id>,"init"...)` shows the **real** counter id, not `0`:
+Expected: first count is the ~599 page count; each named page reports `1` (exactly one snippet); **`auth-guard.js` reports `1` on the app pages** (auth was re-injected, not stripped); the re-run still reports `1` in `index.html` (idempotent — not doubled). Also confirm the real counter id is embedded, not `0`:
 ```bash
 grep -o 'ym([0-9]\+,"init"' index.html | head -1
 ```
 Expected: `ym(<METRIKA_ID>,"init"` — non-zero.
 
-- [ ] **Step 6: Commit (source + regenerated HTML together)**
+- [ ] **Step 6: Confirm the diff is clean, then commit the full regenerated output**
 
+Run `git status` / `git diff --stat` and confirm the only changes are the Metrica snippet added across pages (auth pages net-unchanged after re-injection; no unexpected drift). Then stage everything the build touched (HTML + any regenerated assets like `sitemap.xml`):
 ```bash
-git add build.js index.html 404.html && git add -A -- '*.html'
+git add -A
+git status   # expect: clean staging of build.js + regenerated pages, nothing left unstaged
 git commit -m "feat(analytics): inject Yandex Metrica counter site-wide via build.js"
 ```
 
@@ -291,24 +297,67 @@ git commit -m "feat(analytics): mask email/name fields from Webvisor (ym-hide-co
 
 ---
 
-## Task 5: `auth.js` — centralized `auth` funnel goal
+## Task 5: `auth.js` — centralized `auth` funnel goal (gated on a real sign-in)
+
+**Why not a bare `SIGNED_IN` listener:** Supabase v2 emits `SIGNED_IN` **also** on page load with a stored session and on tab refocus — not just on a genuine login. So a plain listener would count every returning subscriber who opens the app. The fix is a short-lived `hsk_auth_pending` marker set at the moment an **explicit** sign-in is initiated (OTP verify, password, Google); the `SIGNED_IN` listener fires the goal only when that fresh marker is present. `localStorage` is used because it survives the Google OAuth cross-origin round-trip; a 10-minute freshness window bounds any stale marker.
 
 **Files:**
-- Modify: `auth.js` — add a one-shot listener at the IIFE tail, just before `finishOAuthFromUrl();` (`auth.js:~518`).
+- Modify: `auth.js` — insert `markAuthPending()` helper before `signIn` (`auth.js:267`); call it inside `signIn` (`auth.js:267`), `signInWithGoogle` (`auth.js:279`), `verifyEmailOtp` (`auth.js:320`); add the gated listener just before `finishOAuthFromUrl();` (`auth.js:484`).
 
 **Interfaces:**
-- Consumes: `getClient()` (existing, `auth.js:33`), `window.ymGoal` (Task 2).
-- Produces: one `reachGoal('auth', { via })` per fresh sign-in (OTP, Google-redirect return, password) per browser session.
+- Consumes: `getClient()` (`auth.js:33`), `window.ymGoal` (Task 2).
+- Produces: one `reachGoal('auth', { via })` per genuine sign-in (OTP / password / Google-redirect return); segmentable by `via` (`onboarding` / `login` / `callback` / `app`). This subsumes the spec's optional `login_success` (segment by `via` instead). The ordered funnel stays correct — a `/login/` sign-in never hit `ob_start`/`ob_email_view` earlier in the visit.
 
-- [ ] **Step 1: Add the listener**
+- [ ] **Step 1: Add the `markAuthPending()` helper**
 
-In `auth.js`, immediately before the final `finishOAuthFromUrl();` call (the last statement inside the IIFE, `auth.js:~518`), insert:
+In `auth.js`, immediately before `async function signIn({ email, password }) {` (`auth.js:267`), insert:
 ```js
-  // Analytics: fire the 'auth' funnel goal once per fresh sign-in. Centralized
+  // Analytics: record that an explicit sign-in was just initiated, so the
+  // SIGNED_IN listener can tell a genuine login from a restored session / tab
+  // refocus (both also emit SIGNED_IN). localStorage survives the Google OAuth
+  // cross-origin round-trip; the timestamp bounds staleness to 10 minutes.
+  function markAuthPending() {
+    try { global.localStorage.setItem('hsk_auth_pending', String(Date.now())); } catch (e) {}
+  }
+
+```
+
+- [ ] **Step 2: Mark the three explicit sign-in entry points**
+
+In `signIn` (`auth.js:267`), after the `if (!c) throw ...` guard and before `const { data, error } = await c.auth.signInWithPassword(...)`, add `markAuthPending();`:
+```js
+  async function signIn({ email, password }) {
+    const c = getClient();
+    if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    markAuthPending();
+    const { data, error } = await c.auth.signInWithPassword({ email, password });
+```
+In `signInWithGoogle` (`auth.js:279`), after the `if (!c) throw ...` guard and before `const nextPath = ...`, add `markAuthPending();`:
+```js
+  async function signInWithGoogle({ redirectTo, next } = {}) {
+    const c = getClient();
+    if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    markAuthPending();
+    const nextPath = safeNextPath(next || '/exams/');
+```
+In `verifyEmailOtp` (`auth.js:320`), after the `if (!c) throw ...` guard and before `const t = String(token).trim();`, add `markAuthPending();`:
+```js
+  async function verifyEmailOtp(email, token) {
+    const c = getClient();
+    if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
+    markAuthPending();
+    const t = String(token).trim();
+```
+(Set **before** the async call — Supabase fires `SIGNED_IN` during the call, so a marker set afterward could be missed. A failed OTP leaves a marker, but it expires in 10 min and a user who failed to sign in has no session to trigger a spurious `SIGNED_IN`.)
+
+- [ ] **Step 3: Add the gated listener**
+
+In `auth.js`, immediately before the final `finishOAuthFromUrl();` call (`auth.js:484`), insert:
+```js
+  // Analytics: fire the 'auth' funnel goal once per genuine sign-in. Centralized
   // here (not per call-site) so the Google OAuth redirect return is captured too.
-  // Supabase v2 emits SIGNED_IN only for genuine sign-ins (INITIAL_SESSION for a
-  // restored session, TOKEN_REFRESHED for refreshes), so restored sessions on app
-  // pages don't count. The sessionStorage guard dedupes multi-fire within a tab.
+  // Gated on the fresh markAuthPending() marker so stored-session/tab-refocus
+  // SIGNED_IN events do not count.
   (function trackAuthGoal() {
     function via() {
       try {
@@ -324,8 +373,10 @@ In `auth.js`, immediately before the final `finishOAuthFromUrl();` call (the las
       if (!c) return;
       c.auth.onAuthStateChange(function (event) {
         if (event !== 'SIGNED_IN') return;
-        try { if (global.sessionStorage.getItem('hsk_auth_goal_sent')) return;
-              global.sessionStorage.setItem('hsk_auth_goal_sent', '1'); } catch (e) {}
+        var pend;
+        try { pend = global.localStorage.getItem('hsk_auth_pending');
+              global.localStorage.removeItem('hsk_auth_pending'); } catch (e) {}
+        if (!pend || (Date.now() - parseInt(pend, 10)) > 10 * 60 * 1000) return; // restore/refocus, not a login
         try { if (global.ymGoal) global.ymGoal('auth', { via: via() }); } catch (e) {}
       });
     } catch (e) {}
@@ -333,21 +384,19 @@ In `auth.js`, immediately before the final `finishOAuthFromUrl();` call (the las
 
 ```
 
-This replaces the spec's optional `login_success` goal: one `auth` goal, segmentable by the `via` param (funnel vs login vs callback), keeps the ordered funnel correct (a `/login/` sign-in never hit `ob_start`/`ob_email_view` earlier in the visit, so it doesn't advance the funnel step).
-
-- [ ] **Step 2: Verify the listener is wired**
+- [ ] **Step 4: Verify the wiring**
 
 Run:
 ```bash
-grep -n "trackAuthGoal\|hsk_auth_goal_sent\|onAuthStateChange" auth.js
+grep -n "markAuthPending\|hsk_auth_pending\|trackAuthGoal\|onAuthStateChange" auth.js
 ```
-Expected: the new function, the sessionStorage guard, and a `c.auth.onAuthStateChange(...)` registration are present; `finishOAuthFromUrl();` still follows it as the last statement.
+Expected: `markAuthPending` is defined once and **called in all three** of `signIn`/`signInWithGoogle`/`verifyEmailOtp` (4 hits total for the name); the listener reads+removes `hsk_auth_pending` with the 10-min freshness check; `finishOAuthFromUrl();` still follows the listener as the last statement.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add auth.js
-git commit -m "feat(analytics): fire 'auth' goal centrally on onAuthStateChange SIGNED_IN"
+git commit -m "feat(analytics): fire 'auth' goal on genuine sign-in (marker-gated SIGNED_IN)"
 ```
 
 ---
@@ -445,6 +494,8 @@ Run `mcp__yandex-metrika__list_goals` (`counter_id: METRIKA_ID`) and confirm the
 
 Use `preview_start` (or `python3 -m http.server 8080`). Load `http://localhost:8080/?_ym_debug=1`.
 
+**Local scope note:** `config/auth.js` ships **real** Supabase creds, so the `s17` email gate requires a live OTP. What's reliably verifiable locally is `landing_cta`, `ob_start`, `ob_email_view` (all fire before the gate) plus the counter/pageview wiring. `auth`, `paywall_view`, `begin_checkout` need a real OTP login (a test account); `purchase` needs a real acquiring round-trip → verify on prod (Step 8) or with a test order.
+
 - [ ] **Step 2: General analytics fires**
 
 With `preview_console_logs` / the Metrica debug output, confirm on the landing page: a Metrica pageview (`hit`) is sent, and `window.ym` + `window.ymGoal` are defined (`preview_eval`: `typeof window.ym + ',' + typeof window.ymGoal` → `function,function`). Confirm via `preview_network` a request to `mc.yandex.ru` (watch/tag), and **no CSP errors**.
@@ -453,13 +504,13 @@ With `preview_console_logs` / the Metrica debug output, confirm on the landing p
 
 Click a "Start" CTA (`preview_click` on `a[href^="/quiz"]`); confirm `reachGoal:landing_cta` in the debug log before nav, then on `/quiz/` confirm `reachGoal:ob_start`.
 
-- [ ] **Step 4: `auth` fires once, covers Google**
+- [ ] **Step 4: `auth` fires on a genuine sign-in only (test account required)**
 
-With a test account, complete the `s17` email OTP; confirm exactly one `reachGoal:auth` with `{via:"onboarding"}` and that it does **not** refire on subsequent navigation in the same tab. (If a Google test login is feasible, confirm `reachGoal:auth` fires on the OAuth return too.)
+Using a test account, complete the `s17` email OTP; confirm exactly one `reachGoal:auth` with `{via:"onboarding"}`. Then reload an app page (session now restored) and confirm `auth` does **NOT** refire — the marker gate must suppress the stored-session `SIGNED_IN`. (If a Google test login is feasible, confirm `reachGoal:auth` fires once on the OAuth return too — the marker survives the redirect.)
 
 - [ ] **Step 5: `paywall_view` / `begin_checkout` / `purchase`**
 
-Advance to the paywall — confirm `reachGoal:paywall_view`; open checkout — confirm `reachGoal:begin_checkout` with `{order_price, currency:"KZT", plan}`. Full `purchase` requires a real acquiring round-trip → verify on prod after deploy (or via a test order), confirming `reachGoal:purchase` carries `order_price` + `plan`.
+These are past the OTP gate, so they need the test-account login from Step 4. Advance to the paywall — confirm `reachGoal:paywall_view`; open checkout — confirm `reachGoal:begin_checkout` with `{order_price, currency:"KZT", plan}`. Full `purchase` requires a real acquiring round-trip → verify on prod after deploy (or via a test order), confirming `reachGoal:purchase` carries `order_price` + `plan`.
 
 - [ ] **Step 6: Webvisor PII masking**
 
@@ -485,12 +536,13 @@ The above commits are on the working branch. To go live, the user merges/pushes 
 - Revenue via `order_price` (map `value→order_price`) → Task 3 Step 1. ✓
 - Stage goals `ob_start`/`ob_email_view`/`paywall_view` → Task 3 Steps 1–2. ✓
 - Pre-existing `begin_checkout`/`purchase`/`payment_cancelled`/`checkout_duplicate_prevented` routed → Task 3 Step 1 (bridge). ✓
-- Centralized `auth` on `SIGNED_IN` (Google-safe) → Task 5. ✓ (subsumes optional `login_success` via the `via` param — noted deviation, within spec intent.)
+- Centralized `auth`, marker-gated on `SIGNED_IN` (Google-safe; ignores stored-session/refocus fires) → Task 5. ✓ (subsumes optional `login_success` via the `via` param — noted deviation, within spec intent.)
 - `landing_cta` best-effort → Task 6. ✓
 - `app_enter` URL goal → Task 7 Step 2. ✓
 - PII masking of email/name → Task 4. ✓
 - Composite funnel (`step` goal, API-supported, UI fallback) → Task 7 Step 3. ✓
 - Verification (preview + `?_ym_debug=1` + Metrica + no CSP) → Task 8. ✓
+- Build integrity: `node build.js` **paired with** `node scripts/inject-auth.js` so app pages keep their auth scripts → Global Constraints + Task 2 Steps 4–6. ✓
 
 **Placeholder scan:** the only intentional substitution is `METRIKA_ID` (a real value produced by Task 1, referenced by exact interface) — not a forbidden placeholder. No "TBD/handle appropriately/similar-to". ✓
 
