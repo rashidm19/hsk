@@ -70,6 +70,9 @@ async function handleCreate(sb: SB, body: Record<string, unknown>, cors: Record<
   const months = Number.isFinite(Number(body.months)) && Number(body.months) > 0
     ? Math.floor(Number(body.months))
     : plan.months;
+  // Passwordless by default (real creators sign in via OTP/Google). A password is
+  // only minted for explicit test accounts (fake/undeliverable emails can't do OTP).
+  const withPassword = body.with_password === true;
 
   // Resolve or create the auth user.
   let uid = "";
@@ -78,7 +81,7 @@ async function handleCreate(sb: SB, body: Record<string, unknown>, cors: Record<
 
   if (existing) {
     uid = existing.id;
-    if (body.reset_password === true) {
+    if (withPassword && body.reset_password === true) {
       generatedPassword = generatePassword();
       const upd = await sb.auth.admin.updateUserById(uid, {
         password: generatedPassword,
@@ -90,13 +93,16 @@ async function handleCreate(sb: SB, body: Record<string, unknown>, cors: Record<
       }
     }
   } else {
-    generatedPassword = String(body.password ?? "") || generatePassword();
-    const created = await sb.auth.admin.createUser({
+    const attrs: Record<string, unknown> = {
       email,
-      password: generatedPassword,
       email_confirm: true,
       user_metadata: name ? { name } : {},
-    });
+    };
+    if (withPassword) {
+      generatedPassword = String(body.password ?? "") || generatePassword();
+      attrs.password = generatedPassword;
+    }
+    const created = await sb.auth.admin.createUser(attrs);
     if (created.error) {
       // Race: someone created it between findUser and now. Recover by re-lookup.
       const retry = await findUserByEmail(sb, email);
@@ -236,7 +242,7 @@ async function findUserByEmail(sb: SB, email: string): Promise<{ id: string } | 
     const { data, error } = await sb.auth.admin.listUsers({ page, perPage });
     if (error) throw new Error("listUsers: " + error.message);
     const users = data?.users ?? [];
-    const hit = users.find((u) => (u.email ?? "").toLowerCase() === email);
+    const hit = users.find((u: { email?: string | null }) => (u.email ?? "").toLowerCase() === email);
     if (hit) return { id: hit.id };
     if (users.length < perPage) break; // last page
   }
