@@ -26,6 +26,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
+<script src="/route-decision.js"></script>
 <script src="/auth.js"></script>
 </head>
 <body>
@@ -41,7 +42,7 @@
       card.innerHTML =
         '<h1 style="font-size:1.25rem;margin-bottom:8px;">Sign-in failed</h1>' +
         '<p class="auth-fail-msg" style="color:var(--stone);margin-bottom:16px;"></p>' +
-        '<a href="/quiz/" class="btn btn-primary">Try again</a>';
+        '<a href="/login/" class="btn btn-primary">Try again</a>';
       card.querySelector('.auth-fail-msg').textContent = message;
     }
 
@@ -65,7 +66,9 @@
 
       var user = await HSKAuth.getUser();
       if (user) await HSKAuth.upsertProfile(user, {});
-      window.location.replace(next);
+      // Resolve app-vs-paywall by entitlement (an unsubscribed returning user
+      // goes to the funnel paywall, not a dead /exams/ bounce).
+      await HSKAuth.routeAfterAuth(next);
     } catch (e) {
       fail(e.message || 'Try again from the sign-in page.');
     }
