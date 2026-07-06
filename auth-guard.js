@@ -48,11 +48,11 @@
     .then(function (session) {
       if (!session) {
         unveil();
-        // Single entry: unauthenticated visitors are sent through the onboarding funnel,
-        // which performs auth at screen s17. ?signin=1 suppresses the funnel's
-        // completed-onboarding shortcut back to the app, so the two redirects can
-        // never ping-pong even when local flags say "done" but the session is gone.
-        window.location.replace('/quiz/?signin=1');
+        // No session on a gated page: send the user to the dedicated sign-in
+        // page, preserving the page they wanted so login can return them to it.
+        // (Was /quiz/?signin=1 — the funnel no longer owns returning-user login.)
+        var wanted = window.location.pathname + window.location.search;
+        window.location.replace('/login/?next=' + encodeURIComponent(wanted));
         return;
       }
       var userId = session.user && session.user.id;
