@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Админка — выдача доступа</title>
+<!-- Only first-party config is loaded (for the Supabase URL). No third-party scripts on this
+     page by design — it holds the operator's admin secret in sessionStorage. -->
+<script src="/config/auth.js"></script>
+<style>
+  :root {
+    --bg: #f9f4ec; --surface: #fffdf8; --ink: #1a1614; --stone: #574f49;
+    --mist: #d4c9bc; --accent: #b84e2e; --accent-hover: #9a4026; --accent-soft: #f3e0d8;
+    --jade: #2f6349; --jade-soft: #d8ebe1; --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 8px 28px rgba(44, 40, 37, .07);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); padding: 24px; line-height: 1.5; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 0; }
+  .sub { color: var(--stone); font-size: 14px; margin: 0 0 22px; }
+  .card { background: var(--surface); border: 1px solid var(--mist);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
+  label { display: block; font-weight: 600; font-size: 13px; margin: 12px 0 4px; }
+  input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--mist);
+    border-radius: var(--radius-sm); font-size: 15px; background: var(--surface); color: var(--ink); }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: var(--radius-sm);
+    padding: 11px 18px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+  button:hover { background: var(--accent-hover); }
+  button:disabled { opacity: .55; cursor: default; }
+  button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--mist); margin: 0; }
+  button.ghost:hover { background: var(--accent-soft); }
+  button.tiny { padding: 5px 10px; font-size: 12px; margin: 0; }
+  .hidden { display: none; }
+  .result { background: var(--accent-soft); border: 1px solid var(--accent);
+    border-radius: var(--radius-sm); padding: 14px; margin-top: 16px; font-size: 14px; }
+  .cred { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #fff;
+    padding: 8px 10px; border-radius: 6px; border: 1px solid var(--mist); margin: 6px 0; word-break: break-all; }
+  .err { color: #b00020; font-size: 14px; margin-top: 10px; }
+  .row-flex { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--mist); vertical-align: middle; }
+  th { color: var(--stone); font-weight: 600; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .badge.on { background: var(--jade-soft); color: var(--jade); }
+  .badge.off { background: #ece6dd; color: var(--stone); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- GATE -->
+  <div id="gate" class="card">
+    <h1>Вход в админку</h1>
+    <p class="sub">Введите секретный ключ администратора.</p>
+    <label for="secret">Секретный ключ</label>
+    <input id="secret" type="password" autocomplete="off" placeholder="HSK_ADMIN_SECRET">
+    <button id="gateBtn">Войти</button>
+    <div id="gateErr" class="err hidden"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <h1>Выдача доступа авторам</h1>
+    <p class="sub">Создаёт аккаунт с активной подпиской (comp). Пароль показывается один раз — скопируйте сразу.</p>
+
+    <div class="card">
+      <h2>Новый аккаунт</h2>
+      <label for="email">Email автора *</label>
+      <input id="email" type="email" placeholder="creator@example.com" autocomplete="off">
+      <label for="name">Имя (необязательно)</label>
+      <input id="name" type="text" placeholder="Имя Фамилия" autocomplete="off">
+      <label for="plan">Срок доступа</label>
+      <select id="plan">
+        <option value="12mo" selected>12 месяцев</option>
+        <option value="3mo">3 месяца</option>
+        <option value="1mo">1 месяц</option>
+        <option value="custom">Другой срок…</option>
+      </select>
+      <div id="customWrap" class="hidden">
+        <label for="months">Сколько месяцев</label>
+        <input id="months" type="number" min="1" max="120" step="1" value="6">
+      </div>
+      <button id="createBtn">Создать аккаунт</button>
+      <div id="createErr" class="err hidden"></div>
+      <div id="createOut" class="result hidden"></div>
+    </div>
+
+    <div class="card">
+      <div class="row-flex">
+        <h2>Созданные аккаунты</h2>
+        <button id="refreshBtn" class="ghost tiny">Обновить</button>
+      </div>
+      <div id="listErr" class="err hidden"></div>
+      <div id="listOut"></div>
+    </div>
+
+    <button id="logoutBtn" class="ghost">Выйти</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var SUPABASE_URL = (window.HSK_AUTH_CONFIG && window.HSK_AUTH_CONFIG.url) || "https://cksziokdhbzpdybwnjsx.supabase.co";
+  var FN_URL = SUPABASE_URL + "/functions/v1/admin-provision";
+  var SIGNIN_URL = "https://www.hskprep.cc/quiz/?signin=1";
+  var SECRET_KEY = "hsk_admin_secret";
+
+  var $ = function (id) { return document.getElementById(id); };
+  function show(el) { el.classList.remove("hidden"); }
+  function hide(el) { el.classList.add("hidden"); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c];
+    });
+  }
+
+  function getSecret() { try { return sessionStorage.getItem(SECRET_KEY) || ""; } catch (e) { return ""; } }
+  function setSecret(v) { try { sessionStorage.setItem(SECRET_KEY, v); } catch (e) {} }
+  function clearSecret() { try { sessionStorage.removeItem(SECRET_KEY); } catch (e) {} }
+
+  async function call(action, payload) {
+    var res = await fetch(FN_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-hsk-admin-secret": getSecret() },
+      body: JSON.stringify(Object.assign({ action: action }, payload || {})),
+    });
+    var data = null;
+    try { data = await res.json(); } catch (e) {}
+    if (res.status === 401) { clearSecret(); throw new Error("Неверный ключ. Войдите заново."); }
+    if (!res.ok) throw new Error((data && data.error) || ("Ошибка " + res.status));
+    return data;
+  }
+
+  // ---- gate ----
+  function enterApp() { hide($("gate")); show($("app")); loadList(); }
+  $("gateBtn").addEventListener("click", async function () {
+    var v = $("secret").value.trim();
+    if (!v) return;
+    setSecret(v);
+    hide($("gateErr"));
+    $("gateBtn").disabled = true;
+    try { await call("list"); enterApp(); }
+    catch (e) { $("gateErr").textContent = e.message; show($("gateErr")); }
+    finally { $("gateBtn").disabled = false; }
+  });
+  $("secret").addEventListener("keydown", function (e) { if (e.key === "Enter") $("gateBtn").click(); });
+
+  // ---- custom months toggle ----
+  $("plan").addEventListener("change", function () {
+    if ($("plan").value === "custom") show($("customWrap")); else hide($("customWrap"));
+  });
+
+  // ---- create ----
+  $("createBtn").addEventListener("click", async function () {
+    var email = $("email").value.trim();
+    var name = $("name").value.trim();
+    var planSel = $("plan").value;
+    hide($("createErr")); hide($("createOut"));
+    if (!email) { $("createErr").textContent = "Укажите email."; show($("createErr")); return; }
+
+    var payload = { email: email, name: name || undefined };
+    if (planSel === "custom") {
+      var m = parseInt($("months").value, 10);
+      if (!(m > 0)) { $("createErr").textContent = "Укажите число месяцев."; show($("createErr")); return; }
+      payload.plan = "12mo"; // placeholder; months override drives coverage length
+      payload.months = m;
+    } else {
+      payload.plan = planSel;
+    }
+
+    $("createBtn").disabled = true;
+    try {
+      var r = await call("create", payload);
+      var blurb = "Логин: " + email + (r.password ? ("  •  Пароль: " + r.password) : "") +
+                  "  •  Вход: " + SIGNIN_URL;
+      var html = "<b>Готово.</b>" +
+        (r.already_comped ? " <em>(доступ уже был выдан ранее — пароль не менялся)</em>" : "") +
+        '<div class="cred">Email: ' + esc(email) + "</div>" +
+        (r.password
+          ? '<div class="cred">Пароль: ' + esc(r.password) + "</div>"
+          : '<div class="cred">Пароль: (существующий аккаунт — не изменён)</div>') +
+        '<div class="cred">Действует до: ' + esc(r.expires_at || "—") + "</div>" +
+        '<label>Готовое сообщение автору</label><div class="cred" id="blurb">' + esc(blurb) + "</div>" +
+        '<button class="ghost" id="copyBtn">Скопировать сообщение</button>';
+      $("createOut").innerHTML = html; show($("createOut"));
+      $("copyBtn").addEventListener("click", function () {
+        navigator.clipboard.writeText(blurb).then(function () { $("copyBtn").textContent = "Скопировано ✓"; },
+          function () { $("copyBtn").textContent = "Не удалось скопировать"; });
+      });
+      $("email").value = ""; $("name").value = "";
+      loadList();
+    } catch (e) {
+      $("createErr").textContent = e.message; show($("createErr"));
+      if (/ключ/.test(e.message)) { show($("gate")); hide($("app")); }
+    } finally { $("createBtn").disabled = false; }
+  });
+
+  // ---- list ----
+  async function loadList() {
+    hide($("listErr")); $("listOut").textContent = "Загрузка…";
+    try {
+      var r = await call("list");
+      if (!r.rows.length) { $("listOut").innerHTML = "<p class='sub' style='margin:8px 0 0'>Пока нет созданных аккаунтов.</p>"; return; }
+      var rows = r.rows.map(function (x) {
+        var active = x.sub_status === "active";
+        var until = (x.expires_at || "").slice(0, 10) || "—";
+        return "<tr>" +
+          "<td>" + esc(x.email || x.uid) + "</td>" +
+          "<td>" + esc(x.name || "—") + "</td>" +
+          "<td>" + esc(x.plan || "—") + "</td>" +
+          "<td>" + esc(until) + "</td>" +
+          '<td><span class="badge ' + (active ? "on" : "off") + '">' + (active ? "активна" : "нет") + "</span></td>" +
+          '<td>' + (active
+            ? '<button class="ghost tiny revoke" data-uid="' + esc(x.uid) + '" data-email="' + esc(x.email || "") + '">Отозвать</button>'
+            : "") + "</td>" +
+          "</tr>";
+      }).join("");
+      $("listOut").innerHTML = "<table><thead><tr><th>Email</th><th>Имя</th><th>План</th>" +
+        "<th>До</th><th>Подписка</th><th></th></tr></thead><tbody>" + rows + "</tbody></table>";
+      Array.prototype.forEach.call(document.querySelectorAll(".revoke"), function (btn) {
+        btn.addEventListener("click", function () { revoke(btn.getAttribute("data-uid"), btn.getAttribute("data-email"), btn); });
+      });
+    } catch (e) { $("listErr").textContent = e.message; show($("listErr")); $("listOut").textContent = ""; }
+  }
+  $("refreshBtn").addEventListener("click", loadList);
+
+  // ---- revoke ----
+  async function revoke(uid, email, btn) {
+    if (!confirm("Отозвать доступ у " + (email || uid) + "?")) return;
+    btn.disabled = true; btn.textContent = "…";
+    try { await call("revoke", { uid: uid }); loadList(); }
+    catch (e) { $("listErr").textContent = e.message; show($("listErr")); btn.disabled = false; btn.textContent = "Отозвать"; }
+  }
+
+  $("logoutBtn").addEventListener("click", function () { clearSecret(); location.reload(); });
+
+  // ---- boot ----
+  if (getSecret()) { enterApp(); }
+})();
+</script>
+</body>
+</html>
