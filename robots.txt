@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /data/
 Disallow: /admin/
+Disallow: /login/
 
 # Slow crawl down for AI-only bots that don't help with indexing
 User-agent: GPTBot
