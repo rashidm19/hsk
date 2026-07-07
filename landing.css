@@ -32,6 +32,19 @@ a.mkt-link { text-decoration: none; color: inherit; }
 @keyframes mq     { from { transform: translateX(0); }       to { transform: translateX(-50%); } }
 @keyframes floatY { 0%, 100% { transform: translateY(-7px); } 50% { transform: translateY(9px); } }
 
+/* Universities marquee — real logo lockups wrapped in uniform white chips.
+   The chip normalises the mixed sources (transparent PNGs + white-bg JPEGs)
+   so every logo reads the same against the beige strip. */
+.mkt-uni {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 116px; padding: 0 30px; flex: none;
+  background: #ffffff;
+  border: 1px solid rgba(26, 26, 46, .07);
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(26, 26, 46, .05);
+}
+.mkt-unilogo { width: 230px; height: auto; display: block; object-fit: contain; }
+
 /* Hide the OAuth-callback flash if this page is ever promoted to root */
 .hsk-oauth-pending body { visibility: hidden; }
 
