@@ -48,8 +48,29 @@ a.mkt-link { text-decoration: none; color: inherit; }
 /* Hide the OAuth-callback flash if this page is ever promoted to root */
 .hsk-oauth-pending body { visibility: hidden; }
 
-/* ---- Responsive ---- */
+/* ---- Mobile carousels (swipe rows) — hide the scrollbar chrome ---- */
+.hscroll { scrollbar-width: none; -ms-overflow-style: none; }
+.hscroll::-webkit-scrollbar { display: none; }
+
+/* ---- Mobile universities marquee — smaller white chips than desktop's .mkt-uni ---- */
+.mkt-uni-m {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 64px; padding: 0 18px; flex: none;
+  background: #ffffff;
+  border: 1px solid rgba(26, 26, 46, .07);
+  border-radius: 12px;
+  box-shadow: 0 5px 16px rgba(26, 26, 46, .05);
+}
+.mkt-unilogo-m { width: 118px; height: auto; display: block; object-fit: contain; }
+
+/* ---- Responsive: swap the desktop and mobile landing blocks at 760px ----
+   Desktop markup (.lp-desktop) is inline-styled and only reflows down to
+   ~tablet; below 760px we render the dedicated mobile composition instead. */
+.lp-mobile { display: none; }
+
 @media (max-width: 760px) {
+  .lp-desktop  { display: none; }
+  .lp-mobile   { display: block; }
   .mkt-navlinks { display: none !important; }
 }
 

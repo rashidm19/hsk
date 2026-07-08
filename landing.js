@@ -71,6 +71,10 @@
     });
     var url = document.querySelector('[data-urlbar]');
     if (url) url.textContent = 'hskprep.cc/' + urls[n] + '/';
+    // Mobile app-card title (mobile block only; desktop has no [data-apptitle]).
+    var names = ['Mock Exams', 'Vocabulary', 'Characters', 'Grammar', 'Strategies', 'Traps'];
+    var apptitle = document.querySelector('[data-apptitle]');
+    if (apptitle) apptitle.textContent = names[n];
   }
   document.querySelectorAll('[data-tabchips] [data-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -174,5 +178,29 @@
         });
       }, { passive: true });
     }
+  }
+
+  /* ---- mobile sticky bottom CTA — reveal after scrolling past the hero ---- */
+  var bar = document.querySelector('[data-stickybar]');
+  if (bar) {
+    var shown = false;
+    var setBar = function (v) {
+      if (v === shown) return;
+      shown = v;
+      bar.style.transform = v
+        ? 'translateX(-50%) translateY(0)'
+        : 'translateX(-50%) translateY(130%)';
+    };
+    var barTicking = false;
+    var onBarScroll = function () {
+      if (barTicking) return;
+      barTicking = true;
+      requestAnimationFrame(function () {
+        setBar(window.scrollY > 560);
+        barTicking = false;
+      });
+    };
+    window.addEventListener('scroll', onBarScroll, { passive: true });
+    onBarScroll();
   }
 })();
