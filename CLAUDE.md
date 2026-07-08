@@ -85,3 +85,15 @@ Edit the shell here, not in generated pages.
   rename scripts; they are not part of the normal build.
 - Marketing/planning docs (`CONTENT_PLAN.md`, `INTERNAL_LINKING.md`, `PROMO.md`) are content
   strategy references, not code.
+- **Root landing is hand-maintained, NOT generated.** `/index.html` + `/landing.css` +
+  `/landing.js` are the marketing landing (ported from the Claude Design project `6ac24648…`
+  via the DesignSync MCP). `build.js` never writes root `index.html` — `buildHomepage()` writes
+  `exams/index.html` — so the "don't hand-edit generated `index.html`" rule above does **not**
+  apply to the root. Edit these three files directly (re-running `node build.js` only re-injects
+  the theme-loader + Metrika snippets idempotently). It ships **dual markup in one file**:
+  `.lp-desktop` + `.lp-mobile` blocks toggled by a single `@media (max-width:760px)` in
+  `landing.css`; both blocks share `landing.js` via the same `data-*` hooks
+  (`data-level`/`data-tab`/`data-faq-q`/`data-count`/`data-hover`), so most interactivity needs
+  no per-block code. Keep mobile section ids `m-`-prefixed (e.g. `#m-platform`) to avoid
+  duplicate ids, and keep funnel CTAs relative (`/quiz/`) so the `landing_cta` analytics goal
+  fires. `body.lp` so `scripts/inject-auth.js` skips it.
