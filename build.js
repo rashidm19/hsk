@@ -39,7 +39,7 @@ const fmtNum = n => n.toLocaleString('en-US');
 
 // Walk every .html file in the site (skipping build/data dirs).
 function walkHtmlFiles() {
-  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts']);
+  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle']);
   const out = [];
   (function walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -5127,7 +5127,7 @@ function injectTheme() {
   // on content pages that ship no JavaScript of their own.
   const toggle = `<button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>`;
 
-  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts']);
+  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle']);
   function walk(dir, out) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       if (SKIP.has(entry.name)) continue;

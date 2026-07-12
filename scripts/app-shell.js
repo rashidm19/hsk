@@ -125,7 +125,7 @@ function injectAppShell() {
     path.join(ROOT, 'index.html'),
     path.join(ROOT, '404.html'),
   ]);
-  const SKIP_DIRS = new Set(['.git', 'node_modules', 'data', 'scripts']);
+  const SKIP_DIRS = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle']);
 
   function walk(dir, out) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

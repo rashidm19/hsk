@@ -11,7 +11,7 @@ const SKIP = new Set([
   path.join(ROOT, '404.html'),
   path.join(ROOT, 'auth', 'callback.html'),
 ]);
-const SKIP_DIRS = new Set(['.git', 'node_modules', 'data', 'scripts', 'supabase', 'config']);
+const SKIP_DIRS = new Set(['.git', 'node_modules', 'data', 'scripts', 'supabase', 'config', 'ds-bundle']);
 
 const HEAD_SNIPPET = `
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
