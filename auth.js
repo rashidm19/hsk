@@ -223,11 +223,23 @@
   // Like getSubscription, but distinguishes a definite "no subscription" (sub:null,
   // error:false) from a failed read (error:true) so guards can fail open on
   // transient errors instead of ejecting a possibly-paying user.
+  // Bound a promise so a non-settling network request can't hang a caller forever
+  // (a rejection still rejects; only a stall is converted to `fallback`).
+  function withTimeout(promise, ms, fallback) {
+    return Promise.race([
+      promise,
+      new Promise(function (resolve) { global.setTimeout(function () { resolve(fallback); }, ms); }),
+    ]);
+  }
+
   async function getSubscriptionStatus(userId) {
     const c = getClient();
     if (!c || !userId) return { error: true, sub: null };
     try {
-      const { data, error } = await c.from('profiles').select('subscription').eq('id', userId).maybeSingle();
+      // Timeout -> fail open ({error:true}) so a stalled read never strands the
+      // login button on "Verifying…" or leaves auth-guard's veil up forever.
+      const q = c.from('profiles').select('subscription').eq('id', userId).maybeSingle();
+      const { data, error } = await withTimeout(q, 8000, { data: null, error: true });
       if (error) return { error: true, sub: null };
       return { error: false, sub: (data && data.subscription) || null };
     } catch (e) {
@@ -441,22 +453,23 @@
   // is missing so this never throws. Reads the server entitlement once, then
   // hands the destination to the pure router.
   async function routeAfterAuth(next) {
-    var target;
+    // Failsafe: whatever hangs (getUser, the entitlement read), always navigate
+    // within 8s so the caller's button never spins forever. safeNextPath is the
+    // fail-open destination; auth-guard re-checks entitlement there.
+    var settled = false;
+    function go(target) { if (settled) return; settled = true; global.clearTimeout(fallbackTimer); global.location.replace(target); }
+    var fallbackTimer = global.setTimeout(function () { go(safeNextPath(next)); }, 8000);
     try {
       var user = await getUser();
-      if (!user) {
-        global.location.replace('/login/?next=' + encodeURIComponent(safeNextPath(next)));
-        return;
-      }
+      if (!user) { go('/login/?next=' + encodeURIComponent(safeNextPath(next))); return; }
       var res = await getSubscriptionStatus(user.id);
       var state = res.error ? 'error' : (subActive(res.sub) ? 'active' : 'none');
-      target = global.HSKRoute
+      go(global.HSKRoute
         ? global.HSKRoute.decideRoute({ sub: state, next: next })
-        : (state === 'none' ? '/quiz/?sub=required' : safeNextPath(next));
+        : (state === 'none' ? '/quiz/?sub=required' : safeNextPath(next)));
     } catch (e) {
-      target = safeNextPath(next);
+      go(safeNextPath(next));
     }
-    global.location.replace(target);
   }
 
   global.HSKAuth = {

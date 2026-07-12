@@ -30,21 +30,30 @@
   profileEl.setAttribute('role', 'button');
   profileEl.setAttribute('tabindex', '0');
   profileEl.setAttribute('aria-label', 'Account menu');
+  profileEl.setAttribute('aria-haspopup', 'menu');
+  profileEl.setAttribute('aria-expanded', 'false');
+  profileEl.setAttribute('aria-controls', 'app-profile-menu');
 
   var menu = document.createElement('div');
   menu.className = 'app-profile-menu';
+  menu.id = 'app-profile-menu';
+  menu.setAttribute('role', 'menu');
   menu.hidden = true;
-  menu.innerHTML = '<button type="button" class="app-profile-menu-item" id="app-sign-out">Sign out</button>';
+  menu.innerHTML = '<button type="button" role="menuitem" class="app-profile-menu-item" id="app-sign-out">Sign out</button>';
   profileEl.parentNode.appendChild(menu);
 
-  function closeMenu() {
+  function closeMenu(returnFocus) {
+    if (menu.hidden) return;
     menu.hidden = true;
     profileEl.setAttribute('aria-expanded', 'false');
+    if (returnFocus === true) { try { profileEl.focus(); } catch (e) {} }
   }
 
   function openMenu() {
     menu.hidden = false;
     profileEl.setAttribute('aria-expanded', 'true');
+    var first = menu.querySelector('.app-profile-menu-item');
+    if (first) { try { first.focus(); } catch (e) {} }
   }
 
   profileEl.addEventListener('click', function (e) {
@@ -56,16 +65,24 @@
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       profileEl.click();
+    } else if (e.key === 'Escape') {
+      closeMenu(true);
     }
   });
 
-  document.addEventListener('click', closeMenu);
+  // Escape from within the menu closes it and returns focus to the trigger.
+  menu.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); closeMenu(true); }
+  });
 
-  document.getElementById('app-sign-out').addEventListener('click', function () {
+  document.addEventListener('click', function () { closeMenu(); });
+
+  document.getElementById('app-sign-out').addEventListener('click', function (e) {
     if (!window.HSKAuth) return;
-    HSKAuth.signOut().then(function () {
-      window.location.href = '/';
-    });
+    e.stopPropagation(); // keep the menu open so the "Signing out…" label is visible
+    var b = this; b.disabled = true; b.textContent = 'Signing out…';
+    var go = function () { window.location.href = '/'; };
+    HSKAuth.signOut().then(go, go); // signOut clears the local session on either outcome
   });
 
   function applyProfile(name, email, avatar) {

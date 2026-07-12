@@ -38,10 +38,32 @@
     } catch (e) {}
   }
 
-  var hasStored = HSKAuth.hasStoredSession && HSKAuth.hasStoredSession();
-  if (!hasStored) {
-    document.documentElement.classList.add('hsk-auth-pending');
+  // Synchronously recover the stored user id (the supabase token carries it) so we
+  // can consult the entitlement cache before deciding whether to veil.
+  function storedUserId() {
+    try {
+      var storage = window.localStorage;
+      if (!storage) return null;
+      for (var i = 0; i < storage.length; i++) {
+        var key = storage.key(i);
+        if (!key || key.indexOf('-auth-token') === -1) continue;
+        var parsed = JSON.parse(storage.getItem(key) || 'null');
+        var u = parsed && ((parsed.user && parsed.user.id) ||
+          (parsed.currentSession && parsed.currentSession.user && parsed.currentSession.user.id));
+        if (u) return u;
+      }
+    } catch (e) {}
+    return null;
   }
+
+  // Veil until we have a POSITIVE access decision (session + active entitlement),
+  // so a signed-in-but-unsubscribed user never sees the gated page flash before the
+  // paywall redirect. EXCEPTION: a fresh positive entitlement cache for the stored
+  // user means the page is known-good — show it instantly (no veil), so the common
+  // subscribed-navigation case isn't slowed. getSubscriptionStatus is time-bounded
+  // (auth.js), so the veil can't outlast a stalled read.
+  var preCached = (function () { var u = storedUserId(); return u ? readSubCache(u) : null; })();
+  if (!preCached) { document.documentElement.classList.add('hsk-auth-pending'); }
   function unveil() { document.documentElement.classList.remove('hsk-auth-pending'); }
 
   (HSKAuth.waitForSession ? HSKAuth.waitForSession() : HSKAuth.getSession())
@@ -62,10 +84,9 @@
       // gating) rather than ejecting a possibly-paying user on a network blip.
       return (HSKAuth.getSubscriptionStatus ? HSKAuth.getSubscriptionStatus(userId) : Promise.resolve({ error: true, sub: null }))
         .then(function (res) {
-          unveil();
-          if (res.error) return;
-          if (subActive(res.sub)) { writeSubCache(userId, res.sub); return; }
-          window.location.replace('/quiz/?sub=required');
+          if (res.error) { unveil(); return; }                              // can't confirm -> fail open, show page
+          if (subActive(res.sub)) { writeSubCache(userId, res.sub); unveil(); return; }
+          window.location.replace('/quiz/?sub=required');                   // keep veiled — never paint the gated page
         });
     })
     .catch(function () {
