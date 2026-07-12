@@ -40,6 +40,7 @@
       btn.style.background = active ? '#c23b22' : '#ffffff';
       btn.style.color = active ? '#fffdf9' : '#5c5c6a';
       btn.style.borderColor = active ? '#c23b22' : 'rgba(26,26,46,.15)';
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
     document.querySelectorAll('[data-levelpanel]').forEach(function (p) {
       p.style.display = p.getAttribute('data-levelpanel') === String(n) ? 'block' : 'none';
@@ -60,6 +61,7 @@
       btn.style.color = active ? '#c23b22' : '#5c5c6a';
       btn.style.borderColor = active ? 'transparent' : 'rgba(26,26,46,.14)';
       btn.style.fontWeight = active ? '600' : '500';
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
     document.querySelectorAll('[data-tabpanel]').forEach(function (p) {
       p.style.display = p.getAttribute('data-tabpanel') === String(n) ? 'block' : 'none';
@@ -82,22 +84,38 @@
     });
   });
 
+  /* Seed aria-pressed on both switchers to their default (the chip whose panel is
+     shown). Re-applies the identical default styles/urlbar — idempotent. */
+  (function initSwitcherAria() {
+    var lp = document.querySelectorAll('[data-levelpanel]');
+    for (var i = 0; i < lp.length; i++) { if (getComputedStyle(lp[i]).display !== 'none') { applyLevel(parseInt(lp[i].getAttribute('data-levelpanel'), 10)); break; } }
+    var tp = document.querySelectorAll('[data-tabpanel]');
+    for (var j = 0; j < tp.length; j++) { if (getComputedStyle(tp[j]).display !== 'none') { applyTab(parseInt(tp[j].getAttribute('data-tabpanel'), 10)); break; } }
+  })();
+
   /* ---- FAQ accordion ---- */
-  document.querySelectorAll('[data-faq-q]').forEach(function (btn) {
+  document.querySelectorAll('[data-faq-q]').forEach(function (btn, i) {
+    var item = btn.closest('[data-faq]');
+    var ans = item && item.querySelector('[data-faq-a]');
+    var chev = item && item.querySelector('[data-faq-chev]');
+    // Initial ARIA (unique ids across desktop + mobile since forEach spans both).
+    if (ans) { if (!ans.id) { ans.id = 'faq-ans-' + i; } btn.setAttribute('aria-controls', ans.id); }
+    btn.setAttribute('aria-expanded', ans && ans.style.display !== 'none' ? 'true' : 'false');
+    if (chev) { chev.setAttribute('aria-hidden', 'true'); }
     btn.addEventListener('click', function () {
-      var item = btn.closest('[data-faq]');
-      var ans = item.querySelector('[data-faq-a]');
-      var chev = item.querySelector('[data-faq-chev]');
-      var open = ans.style.display !== 'none';
+      var open = ans && ans.style.display !== 'none';
       document.querySelectorAll('[data-faq]').forEach(function (el) {
         var a = el.querySelector('[data-faq-a]');
         var c = el.querySelector('[data-faq-chev]');
+        var q = el.querySelector('[data-faq-q]');
         if (a) a.style.display = 'none';
         if (c) c.style.transform = 'rotate(0deg)';
+        if (q) q.setAttribute('aria-expanded', 'false');
       });
-      if (!open) {
+      if (!open && ans) {
         ans.style.display = 'block';
-        chev.style.transform = 'rotate(180deg)';
+        if (chev) chev.style.transform = 'rotate(180deg)';
+        btn.setAttribute('aria-expanded', 'true');
       }
     });
   });
