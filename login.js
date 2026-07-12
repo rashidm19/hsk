@@ -113,18 +113,19 @@
       '<button type="button" class="lg-link" id="resend">Resend code</button>' +
       '<button type="button" class="lg-link" id="changeem">← Use a different email</button>';
     var code = byId('code'), cerr = byId('cerr');
-    var resendTimer = null, resendCooling = false; // 4s resend throttle, shared with the verify handler
+    var resendTimer = null, resendCooling = false, verifying = false; // 4s resend throttle + in-flight-verify guard, shared across handlers
     byId('verify').onclick = function () {
       var t = (code.value || '').trim();
       if (!t) { showErr(cerr, code, 'Enter the code from your email.'); return; }
       cerr.hidden = true;
       var btn = byId('verify'), rs = byId('resend'); btn.disabled = true; btn.textContent = 'Verifying…';
-      if (rs) rs.disabled = true; // don't let Resend fire a fresh code that invalidates the one being verified
+      if (rs) rs.disabled = true; verifying = true; // don't let Resend fire a fresh code that invalidates the one being verified
       HSKAuth.verifyEmailOtp(email, t)
         .then(function () { HSKAuth.routeAfterAuth(NEXT); })
         .catch(function () {
+          verifying = false;
           btn.disabled = false; btn.textContent = 'Verify & log in';
-          if (rs && !resendCooling) rs.disabled = false; // keep Resend locked if its 4s cooldown is still running
+          if (rs && !resendCooling) { rs.disabled = false; rs.textContent = 'Resend code'; } // keep Resend locked if its 4s cooldown is still running
           showErr(cerr, code, "That code didn't work — check it and try again.");
         });
     };
@@ -133,7 +134,7 @@
       if (vb) vb.disabled = true; // hold Verify until the new code is out
       if (resendTimer) { clearTimeout(resendTimer); resendTimer = null; } // don't let a stale cooldown timer clobber this attempt
       HSKAuth.signInWithEmailOtp(email, { next: NEXT, createUser: false })
-        .then(function () { r.textContent = 'Code sent ✓'; if (vb) vb.disabled = false; resendCooling = true; resendTimer = setTimeout(function () { resendCooling = false; if (r.isConnected) { r.disabled = false; r.textContent = 'Resend code'; } }, 4000); })
+        .then(function () { r.textContent = 'Code sent ✓'; if (vb) vb.disabled = false; resendCooling = true; resendTimer = setTimeout(function () { resendCooling = false; if (r.isConnected && !verifying) { r.disabled = false; r.textContent = 'Resend code'; } }, 4000); })
         .catch(function () { r.disabled = false; r.textContent = 'Resend code'; resendCooling = false; if (vb) vb.disabled = false; showErr(cerr, code, 'Please wait a moment before requesting another code.'); });
     };
     byId('changeem').onclick = function () { renderEmail(); };

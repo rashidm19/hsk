@@ -572,7 +572,7 @@
     renderDQ();
     function renderDQ() {
       var q = DIAG[di];
-      if (!q) { next(); return; }
+      if (!q) { commitAdvance(next); return; } // empty/exhausted DIAG: advance past the arrival nav-lock too
       var audio = q.audio ? '<audio class="ob-dq-audio" controls preload="none" src="' + esc(q.audio) + '"></audio>' : '';
       var text = q.text ? '<div class="ob-dq-text">' + esc(q.text) + '</div>' : '';
       var prompt = q.prompt ? '<p class="ob-sub">' + esc(q.prompt) + '</p>' : '';
