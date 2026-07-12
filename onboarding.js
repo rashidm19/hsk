@@ -980,10 +980,10 @@
     var T = CFG.timerSeconds || 600;
     var left = T;
     function tick() {
-      if (elSpan && !elSpan.isConnected) { clearTimer(); return; }
+      if (left < 0) left = T; // refresh/reset on expiry (price stays constant) — intentional loop
       var m = Math.floor(left / 60), s = left % 60;
-      if (elSpan) elSpan.textContent = m + ':' + (s < 10 ? '0' : '') + s;
-      if (left <= 0) { clearTimer(); return; } // park at 0:00 (don't loop back to 10:00)
+      if (elSpan && elSpan.isConnected) elSpan.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+      else { clearTimer(); return; }
       left--;
     }
     tick();
