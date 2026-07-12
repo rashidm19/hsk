@@ -5200,6 +5200,42 @@ function injectMetrika() {
   console.log('[metrika] Injected into ' + count + ' pages');
 }
 
+function injectFavicon() {
+  console.log('[favicon] Injecting 汉-tile favicon links into all pages...');
+  // Brand tile (汉 on #c23b22) as the site icon. PNGs bake the exact Noto Serif SC
+  // glyph (an SVG <text> favicon would fall back to a per-OS system serif). The
+  // 96px raster downscales cleanly to the 16/32 tab slot; apple-touch is a
+  // full-bleed 180 that iOS rounds itself.
+  const MARK = 'apple-touch-icon';
+  const links =
+    '<link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">\n' +
+    '<link rel="apple-touch-icon" href="/apple-touch-icon.png">';
+  const SKIP = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle']);
+  function walk(dir, out) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (SKIP.has(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, out);
+      else if (entry.name.endsWith('.html')) out.push(full);
+    }
+    return out;
+  }
+
+  let count = 0;
+  walk(ROOT, []).forEach(f => {
+    let html = fs.readFileSync(f, 'utf8');
+    if (html.indexOf(MARK) !== -1) return;        // idempotent — already stamped
+    if (html.indexOf('</head>') === -1) return;   // no head to inject into
+    // Drop the stale wordmark favicon (landing + login pointed <link icon> at
+    // /logo.svg, which is the text lockup — illegible at 16px) so we don't double up.
+    html = html.replace(/[ \t]*<link rel="icon" href="\/logo\.svg"[^>]*>\r?\n?/g, '');
+    html = html.replace('</head>', links + '\n</head>');
+    fs.writeFileSync(f, html, 'utf8');
+    count++;
+  });
+  console.log('[favicon] Injected into ' + count + ' pages');
+}
+
 
 // ============================================================
 //  GENERATE LISTENING TRANSCRIPT STUDY PAGES: /test/NN/transcript/
@@ -5477,6 +5513,7 @@ addTestLinksToHubs();
 buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, ...transcriptPages, { loc: '/practice/', priority: '0.8' }, { loc: '/writing/complete-sentence/', priority: '0.8' }, { loc: '/train/', priority: '0.9' }]);
 injectTheme();
 injectMetrika();
+injectFavicon();
 const { injectAppShell } = require('./scripts/app-shell');
 injectAppShell();
 syncCounts();
