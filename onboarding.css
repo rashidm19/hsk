@@ -416,6 +416,9 @@ body.ob .theme-toggle { display: none !important; }
   filter: drop-shadow(0 12px 30px rgba(0,0,0,.28));
   transition: transform 4.6s cubic-bezier(.17,.67,.16,1);
 }
+/* Reduced motion: snap instead of the long spin (not `none` — that kills
+   transitionend, so done() would wait the full 5.2s fallback). */
+@media (prefers-reduced-motion: reduce) { .ob-wheel { transition-duration: .01s; } }
 .ob-wheel-pointer {
   position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
   width: 0; height: 0;

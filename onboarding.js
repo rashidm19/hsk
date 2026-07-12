@@ -191,11 +191,17 @@
 
   function clearTimer() { if (timerInt) { clearInterval(timerInt); timerInt = null; } }
 
+  // Guards a native double-click / double-tap from advancing (or retreating) two
+  // screens: the 2nd click of a double-click lands on the freshly-lifted footer
+  // CTA at the same coordinate. Released once the new screen settles (render()).
+  var navLock = false;
   function next() {
-    if (state.idx < FLOW.length - 1) { state.idx++; save(); render(1); }
+    if (navLock) return;
+    if (state.idx < FLOW.length - 1) { navLock = true; state.idx++; save(); render(1); }
   }
   function back() {
-    if (state.idx <= 0) return;
+    if (navLock || state.idx <= 0) return;
+    navLock = true;
     state.idx--;
     // Processing (S14) is a transient auto-advancing screen — skip it on the way
     // back so the Back button from the mirror doesn't bounce forward off the timer.
@@ -297,6 +303,9 @@
     try { window.scrollTo(0, 0); if (stage) stage.scrollTop = 0; } catch (e) {}
     var h = node.querySelector('.ob-h1, [data-focus]');
     if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) { h.focus(); } }
+
+    // Release the nav-lock once the new screen has settled (see next()/back()).
+    setTimeout(function () { navLock = false; }, 350);
   }
 
   // ---------- small DOM helpers ----------
@@ -322,14 +331,16 @@
   function optionList(items, opts) {
     opts = opts || {};
     var single = opts.single !== false; // default single
-    return '<div class="ob-options" role="' + (single ? 'radiogroup' : 'group') + '">' +
+    // Single-select uses aria-pressed toggle buttons (the interaction is
+    // tap-to-commit, not arrow-key radio nav); multi-select uses real checkboxes.
+    return '<div class="ob-options" role="group">' +
       items.map(function (it, i) {
         var label = typeof it === 'string' ? it : it.label;
         var sel = opts.selected && opts.selected(it, i);
         var rec = it && it.recommended ? '<span class="ob-badge-rec">recommended</span>' : '';
         var mark = '<span class="ob-opt-mark" aria-hidden="true">' + (single ? '' : (sel ? '✓' : '')) + '</span>';
         return '<button type="button" class="ob-opt' + (sel ? ' is-selected' : '') + '"' +
-          (single ? ' data-single role="radio" aria-checked="' + (sel ? 'true' : 'false') + '"' : ' role="checkbox" aria-checked="' + (sel ? 'true' : 'false') + '"') +
+          (single ? ' data-single aria-pressed="' + (sel ? 'true' : 'false') + '"' : ' role="checkbox" aria-checked="' + (sel ? 'true' : 'false') + '"') +
           ' data-i="' + i + '">' + (single ? '' : mark) +
           '<span>' + esc(label) + '</span>' + rec + '</button>';
       }).join('') + '</div>';
@@ -447,12 +458,18 @@
   }
 
   function wireSingle(el, items, onPick) {
+    // Re-entrancy guard: a fast double-tap (or a change-of-mind tap) must not
+    // schedule two advances and skip a screen. Each new tap cancels the pending
+    // advance and reschedules; once one commits, further taps are ignored.
+    var pendingT = null, committed = false;
     el.querySelectorAll('.ob-opt').forEach(function (btn) {
       btn.onclick = function () {
-        el.querySelectorAll('.ob-opt').forEach(function (b) { b.classList.remove('is-selected'); b.setAttribute('aria-checked', 'false'); });
-        btn.classList.add('is-selected'); btn.setAttribute('aria-checked', 'true');
+        if (committed) return;
+        if (pendingT) clearTimeout(pendingT);
+        el.querySelectorAll('.ob-opt').forEach(function (b) { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
+        btn.classList.add('is-selected'); btn.setAttribute('aria-pressed', 'true');
         var it = items[+btn.getAttribute('data-i')];
-        setTimeout(function () { onPick(it); }, 170);
+        pendingT = setTimeout(function () { committed = true; onPick(it); }, 170);
       };
     });
   }
@@ -555,18 +572,26 @@
       var text = q.text ? '<div class="ob-dq-text">' + esc(q.text) + '</div>' : '';
       var prompt = q.prompt ? '<p class="ob-sub">' + esc(q.prompt) + '</p>' : '';
       host.innerHTML =
-        '<div class="ob-dq">' +
+        '<div class="ob-dq" tabindex="-1" role="group" aria-label="Question ' + (di + 1) + ' of ' + DIAG.length + '">' +
         '<div class="ob-dq-prog">Question ' + (di + 1) + ' of ' + DIAG.length + '</div>' +
         prompt + audio + text +
         optionList(q.options.map(function (o) { return { label: o }; }), { single: true, selected: function () { return false; } }) +
         '</div>';
+      // Move focus to the new question so keyboard/SR users aren't dropped to
+      // <body> on each sub-question swap (no-op on the first, detached render;
+      // render() focuses the screen heading there).
+      var dqWrap = host.querySelector('.ob-dq');
+      if (dqWrap && dqWrap.isConnected) { try { dqWrap.focus({ preventScroll: true }); } catch (e) { dqWrap.focus(); } }
+      var pendingT = null, committed = false;
       host.querySelectorAll('.ob-opt').forEach(function (btn) {
         btn.onclick = function () {
-          host.querySelectorAll('.ob-opt').forEach(function (b) { b.classList.remove('is-selected'); });
-          btn.classList.add('is-selected');
+          if (committed) return;
+          if (pendingT) clearTimeout(pendingT);
+          host.querySelectorAll('.ob-opt').forEach(function (b) { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
+          btn.classList.add('is-selected'); btn.setAttribute('aria-pressed', 'true');
           A.diag[di] = +btn.getAttribute('data-i');
           save();
-          setTimeout(function () { di++; if (di < DIAG.length) renderDQ(); else next(); }, 220);
+          pendingT = setTimeout(function () { committed = true; di++; if (di < DIAG.length) renderDQ(); else next(); }, 220);
         };
       });
     }
@@ -659,11 +684,14 @@
         if (!validEmail(v)) { err.textContent = c.invalidEmail || 'Please enter a valid email address.'; err.hidden = false; em.classList.add('is-error'); em.focus(); return; }
         err.hidden = true; em.classList.remove('is-error'); A.email = v; save();
         if (configured() && HSKAuth.signInWithEmailOtp) {
-          var btn = $('#go', host); btn.disabled = true; btn.textContent = c.sending || 'Sending…';
+          var btn = $('#go', host), goog = $('#goog', host);
+          btn.disabled = true; btn.textContent = c.sending || 'Sending…';
+          if (goog) goog.disabled = true; em.disabled = true; // lock the sibling Google button + input while in flight
           HSKAuth.signInWithEmailOtp(v, { next: '/quiz/' })
             .then(function () { renderCode(); })
             .catch(function () {
               btn.disabled = false; btn.textContent = c.cta || 'Show my plan';
+              if (goog) goog.disabled = false; em.disabled = false;
               err.textContent = c.sendError || 'Could not send the code. Check the address and try again.'; err.hidden = false;
             });
         } else {
@@ -673,10 +701,12 @@
       $('#goog', host).onclick = function () {
         if (!configured()) { next(); return; }
         A.email = (em.value || '').trim(); save();
-        var g = $('#goog', host); g.disabled = true;
+        var g = $('#goog', host), sendBtn = $('#go', host); g.disabled = true;
+        if (sendBtn) sendBtn.disabled = true; em.disabled = true; // lock the sibling Send-code button + input while in flight
         g.innerHTML = '<span class="ob-google-spin" aria-hidden="true"></span>' + esc(c.connecting || 'Connecting…');
         var restore = function () {
           g.disabled = false; g.textContent = c.google || 'Continue with Google';
+          if (sendBtn) sendBtn.disabled = false; em.disabled = false;
           err.textContent = c.googleError || 'Could not start Google sign-in. Please try again.'; err.hidden = false;
         };
         try {
@@ -843,7 +873,10 @@
       svg.style.transform = 'rotate(' + rot + 'deg)';
       var fired = false, fb;
       var done = function () {
-        if (fired) return; fired = true; clearTimeout(fb);
+        // No-op if the user navigated away before the spin settled (the 5.2s
+        // fallback timer isn't cleared by render()); avoids writing detached nodes.
+        if (fired || !svg.isConnected) return;
+        fired = true; clearTimeout(fb);
         A.discount = w.win; save();
         foot.innerHTML =
           '<div class="ob-win"><div class="ob-win-big">' + esc(c.winTitle || '') + '</div>' +
@@ -907,7 +940,7 @@
       var tag = t.popular ? '<span class="ob-tier-tag">' + esc(c.mostPopular || 'MOST POPULAR') + '</span>' : '';
       var best = t.bestValue ? ' <span class="ob-tier-best">' + esc(c.bestValue || 'best value') + '</span>' : '';
       return '<button type="button" class="ob-tier' + (t.popular ? ' is-popular' : '') + (A.plan === t.id ? ' is-selected' : '') + '"' +
-        ' data-id="' + esc(t.id) + '" role="radio" aria-checked="' + (A.plan === t.id ? 'true' : 'false') + '"' +
+        ' data-id="' + esc(t.id) + '" aria-pressed="' + (A.plan === t.id ? 'true' : 'false') + '"' +
         ' aria-label="' + esc(t.label + (t.popular ? ' (most popular)' : '') + ' ' + fmtPrice(t.price)) + '">' + tag +
         '<span class="ob-tier-radio" aria-hidden="true"></span>' +
         '<span class="ob-tier-main"><span class="ob-tier-label">' + esc(t.label) + best + '</span><br>' +
@@ -922,7 +955,7 @@
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
       '<p class="ob-sub">' + subst(c.subtag) + '</p>' +
       '<div class="ob-chips"><span class="ob-chip">' + subst(c.goalChip) + '</span><span class="ob-chip">' + subst(c.focusChip) + '</span></div>' +
-      '<div class="ob-tiers" role="radiogroup" aria-label="Choose a plan">' + tiers + '</div>' +
+      '<div class="ob-tiers" role="group" aria-label="Choose a plan">' + tiers + '</div>' +
       '<p class="ob-fineprint">' + esc(c.riskReversal || '') + '</p>' +
       '<div class="ob-trustrow"><span>🔒 Secure payment</span><span>💳 Visa · Mastercard · Amex</span></div>' +
       certCard(c) +
@@ -934,7 +967,7 @@
       btn.onclick = function () {
         A.plan = btn.getAttribute('data-id'); save();
         el.querySelectorAll('.ob-tier').forEach(function (b) {
-          var on = b === btn; b.classList.toggle('is-selected', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+          var on = b === btn; b.classList.toggle('is-selected', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
       };
     });
@@ -947,10 +980,10 @@
     var T = CFG.timerSeconds || 600;
     var left = T;
     function tick() {
-      if (left < 0) left = T; // refresh/reset on expiry (price stays constant)
+      if (elSpan && !elSpan.isConnected) { clearTimer(); return; }
       var m = Math.floor(left / 60), s = left % 60;
-      if (elSpan && elSpan.isConnected) elSpan.textContent = m + ':' + (s < 10 ? '0' : '') + s;
-      else { clearTimer(); return; }
+      if (elSpan) elSpan.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+      if (left <= 0) { clearTimer(); return; } // park at 0:00 (don't loop back to 10:00)
       left--;
     }
     tick();
@@ -959,7 +992,12 @@
 
   // ---------- S23 checkout modal + S24 exit-intent (overlays) ----------
   var overlay = null;
-  function closeOverlay() { if (overlay) { overlay.remove(); overlay = null; } }
+  var overlayTrigger = null; // element that opened the current overlay (focus is returned here on close)
+  function closeOverlay() {
+    if (overlay) { overlay.remove(); overlay = null; }
+    var t = overlayTrigger; overlayTrigger = null;
+    if (t && t.isConnected && typeof t.focus === 'function') { try { t.focus(); } catch (e) {} }
+  }
 
   // Modal a11y: trap Tab within the dialog and route Escape.
   function trapModal(ov, onEscape) {
@@ -980,6 +1018,7 @@
     var c = S.s23 || {};
     var t = selectedTier();
     closeOverlay();
+    overlayTrigger = document.activeElement; // return focus here when the modal closes
     overlay = mk('<div class="ob-modal-overlay" role="dialog" aria-modal="true" aria-label="Checkout"></div>');
     var disclosure = subst(c.disclosure);
     overlay.appendChild(mk(
@@ -1011,6 +1050,7 @@
   function openExitIntent() {
     var c = S.s24 || {};
     closeOverlay();
+    overlayTrigger = document.activeElement; // return focus here when the modal closes
     overlay = mk('<div class="ob-modal-overlay" role="dialog" aria-modal="true" aria-label="Special offer"></div>');
     overlay.appendChild(mk(
       '<div class="ob-modal ob-center">' +
@@ -1089,7 +1129,7 @@
       // never start a second charge in that window — show success and re-poll.
       if (payPendingFresh()) {
         obTrack('checkout_duplicate_prevented', { plan: tier.id, reason: 'pay_pending' });
-        closeOverlay(); clearTimer(); goById('s25');
+        closeOverlay(); clearTimer(); pollActive = true; goById('s25');
         pollSubscription(0);
         return;
       }
@@ -1150,10 +1190,20 @@
       '<div class="ob-summary-row"><dt>Goal</dt><dd>' + subst('{target_level}') + '</dd></div>' +
       '<div class="ob-summary-row"><dt>Focus</dt><dd>' + subst('{weak_section}') + '</dd></div></dl>' +
       '<p class="ob-sub">' + subst(c.next) + '</p>' +
-      ctaBtn(c.cta || 'Start studying', { id: 'go', lg: true }),
+      // While the entitlement is still being confirmed, keep the CTA disabled so
+      // the user can't race to /exams/ before the webhook lands (auth-guard would
+      // bounce them to ?sub=required). finishSuccess() re-enables it.
+      ctaBtn(pollActive ? (c.settingUp || 'Setting up your access…') : (c.cta || 'Start studying'),
+        { id: 'go', lg: true, disabled: pollActive }),
       { center: true });
-    $('#go', el).onclick = function () { location.href = HANDOFF; };
+    $('#go', el).onclick = function () { if (!$('#go', el).disabled) location.href = HANDOFF; };
     return el;
+  }
+  // Re-enable / relabel the success CTA once entitlement polling settles (see #5).
+  function updateSuccessCta() {
+    if (!(FLOW[state.idx] && FLOW[state.idx].id === 's25')) return;
+    var go = document.getElementById('go');
+    if (go) { go.disabled = false; go.textContent = (S.s25 && S.s25.cta) || 'Start studying'; }
   }
 
   // ---------- profile migration ----------
@@ -1171,6 +1221,7 @@
 
   // ---------- payment return handling (/quiz/?pay=success|cancel) ----------
   var POLL_MAX = 6;
+  var pollActive = false; // true while confirming the server-written entitlement (disables the s25 CTA)
   function stripParam(name) {
     try {
       var u = new URL(location.href);
@@ -1193,6 +1244,7 @@
     // startCheckout must refuse to begin a second charge.
     lsSet(LS_PAY_PENDING, String(Date.now()));
     clearTimer();
+    pollActive = true;    // CTA renders as "Setting up your access…" until confirmed
     goById('s25');        // show success optimistically (content is ungated)
     pollSubscription(0);  // confirm the server-written entitlement in the background
   }
@@ -1213,6 +1265,8 @@
     }).catch(function () { finishSuccess(null); });
   }
   function finishSuccess(sub) {
+    pollActive = false;
+    updateSuccessCta(); // re-enable "Start studying" (confirmed OR timed out — never trap the user)
     if (subActive(sub)) {
       A.subscription = sub; save();
       lsDel(LS_PAY_PENDING);
