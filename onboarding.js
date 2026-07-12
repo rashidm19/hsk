@@ -388,8 +388,10 @@
   function sWelcome() {
     var c = S.s0 || {};
     var el = screenEl(
-      '<img src="/logo.svg" alt="HSK Prep" class="ob-logo ob-logo--lt">' +
-      '<img src="/logo-light.svg" alt="" aria-hidden="true" class="ob-logo ob-logo--dk">' +
+      '<div class="ob-logo">' +
+      '<span class="ob-logo-mark serif-cn" aria-hidden="true">汉</span>' +
+      '<span class="ob-logo-name">HSK Prep</span>' +
+      '</div>' +
       '<div class="ob-pill">' + subst(c.badge) + '</div>' +
       '<h1 class="ob-h1">' + subst(c.headline) + '</h1>' +
       '<p class="ob-sub">' + subst(c.sub) + '</p>' +
@@ -1319,8 +1321,8 @@
       '<div class="ob-top-row">' +
       '<button class="ob-back" id="ob-back" type="button" aria-label="Back" hidden>←</button>' +
       '<div class="ob-brand" id="ob-brand" hidden>' +
-      '<img src="/logo.svg" alt="HSK Prep" class="ob-brand-logo ob-logo--lt">' +
-      '<img src="/logo-light.svg" alt="" aria-hidden="true" class="ob-brand-logo ob-logo--dk">' +
+      '<span class="ob-brand-mark serif-cn" aria-hidden="true">汉</span>' +
+      '<span class="ob-brand-name">HSK Prep</span>' +
       '</div>' +
       '<div class="ob-step-count" id="ob-count"></div>' +
       '</div>' +

@@ -39,6 +39,7 @@ body.ob .theme-toggle { display: none !important; }
   box-sizing: border-box;
 }
 .ob-back {
+  grid-column: 1;
   justify-self: start;
   appearance: none;
   border: none;
@@ -52,10 +53,29 @@ body.ob .theme-toggle { display: none !important; }
 }
 .ob-back:hover { background: var(--surface-sunken); color: var(--ink); }
 .ob-back[hidden] { display: none; }
-.ob-brand { justify-self: center; display: inline-flex; align-items: center; }
+/* Explicit grid-column on every child keeps the brand pinned to the centre track
+   even when the back button is display:none (screens flagged back:false, e.g. s14/s25). */
+.ob-brand { grid-column: 2; justify-self: center; display: inline-flex; align-items: center; gap: 8px; }
 .ob-brand[hidden] { display: none; }
-.ob-brand-logo { height: 22px; width: auto; display: block; }
+.ob-brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  background: #c23b22;
+  color: #fffdf9;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  padding-bottom: 0.1em; /* nudge 汉 to the optical centre of the tile */
+  flex: 0 0 auto;
+}
+.ob-brand-name { font-weight: 600; font-size: 17px; letter-spacing: -.01em; color: var(--ink); }
 .ob-step-count {
+  grid-column: 3;
   justify-self: end;
   font-size: var(--fs-xs);
   color: var(--stone);
@@ -236,12 +256,26 @@ body.ob .theme-toggle { display: none !important; }
   border-radius: 999px;
   margin-bottom: 16px;
 }
-.ob-logo { width: 120px; margin-bottom: 18px; }
-/* logo.svg is dark-ink (for light bg); logo-light.svg is near-white (for dark bg).
-   Show whichever matches the active theme so the wordmark is always legible. */
-.ob-logo--dk { display: none; }
-[data-theme="dark"] .ob-logo--lt { display: none; }
-[data-theme="dark"] .ob-logo--dk { display: inline-block; }
+/* Welcome (s0) hero brand — 汉 tile + wordmark, matching the landing/login lockup.
+   Tile stays landing-red on both themes; the wordmark uses --ink so it's always legible. */
+.ob-logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.ob-logo-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #c23b22;
+  color: #fffdf9;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1;
+  padding-bottom: 0.1em; /* nudge 汉 to the optical centre of the tile */
+  flex: 0 0 auto;
+}
+.ob-logo-name { font-weight: 600; font-size: 26px; letter-spacing: -.01em; color: var(--ink); }
 
 /* ---- Social proof cards ---- */
 .ob-quote {
