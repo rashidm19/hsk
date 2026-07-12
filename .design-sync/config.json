@@ -7,7 +7,7 @@
   "readmeHeader": ".design-sync/conventions.md",
   "sources": {
     "closureCss": ["common.css", "dashboard.css"],
-    "referenceTokens": ["landing-v2/styles.css"]
+    "referenceTokens": ["landing.css"]
   },
   "notes": "Off-script layout — see .design-sync/NOTES.md."
 }
