@@ -80,7 +80,16 @@
     };
     byId('goog').onclick = function () {
       email = (em.value || '').trim();
-      try { HSKAuth.signInWithGoogle({ next: NEXT }); } catch (e) {}
+      var g = byId('goog'); g.disabled = true;
+      g.innerHTML = '<span class="lg-spin" aria-hidden="true"></span>Connecting…';
+      var restore = function () {
+        g.disabled = false; g.innerHTML = googleSvg() + 'Continue with Google';
+        err.textContent = 'Could not start Google sign-in. Please try again.'; err.hidden = false;
+      };
+      try {
+        var p = HSKAuth.signInWithGoogle({ next: NEXT });
+        if (p && typeof p.then === 'function') p.then(null, restore); else if (!p) restore();
+      } catch (e) { restore(); }
     };
     em.onkeydown = function (e) { if (e.key === 'Enter') byId('go').click(); };
     byId('pwtoggle').onclick = function () { email = (em.value || '').trim(); renderPassword(); };

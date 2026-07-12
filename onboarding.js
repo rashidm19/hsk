@@ -671,8 +671,18 @@
         }
       };
       $('#goog', host).onclick = function () {
-        try { if (configured()) { A.email = (em.value || '').trim(); save(); HSKAuth.signInWithGoogle({ next: '/quiz/' }); return; } } catch (e) {}
-        next();
+        if (!configured()) { next(); return; }
+        A.email = (em.value || '').trim(); save();
+        var g = $('#goog', host); g.disabled = true;
+        g.innerHTML = '<span class="ob-google-spin" aria-hidden="true"></span>' + esc(c.connecting || 'Connecting…');
+        var restore = function () {
+          g.disabled = false; g.textContent = c.google || 'Continue with Google';
+          err.textContent = c.googleError || 'Could not start Google sign-in. Please try again.'; err.hidden = false;
+        };
+        try {
+          var p = HSKAuth.signInWithGoogle({ next: '/quiz/' });
+          if (p && typeof p.then === 'function') p.then(null, restore); else if (!p) restore();
+        } catch (e) { restore(); }
       };
       em.onkeydown = function (e) { if (e.key === 'Enter') $('#go', host).click(); };
       focusHead();

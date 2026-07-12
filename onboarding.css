@@ -585,6 +585,12 @@ body.ob .theme-toggle { display: none !important; }
   background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer;
 }
 .ob-google:hover { border-color: var(--stone); }
+.ob-google:disabled { opacity: .7; cursor: default; }
+.ob-google-spin {
+  display: inline-block; width: 17px; height: 17px; flex: none;
+  border: 2px solid var(--mist); border-top-color: var(--ink);
+  border-radius: 50%; animation: ob-spin 0.7s linear infinite;
+}
 .ob-bonus {
   margin-top: 16px; text-align: center; font-size: var(--fs-sm);
   color: var(--gold); background: var(--gold-soft); border: 1px solid var(--gold-border);

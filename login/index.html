@@ -34,6 +34,9 @@
   .lg-or::before,.lg-or::after{content:"";flex:1;height:1px;background:var(--mist);}
   .lg-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;font-size:15px;font-weight:500;font-family:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--mist);border-radius:999px;cursor:pointer;transition:background .15s;}
   .lg-google:hover{background:var(--surface-sunken);}
+  .lg-google:disabled{opacity:.7;cursor:default;}
+  .lg-spin{display:inline-block;width:17px;height:17px;flex:none;border:2px solid var(--mist);border-top-color:var(--ink);border-radius:50%;animation:lg-spin .7s linear infinite;}
+  @keyframes lg-spin{to{transform:rotate(360deg);}}
   .lg-link{display:block;width:100%;margin-top:12px;padding:8px;font-size:14px;font-family:inherit;color:var(--stone);background:none;border:none;cursor:pointer;text-align:center;text-decoration:underline;}
   .lg-foot{margin-top:22px;text-align:center;font-size:13.5px;color:var(--stone);}
   .lg-foot a{color:#c23b22;text-decoration:none;font-weight:500;}
