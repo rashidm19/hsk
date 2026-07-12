@@ -194,11 +194,16 @@
   // Guards a native double-click / double-tap from advancing (or retreating) two
   // screens: the 2nd click of a double-click lands on the freshly-lifted footer
   // CTA at the same coordinate. Released once the new screen settles (render()).
-  var navLock = false;
+  // bypassNav lets the programmatic option-commit (wireSingle/renderDQ, which have
+  // their own one-shot guard) advance even during the arrival nav-lock, so a fast
+  // tap on a footer-less single-select screen can't softlock it.
+  var navLock = false, bypassNav = false;
   function next() {
-    if (navLock) return;
+    if (navLock && !bypassNav) return;
     if (state.idx < FLOW.length - 1) { navLock = true; state.idx++; save(); render(1); }
   }
+  // Run a programmatic advance that must not be swallowed by the arrival nav-lock.
+  function commitAdvance(fn) { bypassNav = true; try { fn(); } finally { bypassNav = false; } }
   function back() {
     if (navLock || state.idx <= 0) return;
     navLock = true;
@@ -469,7 +474,7 @@
         el.querySelectorAll('.ob-opt').forEach(function (b) { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
         btn.classList.add('is-selected'); btn.setAttribute('aria-pressed', 'true');
         var it = items[+btn.getAttribute('data-i')];
-        pendingT = setTimeout(function () { committed = true; onPick(it); }, 170);
+        pendingT = setTimeout(function () { committed = true; commitAdvance(function () { onPick(it); }); }, 170);
       };
     });
   }
@@ -591,7 +596,7 @@
           btn.classList.add('is-selected'); btn.setAttribute('aria-pressed', 'true');
           A.diag[di] = +btn.getAttribute('data-i');
           save();
-          pendingT = setTimeout(function () { committed = true; di++; if (di < DIAG.length) renderDQ(); else next(); }, 220);
+          pendingT = setTimeout(function () { committed = true; di++; if (di < DIAG.length) renderDQ(); else commitAdvance(next); }, 220);
         };
       });
     }
@@ -1196,7 +1201,10 @@
       ctaBtn(pollActive ? (c.settingUp || 'Setting up your access…') : (c.cta || 'Start studying'),
         { id: 'go', lg: true, disabled: pollActive }),
       { center: true });
-    $('#go', el).onclick = function () { if (!$('#go', el).disabled) location.href = HANDOFF; };
+    // Capture the node: render() lifts this .ob-cta into #ob-foot, so a scoped
+    // re-query ($('#go', el)) would be null at click time. `go` survives the move.
+    var go = $('#go', el);
+    go.onclick = function () { if (!go.disabled) location.href = HANDOFF; };
     return el;
   }
   // Re-enable / relabel the success CTA once entitlement polling settles (see #5).

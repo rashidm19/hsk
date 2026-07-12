@@ -81,8 +81,10 @@
     if (!window.HSKAuth) return;
     e.stopPropagation(); // keep the menu open so the "Signing out…" label is visible
     var b = this; b.disabled = true; b.textContent = 'Signing out…';
-    var go = function () { window.location.href = '/'; };
+    var done = false;
+    var go = function () { if (done) return; done = true; window.location.href = '/'; };
     HSKAuth.signOut().then(go, go); // signOut clears the local session on either outcome
+    setTimeout(go, 5000); // failsafe: a hung revoke must not strand the button on "Signing out…"
   });
 
   function applyProfile(name, email, avatar) {

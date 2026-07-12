@@ -464,6 +464,12 @@
       if (!user) { go('/login/?next=' + encodeURIComponent(safeNextPath(next))); return; }
       var res = await getSubscriptionStatus(user.id);
       var state = res.error ? 'error' : (subActive(res.sub) ? 'active' : 'none');
+      // Warm the entitlement cache (same key/shape as auth-guard's SUB_CACHE_KEY)
+      // so the destination gated page finds a positive cache and skips its veil —
+      // no blank flash on the subscriber's first navigation after auth.
+      if (state === 'active') {
+        try { global.sessionStorage.setItem('hsk_sub_cache', JSON.stringify({ userId: user.id, sub: res.sub, cachedAt: Date.now() })); } catch (e) {}
+      }
       go(global.HSKRoute
         ? global.HSKRoute.decideRoute({ sub: state, next: next })
         : (state === 'none' ? '/quiz/?sub=required' : safeNextPath(next)));

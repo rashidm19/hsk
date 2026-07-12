@@ -113,6 +113,7 @@
       '<button type="button" class="lg-link" id="resend">Resend code</button>' +
       '<button type="button" class="lg-link" id="changeem">← Use a different email</button>';
     var code = byId('code'), cerr = byId('cerr');
+    var resendTimer = null, resendCooling = false; // 4s resend throttle, shared with the verify handler
     byId('verify').onclick = function () {
       var t = (code.value || '').trim();
       if (!t) { showErr(cerr, code, 'Enter the code from your email.'); return; }
@@ -123,16 +124,17 @@
         .then(function () { HSKAuth.routeAfterAuth(NEXT); })
         .catch(function () {
           btn.disabled = false; btn.textContent = 'Verify & log in';
-          if (rs) rs.disabled = false;
+          if (rs && !resendCooling) rs.disabled = false; // keep Resend locked if its 4s cooldown is still running
           showErr(cerr, code, "That code didn't work — check it and try again.");
         });
     };
     byId('resend').onclick = function () {
       var r = byId('resend'), vb = byId('verify'); r.disabled = true; r.textContent = 'Sending…';
       if (vb) vb.disabled = true; // hold Verify until the new code is out
+      if (resendTimer) { clearTimeout(resendTimer); resendTimer = null; } // don't let a stale cooldown timer clobber this attempt
       HSKAuth.signInWithEmailOtp(email, { next: NEXT, createUser: false })
-        .then(function () { r.textContent = 'Code sent ✓'; if (vb) vb.disabled = false; setTimeout(function () { if (r.isConnected) { r.disabled = false; r.textContent = 'Resend code'; } }, 4000); })
-        .catch(function () { r.disabled = false; r.textContent = 'Resend code'; if (vb) vb.disabled = false; showErr(cerr, code, 'Please wait a moment before requesting another code.'); });
+        .then(function () { r.textContent = 'Code sent ✓'; if (vb) vb.disabled = false; resendCooling = true; resendTimer = setTimeout(function () { resendCooling = false; if (r.isConnected) { r.disabled = false; r.textContent = 'Resend code'; } }, 4000); })
+        .catch(function () { r.disabled = false; r.textContent = 'Resend code'; resendCooling = false; if (vb) vb.disabled = false; showErr(cerr, code, 'Please wait a moment before requesting another code.'); });
     };
     byId('changeem').onclick = function () { renderEmail(); };
     code.onkeydown = function (e) { if (e.key === 'Enter') byId('verify').click(); };
