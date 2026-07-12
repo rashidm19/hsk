@@ -70,7 +70,8 @@ body.ob .theme-toggle { display: none !important; }
   font-size: 16px;
   font-weight: 600;
   line-height: 1;
-  padding-bottom: 0.1em; /* nudge 汉 to the optical centre of the tile */
+  padding-right: 0.04em;
+  padding-bottom: 0.16em; /* nudge 汉 to its optical (mass) centre in the tile */
   flex: 0 0 auto;
 }
 .ob-brand-name { font-weight: 600; font-size: 17px; letter-spacing: -.01em; color: var(--ink); }
@@ -272,7 +273,8 @@ body.ob .theme-toggle { display: none !important; }
   font-size: 27px;
   font-weight: 600;
   line-height: 1;
-  padding-bottom: 0.1em; /* nudge 汉 to the optical centre of the tile */
+  padding-right: 0.04em;
+  padding-bottom: 0.16em; /* nudge 汉 to its optical (mass) centre in the tile */
   flex: 0 0 auto;
 }
 .ob-logo-name { font-weight: 600; font-size: 26px; letter-spacing: -.01em; color: var(--ink); }
