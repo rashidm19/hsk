@@ -45,6 +45,9 @@
     return;
   }
 
+  // Loading cue while the session resolves — returning users (the whole point of
+  // this page) shouldn't stare at an empty card. Replaced by renderEmail/routeAfterAuth.
+  host.innerHTML = '<div class="lg-loading" role="status" aria-live="polite"><span class="lg-spin" aria-hidden="true"></span>Checking your session…</div>';
   // Already signed in? Never show the form — route straight through.
   (HSKAuth.waitForSession ? HSKAuth.waitForSession() : HSKAuth.getSession())
     .then(function (session) {
@@ -57,7 +60,7 @@
     host.innerHTML =
       '<h1 class="lg-h1">Welcome back</h1>' +
       '<p class="lg-sub">Log in to your HSK Prep account.</p>' +
-      '<input class="lg-input" id="em" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" value="' + esc(email) + '">' +
+      '<input class="lg-input" id="em" type="email" inputmode="email" autocomplete="email" aria-label="Email address" placeholder="you@email.com" value="' + esc(email) + '">' +
       '<div class="lg-error" id="err" role="alert" hidden></div>' +
       '<button type="button" class="lg-btn" id="go">Send login code</button>' +
       '<div class="lg-or">OR</div>' +
@@ -69,21 +72,25 @@
       var v = em.value.trim();
       if (!validEmail(v)) { showErr(err, em, 'Please enter a valid email address.'); return; }
       err.hidden = true; em.classList.remove('is-error'); email = v;
-      var btn = byId('go'); btn.disabled = true; btn.textContent = 'Sending…';
+      var btn = byId('go'), goog = byId('goog'); btn.disabled = true; btn.textContent = 'Sending…';
+      goog.disabled = true; em.disabled = true; // lock the sibling Google button + input while in flight
       HSKAuth.signInWithEmailOtp(v, { next: NEXT, createUser: false })
         .then(function () { renderCode(); })
         .catch(function (e) {
           btn.disabled = false; btn.textContent = 'Send login code';
+          goog.disabled = false; em.disabled = false;
           if (isNoAccount(e)) { renderNoAccount(); return; }
           showErr(err, em, 'Could not send the code. Check the address and try again.');
         });
     };
     byId('goog').onclick = function () {
       email = (em.value || '').trim();
-      var g = byId('goog'); g.disabled = true;
+      var g = byId('goog'), sendBtn = byId('go'); g.disabled = true;
+      sendBtn.disabled = true; em.disabled = true; // lock the sibling Send-code button + input while in flight
       g.innerHTML = '<span class="lg-spin" aria-hidden="true"></span>Connecting…';
       var restore = function () {
         g.disabled = false; g.innerHTML = googleSvg() + 'Continue with Google';
+        sendBtn.disabled = false; em.disabled = false;
         err.textContent = 'Could not start Google sign-in. Please try again.'; err.hidden = false;
       };
       try {
@@ -100,7 +107,7 @@
     host.innerHTML =
       '<h1 class="lg-h1">Check your email</h1>' +
       '<p class="lg-sub">We sent a login code to <strong>' + esc(email) + '</strong></p>' +
-      '<input class="lg-input" id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Enter code">' +
+      '<input class="lg-input" id="code" type="text" inputmode="numeric" autocomplete="one-time-code" aria-label="Login code" maxlength="8" placeholder="Enter code">' +
       '<div class="lg-error" id="cerr" role="alert" hidden></div>' +
       '<button type="button" class="lg-btn" id="verify">Verify &amp; log in</button>' +
       '<button type="button" class="lg-link" id="resend">Resend code</button>' +
@@ -110,19 +117,22 @@
       var t = (code.value || '').trim();
       if (!t) { showErr(cerr, code, 'Enter the code from your email.'); return; }
       cerr.hidden = true;
-      var btn = byId('verify'); btn.disabled = true; btn.textContent = 'Verifying…';
+      var btn = byId('verify'), rs = byId('resend'); btn.disabled = true; btn.textContent = 'Verifying…';
+      if (rs) rs.disabled = true; // don't let Resend fire a fresh code that invalidates the one being verified
       HSKAuth.verifyEmailOtp(email, t)
         .then(function () { HSKAuth.routeAfterAuth(NEXT); })
         .catch(function () {
           btn.disabled = false; btn.textContent = 'Verify & log in';
+          if (rs) rs.disabled = false;
           showErr(cerr, code, "That code didn't work — check it and try again.");
         });
     };
     byId('resend').onclick = function () {
-      var r = byId('resend'); r.disabled = true; r.textContent = 'Sending…';
+      var r = byId('resend'), vb = byId('verify'); r.disabled = true; r.textContent = 'Sending…';
+      if (vb) vb.disabled = true; // hold Verify until the new code is out
       HSKAuth.signInWithEmailOtp(email, { next: NEXT, createUser: false })
-        .then(function () { r.textContent = 'Code sent ✓'; setTimeout(function () { if (r.isConnected) { r.disabled = false; r.textContent = 'Resend code'; } }, 4000); })
-        .catch(function () { r.disabled = false; r.textContent = 'Resend code'; showErr(cerr, code, 'Please wait a moment before requesting another code.'); });
+        .then(function () { r.textContent = 'Code sent ✓'; if (vb) vb.disabled = false; setTimeout(function () { if (r.isConnected) { r.disabled = false; r.textContent = 'Resend code'; } }, 4000); })
+        .catch(function () { r.disabled = false; r.textContent = 'Resend code'; if (vb) vb.disabled = false; showErr(cerr, code, 'Please wait a moment before requesting another code.'); });
     };
     byId('changeem').onclick = function () { renderEmail(); };
     code.onkeydown = function (e) { if (e.key === 'Enter') byId('verify').click(); };
@@ -131,11 +141,12 @@
 
   function renderNoAccount() {
     host.innerHTML =
-      '<h1 class="lg-h1">No account found</h1>' +
+      '<h1 class="lg-h1" id="na-h" tabindex="-1">No account found</h1>' +
       '<p class="lg-sub">We couldn\'t find an HSK Prep account for <strong>' + esc(email) + '</strong>.</p>' +
       '<a class="lg-btn" href="' + FUNNEL + '">Take the free assessment</a>' +
       '<button type="button" class="lg-link" id="tryagain">← Try a different email</button>';
     byId('tryagain').onclick = function () { renderEmail(); };
+    try { byId('na-h').focus(); } catch (e) {} // announce the outcome + keep keyboard place
   }
 
   // Discreet password path — for internal test accounts provisioned with a password
@@ -145,8 +156,8 @@
     host.innerHTML =
       '<h1 class="lg-h1">Log in with password</h1>' +
       '<p class="lg-sub">For accounts set up with a password.</p>' +
-      '<input class="lg-input" id="pwem" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" value="' + esc(email) + '">' +
-      '<input class="lg-input" id="pw" type="password" autocomplete="current-password" placeholder="Password" style="margin-top:10px;">' +
+      '<input class="lg-input" id="pwem" type="email" inputmode="email" autocomplete="email" aria-label="Email address" placeholder="you@email.com" value="' + esc(email) + '">' +
+      '<input class="lg-input" id="pw" type="password" autocomplete="current-password" aria-label="Password" placeholder="Password" style="margin-top:10px;">' +
       '<div class="lg-error" id="pwerr" role="alert" hidden></div>' +
       '<button type="button" class="lg-btn" id="pwgo">Log in</button>' +
       '<button type="button" class="lg-link" id="backcode">← Use email code instead</button>';
@@ -165,6 +176,7 @@
         });
     };
     byId('backcode').onclick = function () { renderEmail(); };
+    em.onkeydown = function (e) { if (e.key === 'Enter') pw.focus(); }; // Enter from email advances to password
     pw.onkeydown = function (e) { if (e.key === 'Enter') byId('pwgo').click(); };
     em.focus();
   }
