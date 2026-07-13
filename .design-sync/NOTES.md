@@ -58,3 +58,38 @@
   sidebar/topbar site-chrome injector — this is the one the first pass missed), and `SKIP_DIRS`
   in `scripts/inject-auth.js`. All six walkers now skip `ds-bundle/`, so future builds no longer
   touch it. All 5 cards browser-verified (AppShell in light + dark) before upload.
+
+## Acquisition-funnel expansion (2026-07-13, in progress)
+
+Goal (user ask): add the whole pre-app surface to the DS — **landing (+login for returning
+users), onboarding, auth, paywall** — everything up to but excluding the post-paywall app.
+
+**Skin/closure architecture (two closures).** Everything except the marketing landing lives on
+the platform palette (`common.css`), so it can share one closure:
+- `styles.css` (platform) = `_ds_bundle.css` (common+dashboard) + `_ds_bundle_onboarding.css`
+  (verbatim `onboarding.css`, `body.ob`/`.ob-*` scoped, no `:root` → safe to share). Used by
+  app-shell, onboarding, paywall, login, auth cards.
+- `styles-landing.css` (marketing) — TODO for Phase 4: `landing.css` + Poppins/Instrument Serif.
+  `landing.css` uses zero `var()`/`:root` (all hex literals, `.lp`/`.mkt-*` scoped) so it won't
+  collide; landing cards will link it instead of `styles.css`.
+
+**Capture method (JS-rendered screens).** The funnel screens are rendered by `onboarding.js`
+from `window.OB_CONFIG`, not static in the DOM. `onboarding.js` exposes `window.OB.go(id)`
+(→ `goById` → `state.idx=i; render(0)`) which renders any screen **without** the funnel-order
+gates. Procedure: serve the repo via `scratchpad/capserver.py` (static + `POST /__save` sink +
+`Cache-Control: no-store`), open `/quiz/?reset=1`, seed `window.OB.state.answers`
+(`target:'HSK 4'`, `section:{short:'Listening (听力)'}`) so `{target_level}`/`{weak_section}`
+resolve, then loop the FLOW ids calling `go(id)` and snapshot `#ob-root` outerHTML synchronously
+(so s14's auto-advance timer can't fire mid-capture). POST the JSON to the capserver; a Node
+generator (`scratchpad/gen_onboarding.js`) wraps each capture in a card (`<body class="ob">` +
+captured `#ob-root`, links `../../../styles.css`, `@dsCard group="Onboarding" width="440"`).
+
+**Phase 1 — Onboarding: DONE.** 22 cards s0–s21 under `components/onboarding/S00…S21…`, group
+"Onboarding". Uploaded (`styles.css` + `_ds_bundle_onboarding.css` + 22×{html,prompt.md}).
+Browser-verified s0/s8/s17/s18/s21 (welcome, multi-select, email-gate, plan-graph SVG, wheel SVG).
+FLOW = s0–s22 + s25; s23 (checkout) and s24 (downsell) are OVERLAYS (not in FLOW) — Phase 2.
+
+**Remaining:** Phase 2 Paywall (s22 paywall + s23 checkout + s24 downsell + s25 success; the
+overlays need triggering, not `go()`). Phase 3 Login + Auth (`/login/` renders via `login.js`
+into `#lg-host`; `.lg-*` inline skin on `common.css`). Phase 4 Landing (sections + full page,
+desktop + mobile, `styles-landing.css`). Then a `conventions.md` update documenting all skins.
