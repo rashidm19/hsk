@@ -1,0 +1,47 @@
+<!-- @dsCard group="Auth" name="Login · Email + Google" subtitle="Welcome-back sign-in — email login code + Google" width="440" height="720" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../../styles.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Serif+SC:wght@600&display=swap">
+<style>
+html,body{height:100%;margin:0}
+/* Landing-brand identity layered over common.css theme tokens, so light AND
+     dark both render correctly and injectTheme's floating toggle looks right.
+     Primary CTA + logo stay landing red (#c23b22) in both themes. */
+  body{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--paper);color:var(--ink);font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  .lg-card{width:100%;max-width:400px;}
+  .lg-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:28px;text-decoration:none;color:var(--ink);}
+  .lg-brand-mark{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:34px;height:34px;background:#c23b22;color:#fff;border-radius:9px;font-family:'Noto Serif SC',serif;font-size:19px;font-weight:600;padding-right:.04em;padding-bottom:.16em;}
+  .lg-brand-name{font-weight:600;font-size:19px;letter-spacing:-.01em;color:var(--ink);}
+  .lg-h1{font-size:24px;font-weight:600;line-height:1.25;margin:0 0 8px;text-align:center;color:var(--ink);}
+  .lg-sub{font-size:14.5px;color:var(--stone);text-align:center;margin:0 0 24px;line-height:1.5;}
+  .lg-input{width:100%;padding:14px 16px;font-size:16px;font-family:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--mist);border-radius:12px;outline:none;transition:border-color .15s;}
+  .lg-input:focus{border-color:#c23b22;}
+  .lg-input.is-error{border-color:#c23b22;}
+  .lg-error{color:#c23b22;font-size:13.5px;margin:8px 2px 0;}
+  .lg-btn{display:block;width:100%;margin-top:14px;padding:14px 20px;font-size:15.5px;font-weight:600;font-family:inherit;text-align:center;text-decoration:none;color:#fff;background:#c23b22;border:none;border-radius:999px;cursor:pointer;box-shadow:0 8px 24px rgba(194,59,34,.25);transition:background .15s;}
+  .lg-btn:hover{background:#a83220;}
+  .lg-btn:disabled{opacity:.6;cursor:default;}
+  .lg-or{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--stone);font-size:12.5px;}
+  .lg-or::before,.lg-or::after{content:"";flex:1;height:1px;background:var(--mist);}
+  .lg-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;font-size:15px;font-weight:500;font-family:inherit;color:var(--ink);background:var(--surface);border:1.5px solid var(--mist);border-radius:999px;cursor:pointer;transition:background .15s;}
+  .lg-google:hover{background:var(--surface-sunken);}
+  .lg-google:disabled{opacity:.7;cursor:default;}
+  .lg-spin{display:inline-block;width:17px;height:17px;flex:none;border:2px solid var(--mist);border-top-color:var(--ink);border-radius:50%;animation:lg-spin .7s linear infinite;}
+  @keyframes lg-spin{to{transform:rotate(360deg);}}
+  .lg-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:24px 0;color:var(--stone);font-size:14.5px;}
+  .lg-link{display:block;width:100%;margin-top:12px;padding:8px;font-size:14px;font-family:inherit;color:var(--stone);background:none;border:none;cursor:pointer;text-align:center;text-decoration:underline;}
+  .lg-foot{margin-top:22px;text-align:center;font-size:13.5px;color:var(--stone);}
+  .lg-foot a{color:#c23b22;text-decoration:none;font-weight:500;}
+</style>
+</head>
+<body>
+  <div class="lg-card">
+    <a href="#" class="lg-brand"><span class="lg-brand-mark">汉</span><span class="lg-brand-name">HSK Prep</span></a>
+    <div id="lg-host"><h1 class="lg-h1">Welcome back</h1><p class="lg-sub">Log in to your HSK Prep account.</p><input class="lg-input" id="em" type="email" inputmode="email" autocomplete="email" aria-label="Email address" placeholder="you@email.com" value=""><div class="lg-error" id="err" role="alert" hidden=""></div><button type="button" class="lg-btn" id="go">Send login code</button><div class="lg-or">OR</div><button type="button" class="lg-google" id="goog"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" style="flex:none;"><path fill="#4285F4" d="M17.6 9.2c0-.6-.05-1.18-.16-1.74H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.66-3.88 2.66-6.72z"></path><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.94v2.33A9 9 0 0 0 9 18z"></path><path fill="#FBBC05" d="M3.95 10.7a5.4 5.4 0 0 1 0-3.42V4.96H.94a9 9 0 0 0 0 8.08l3.01-2.34z"></path><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.47.89 11.43 0 9 0A9 9 0 0 0 .94 4.96l3.01 2.33C4.66 5.17 6.65 3.58 9 3.58z"></path></svg>Continue with Google</button><div class="lg-foot">New here? <a href="/quiz/">Take the free assessment →</a></div><button type="button" class="lg-link" id="pwtoggle" style="margin-top:2px;">Log in with password</button></div>
+  </div>
+</body>
+</html>

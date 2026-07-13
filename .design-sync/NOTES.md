@@ -97,6 +97,14 @@ Cards wrap the captured overlay in `<body class="ob">`; the fixed backdrop rende
 centered over a dimmed screen. Browser-verified all four. No `styles.css` change (reuses the
 onboarding closure).
 
-**Remaining:** Phase 3 Login + Auth (`/login/` renders via `login.js` into `#lg-host`; `.lg-*`
-inline skin on `common.css`). Phase 4 Landing (sections + full page, desktop + mobile,
-`styles-landing.css`). Then a `conventions.md` update documenting all skins.
+**Phase 3 — Login + Auth: DONE.** 4 cards under `components/auth/` (group "Auth"): Login1Email
+(email login-code + Google + password toggle), Login2Code (OTP), Login3Password, Login4NoAccount.
+Captured from `/login/` by driving `login.js` and stubbing `HSKAuth.signInWithEmailOtp` in the
+browser (resolve → code state; reject 'user not found' → no-account) — no real OTP sent. Cards
+embed the `/login/` inline `.lg-*` skin + Poppins (extracted to the card `<style>`) on `common.css`
+tokens via `styles.css` (no bundle-CSS change); self-contained, no auth scripts. Browser-verified
+the email + password states.
+
+**Remaining:** Phase 4 Landing (sections + full page, desktop + mobile; a separate
+`styles-landing.css` = `landing.css` + Poppins/Instrument Serif — `landing.css` uses zero
+`:root`/`var()` so no collision). Then a `conventions.md` update documenting all skins.
