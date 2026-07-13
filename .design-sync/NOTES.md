@@ -89,7 +89,14 @@ captured `#ob-root`, links `../../../styles.css`, `@dsCard group="Onboarding" wi
 Browser-verified s0/s8/s17/s18/s21 (welcome, multi-select, email-gate, plan-graph SVG, wheel SVG).
 FLOW = s0–s22 + s25; s23 (checkout) and s24 (downsell) are OVERLAYS (not in FLOW) — Phase 2.
 
-**Remaining:** Phase 2 Paywall (s22 paywall + s23 checkout + s24 downsell + s25 success; the
-overlays need triggering, not `go()`). Phase 3 Login + Auth (`/login/` renders via `login.js`
-into `#lg-host`; `.lg-*` inline skin on `common.css`). Phase 4 Landing (sections + full page,
-desktop + mobile, `styles-landing.css`). Then a `conventions.md` update documenting all skins.
+**Phase 2 — Paywall: DONE.** 4 cards under `components/paywall/` (group "Paywall"):
+S22Paywall + S25Success are full-screen (`#ob-root`, via `go()`); S23Checkout + S24Downsell are
+the `.ob-modal-overlay` modals (appended to `document.body`, not `#ob-root`) — captured by driving
+the UI: click s22 `#go` → checkout overlay; click checkout `#x` (→ `toExit`) → exit-intent overlay.
+Cards wrap the captured overlay in `<body class="ob">`; the fixed backdrop renders the modal
+centered over a dimmed screen. Browser-verified all four. No `styles.css` change (reuses the
+onboarding closure).
+
+**Remaining:** Phase 3 Login + Auth (`/login/` renders via `login.js` into `#lg-host`; `.lg-*`
+inline skin on `common.css`). Phase 4 Landing (sections + full page, desktop + mobile,
+`styles-landing.css`). Then a `conventions.md` update documenting all skins.
