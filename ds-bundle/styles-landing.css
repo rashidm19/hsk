@@ -1,0 +1,10 @@
+/* HSK Prep — MARKETING landing entry stylesheet (separate closure from styles.css).
+   Landing/marketing cards link THIS file, not styles.css: the landing uses the
+   marketing palette (Poppins + Instrument Serif, hex literals) which intentionally
+   differs from the platform tokens. Closure:
+   1. Google Fonts (Poppins, Instrument Serif, DM Sans, Noto SC/Serif — as index.html loads)
+   2. _ds_bundle_landing.css (verbatim landing.css). Most landing styling is inline in the
+      captured markup; this adds the .lp/.mkt-* class rules, the 760px desktop/mobile toggle,
+      carousels, marquee, and reveal animations. */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&display=swap');
+@import url('./_ds_bundle_landing.css');

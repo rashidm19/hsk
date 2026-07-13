@@ -1,0 +1,136 @@
+<!-- @dsCard group="Landing" name="Landing · HSK levels" subtitle="HSK level picker (3–6) with detail panels" width="1200" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../../styles-landing.css">
+<style>html,body{margin:0}[data-reveal]{opacity:1 !important;transform:none !important}</style>
+</head>
+<body class="lp">
+<section style="background:#f5f0e8;padding:112px 28px;border-top:1px solid rgba(26,26,46,.06);border-bottom:1px solid rgba(26,26,46,.06);">
+    <div style="max-width:1200px;margin:0 auto;">
+      <h2 style="margin:0;font-size:clamp(30px,3.6vw,44px);line-height:1.15;letter-spacing:-.02em;font-weight:600;">Which HSK do you need?</h2>
+      <p style="margin:14px 0 0;color:#5c5c6a;font-size:16.5px;max-width:520px;">Six levels, one standard. Pick yours to see what it takes — and what it unlocks.</p>
+
+      <div data-levelchips="1" style="display:flex;gap:10px;margin-top:36px;flex-wrap:wrap;">
+        <button data-level="1" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;" aria-pressed="false">HSK 1</button>
+        <button data-level="2" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;" aria-pressed="false">HSK 2</button>
+        <button data-level="3" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;" aria-pressed="false">HSK 3</button>
+        <button data-level="4" style="border:1px solid #c23b22;background:#c23b22;color:#fffdf9;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;" aria-pressed="true">HSK 4</button>
+        <button data-level="5" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;" aria-pressed="false">HSK 5</button>
+        <button data-level="6" style="border:1px solid rgba(26,26,46,.15);background:#ffffff;color:#5c5c6a;border-radius:999px;padding:12px 24px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:600;cursor:pointer;" aria-pressed="false">HSK 6</button>
+      </div>
+
+      <!-- level panels -->
+      <div data-levelpanel="1" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 1</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Your first milestone — greetings, numbers, everyday phrases in pinyin-supported reading.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">150</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">174</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~40<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">A foundation level — not accepted for university admission, but the fastest confidence boost in the sequence. Sections: listening + reading.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="2" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 2</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Simple, direct communication on daily routines — shopping, directions, plans.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">300</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">347</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~55<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">Still a beginner tier — proof you can survive daily life in Chinese. Sections: listening + reading.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="3" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 3</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Conversational basics for life, study and work — the first level with a writing section.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">600</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">617</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~90<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">The minimum some universities accept for foundation-year programs. Sections: listening + reading + writing.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="4" style="display:block;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 4</div>
+              <span style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#c23b22;background:#fde8e4;border-radius:999px;padding:6px 12px;text-transform:uppercase;">Full course on HSK Prep</span>
+            </div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Discuss a wide range of topics with fluency. The level that opens university doors.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">1,200</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">1,064</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~105<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">The common requirement for Chinese-taught bachelor's programs. Sections: listening + reading + writing.</p>
+            <p style="margin:14px 0 0;font-size:14px;line-height:1.6;color:#5c5c6a;">On HSK Prep: 14 full mock exams with real audio, the complete 1,200-word list, grammar patterns, strategies and trap drills.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="5" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 5</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Read newspapers, follow films, deliver full presentations in Chinese.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">2,500</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">1,685</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~125<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">Requested by top universities for competitive programs — and a strong card for CSC scholarships. Sections: listening + reading + writing.</p>
+          </div>
+        </div>
+      </div>
+      <div data-levelpanel="6" style="display:none;background:#ffffff;border:1px solid rgba(26,26,46,.1);border-radius:16px;margin-top:22px;padding:40px;box-shadow:0 8px 32px rgba(26,26,46,.05);">
+        <div style="display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,1.4fr);gap:40px;align-items:start;">
+          <div>
+            <div style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#1a1a2e;">HSK 6</div>
+            <p style="margin:14px 0 0;color:#5c5c6a;font-size:15px;line-height:1.65;">Effortless comprehension of nearly anything you hear or read.</p>
+            <div style="display:flex;gap:28px;margin-top:26px;flex-wrap:wrap;">
+              <div><div style="font-size:24px;font-weight:600;">5,000+</div><div style="font-size:12.5px;color:#8a8a96;">words</div></div>
+              <div><div style="font-size:24px;font-weight:600;">2,663</div><div style="font-size:12.5px;color:#8a8a96;">characters</div></div>
+              <div><div style="font-size:24px;font-weight:600;">~140<span style="font-size:15px;">min</span></div><div style="font-size:12.5px;color:#8a8a96;">exam length</div></div>
+            </div>
+          </div>
+          <div style="border-left:1px solid rgba(26,26,46,.1);padding-left:40px;">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.18em;color:#8a8a96;text-transform:uppercase;">What it unlocks</div>
+            <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:#1a1a2e;">The gold standard — elite programs, scholarships and full academic freedom. Sections: listening + reading + writing.</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin:22px 0 0;font-size:14px;color:#8a8a96;">Not sure? <span style="color:#c23b22;font-weight:500;">Take a free diagnostic mock</span> — it places you in one sitting.</p>
+    </div>
+  </section>
+</body>
+</html>

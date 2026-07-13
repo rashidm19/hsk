@@ -1,0 +1,39 @@
+<!-- @dsCard group="Landing" name="Landing · Universities" subtitle="University acceptance logos (marquee)" width="1200" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../../styles-landing.css">
+<style>html,body{margin:0}[data-reveal]{opacity:1 !important;transform:none !important}</style>
+</head>
+<body class="lp">
+<section style="background:#f5f0e8;padding:56px 0;border-top:1px solid rgba(26,26,46,.06);border-bottom:1px solid rgba(26,26,46,.06);">
+    <!-- University logos (real; uniform white-chip lockups, styled via .mkt-uni/.mkt-unilogo in landing.css).
+         To add e.g. Nanjing/BLCU: drop the logo file in root and add a matching <span class="mkt-uni"> to BOTH marquee groups (they must stay identical for the -50% loop). -->
+<p style="text-align:center;margin:0 0 34px;font-size:12.5px;font-weight:600;letter-spacing:.22em;color:#8a8a96;text-transform:uppercase;">Our students got into</p>
+    <div style="overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);">
+      <div data-marquee="1" data-anim="1" style="display:flex;width:max-content;animation:mq 38s linear infinite;">
+        <div style="display:flex;gap:30px;padding-right:30px;align-items:center;">
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/Tsinghua_University_Logo.png" alt="Tsinghua University"></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/peking.png" alt="Peking University"></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/fudan.png" alt="Fudan University"></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/jiaotong.png" alt="Shanghai Jiao Tong University"></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/zhejiang.png" alt="Zhejiang University"></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/wuhan.png" alt="Wuhan University"></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/tongji.png" alt="Tongji University"></span>
+        </div>
+        <div style="display:flex;gap:30px;padding-right:30px;align-items:center;" aria-hidden="true">
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/Tsinghua_University_Logo.png" alt=""></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/peking.png" alt=""></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/fudan.png" alt=""></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/jiaotong.png" alt=""></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/zhejiang.png" alt=""></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/wuhan.png" alt=""></span>
+          <span class="mkt-uni"><img class="mkt-unilogo" src="../../../assets/tongji.png" alt=""></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

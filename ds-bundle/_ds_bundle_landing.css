@@ -1,0 +1,88 @@
+/* HSK Prep — MARKETING landing CSS. Verbatim landing.css from the repo root.
+   Self-contained: zero :root / var() (all hex literals), selectors scoped to
+   .lp / .lp-desktop / .lp-mobile / .mkt-*, so it never collides with the platform
+   closure. Landing cards link ../../../styles-landing.css (NOT styles.css).
+   Regenerate: cat landing.css >> this header. Do not hand-edit. */
+
+/* ============================================================
+   HSK Prep — root landing (marketing redesign)
+   The page markup is inline-styled (ported verbatim from the
+   Claude Design file). This stylesheet only carries what inline
+   styles cannot express: resets, keyframes, :hover, the mobile
+   nav collapse, and reduced-motion.
+   Marketing palette: bg #fffdf9 · ink #1a1a2e · primary #c23b22
+   · jade #2d6a4f · gold #b7791f. Type: Poppins + Instrument Serif
+   + Noto Serif/Sans SC.
+   ============================================================ */
+
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background: #fffdf9;
+}
+* { box-sizing: border-box; }
+
+::selection { background: #fde8e4; color: #c23b22; }
+
+/* Canonical Chinese-text wrappers (most inline styles set these too;
+   kept as a safety net so unwrapped 汉字 never fall back to a Latin face). */
+.chinese  { font-family: 'Noto Sans SC', sans-serif; }
+.serif-cn { font-family: 'Noto Serif SC', serif; }
+
+/* CTA buttons that became <a> funnel links keep button semantics visually. */
+a.mkt-link { text-decoration: none; color: inherit; }
+
+/* Hero float + universities marquee (referenced by inline animation:) */
+@keyframes mq     { from { transform: translateX(0); }       to { transform: translateX(-50%); } }
+@keyframes floatY { 0%, 100% { transform: translateY(-7px); } 50% { transform: translateY(9px); } }
+
+/* Universities marquee — real logo lockups wrapped in uniform white chips.
+   The chip normalises the mixed sources (transparent PNGs + white-bg JPEGs)
+   so every logo reads the same against the beige strip. */
+.mkt-uni {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 116px; padding: 0 30px; flex: none;
+  background: #ffffff;
+  border: 1px solid rgba(26, 26, 46, .07);
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(26, 26, 46, .05);
+}
+.mkt-unilogo { width: 230px; height: auto; display: block; object-fit: contain; }
+
+/* Hide the OAuth-callback flash if this page is ever promoted to root */
+.hsk-oauth-pending body { visibility: hidden; }
+
+/* ---- Mobile carousels (swipe rows) — hide the scrollbar chrome ---- */
+.hscroll { scrollbar-width: none; -ms-overflow-style: none; }
+.hscroll::-webkit-scrollbar { display: none; }
+
+/* ---- Mobile universities marquee — smaller white chips than desktop's .mkt-uni ---- */
+.mkt-uni-m {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 64px; padding: 0 18px; flex: none;
+  background: #ffffff;
+  border: 1px solid rgba(26, 26, 46, .07);
+  border-radius: 12px;
+  box-shadow: 0 5px 16px rgba(26, 26, 46, .05);
+}
+.mkt-unilogo-m { width: 118px; height: auto; display: block; object-fit: contain; }
+
+/* ---- Responsive: swap the desktop and mobile landing blocks at 760px ----
+   Desktop markup (.lp-desktop) is inline-styled and only reflows down to
+   ~tablet; below 760px we render the dedicated mobile composition instead. */
+.lp-mobile { display: none; }
+
+@media (max-width: 760px) {
+  .lp-desktop  { display: none; }
+  .lp-mobile   { display: block; }
+  .mkt-navlinks { display: none !important; }
+}
+
+/* ---- Reduced motion: stop the CSS-driven float/marquee.
+   (main.js separately skips reveal, parallax and count-up.) ---- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  [data-anim] { animation: none !important; }
+}

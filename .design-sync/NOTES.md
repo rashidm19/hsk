@@ -105,6 +105,24 @@ embed the `/login/` inline `.lg-*` skin + Poppins (extracted to the card `<style
 tokens via `styles.css` (no bundle-CSS change); self-contained, no auth scripts. Browser-verified
 the email + password states.
 
-**Remaining:** Phase 4 Landing (sections + full page, desktop + mobile; a separate
-`styles-landing.css` = `landing.css` + Poppins/Instrument Serif — `landing.css` uses zero
-`:root`/`var()` so no collision). Then a `conventions.md` update documenting all skins.
+**Phase 4 — Landing: DONE.** 13 cards under `components/landing/` (group "Landing"): 11 sections
+(Nav, Hero, Universities, HowItWorks, LevelPicker, Platform, Comparison, Reviews, Guarantee, FAQ,
+Footer) + full-page LandingDesktop & LandingMobile. Separate closure — cards link
+`styles-landing.css` (fonts + `_ds_bundle_landing.css` = verbatim `landing.css`), NOT `styles.css`.
+Captured from the live landing via the browser (`.lp-desktop`/`.lp-mobile` children); reveals forced
+visible; count-up settled. Images: 7 university logos + 2 HSK cert scans `sips`-optimised (logos
+≤48K PNG, certs 100K JPEG) into `assets/`, captured `src="/x"` rewritten to `../../../assets/x`
+(certs .png→.jpg). Bundle-relative assets load in-sandbox (same origin, not CSP-blocked).
+Browser-verified full desktop (hero, certs, logos, sections), full mobile, and the Platform tab.
+
+**conventions.md / README.md: DONE.** Added a "Funnel & marketing skins" section (the `.ob`, `.lg-*`,
+`.lp`/`.mkt-*` skins + the `styles-landing.css` closure) and refreshed "Where the truth lives" +
+"Project contents"; all 16 new class names validated against the bundle. README re-uploaded.
+
+## ALL FOUR PHASES COMPLETE (2026-07-13)
+The DS now covers the whole pre-app funnel: platform (app-shell, foundations, components) +
+onboarding (22) + paywall (4) + auth (4) + landing (13) = 43 new funnel cards. Reusable capture
+tooling lives in the scratchpad (`capserver.py` no-cache static+POST sink; `gen_cards.js` /
+`gen_auth.js` / `gen_landing.js`). Caveat to revisit: the heavy landing cert scans were downscaled
+for the bundle — re-optimise if pixel-exact scans ever matter. Committed per-phase to `claude/dev`;
+not pushed.
