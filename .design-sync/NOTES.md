@@ -127,10 +127,23 @@ tooling lives in the scratchpad (`capserver.py` no-cache static+POST sink; `gen_
 for the bundle — re-optimise if pixel-exact scans ever matter. Committed per-phase to `claude/dev`;
 not pushed.
 
-## App Shell removed (2026-07-13)
-The user is redesigning the internal platform, so the App Shell preview (sidebar/topbar/dashboard)
-became noise in the design pane. Deleted `components/app-shell/AppShell/*` from the remote
-(`delete_files`) and from the repo; updated the README/conventions references to it.
-**`dashboard.css` is KEPT** in the closure (`_ds_bundle.css` → `styles.css`) — its removal wasn't
-requested and the redesign may still reference `.app-*`/`.dash-*`. If a clean slate is wanted later,
-the next step is dropping `dashboard.css` from the closure + the app-shell class docs.
+## Internal app UI removed (2026-07-13)
+The user is redesigning the logged-in / subscribed app experience, so the current internal-app
+design was pulled from the project to avoid noise:
+- Deleted cards: **App Shell**, **Buttons & CTA**, **Cards & Layout** (`components/app-shell/*`,
+  `components/components/*`). Verified internal-only: 0 external (funnel/landing/auth) cards use
+  `.btn`/`.content-card`/`.card-grid`/`.breadcrumb`/`.stats-row`/`.cta-banner`.
+- Dropped **`dashboard.css`** from the closure — regenerated `_ds_bundle.css` = verbatim `common.css`
+  only; `styles.css` comment updated. No remaining card uses `.app-*`/`.dash-*`. (A few `.dash-`
+  dark-override rules still live inside `common.css`, which is kept verbatim because the funnel needs
+  its tokens — latent, no cards reference them.)
+- **Kept Colors + Typography** (`components/foundations/`) per the user's rule "remove only if
+  internal-only": the funnel/login DO use them — onboarding.css uses `--accent`(25×)/`--ink`(17×)/
+  `--jade`/`--gold` + the `--fs-` scale (37×); login uses `--ink`/`--stone`/`--mist`/`--surface`;
+  `.serif-cn`/`.chinese` appear in 72 external cards. Shared brand foundations, not internal-only.
+- README/conventions rewritten around the new shape (brand foundations + funnel/landing skins;
+  removed the internal-app component-class list + the app idiomatic example).
+
+**Project now = Colors, Typography (foundations) + Onboarding (22) + Paywall (4) + Auth (4) +
+Landing (13).** Colors card re-verified rendering after the closure change. If the redesign later
+wants the platform palette/type refreshed too, re-sync Colors/Typography from the new `common.css`.

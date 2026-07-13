@@ -1,7 +1,8 @@
 /* HSK Prep — design-system entry stylesheet.
    Rendered designs receive exactly this file's @import closure:
    1. Google Fonts (same families + weights the production site loads)
-   2. _ds_bundle.css (verbatim common.css + dashboard.css from the repo)
+   2. _ds_bundle.css (verbatim common.css from the repo — platform tokens + base;
+      dashboard.css was dropped when the internal app UI left this project)
    3. _ds_bundle_onboarding.css (verbatim onboarding.css — the /quiz/ funnel;
       built on common.css tokens, all rules scoped to body.ob / .ob-*, so it
       only styles onboarding cards and never leaks into platform cards)
