@@ -6,9 +6,9 @@ No provider or JS bundle — this is a CSS-class design system. Link the stylesh
 use the documented classes:
 
 - Every design: load `styles.css` (it pulls the Google Fonts and the full site CSS).
-- **App screens**: put `class="app"` on `<body>` and build inside the App Shell markup
-  (see `components/app-shell/AppShell/`). Without `body.app` the shell and `.dash-*`
-  components are unstyled.
+- **App / dashboard screens**: the App Shell preview was removed from this project while the
+  internal platform is being redesigned. The `.app-*` / `.dash-*` classes still ship in the
+  closure (`dashboard.css`), but treat the app UI as in-flux until the redesign lands.
 - **Dark mode**: `data-theme="dark"` on `<html>`. All tokens re-map automatically;
   never write dark-specific colors.
 - **Chinese text**: always wrap in `.chinese` (Noto Sans SC, UI/body) or `.serif-cn`
@@ -72,7 +72,7 @@ different skins — pick the right one per screen:
 
 ```html
 <body class="app">
-  <!-- app shell chrome from components/app-shell/AppShell/AppShell.html, then: -->
+  <!-- app shell chrome (body.app), then: -->
   <div class="app-content">
     <div class="dash-head"><h1>Vocabulary</h1></div>
     <div class="dash-stats">

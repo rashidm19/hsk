@@ -126,3 +126,11 @@ tooling lives in the scratchpad (`capserver.py` no-cache static+POST sink; `gen_
 `gen_auth.js` / `gen_landing.js`). Caveat to revisit: the heavy landing cert scans were downscaled
 for the bundle — re-optimise if pixel-exact scans ever matter. Committed per-phase to `claude/dev`;
 not pushed.
+
+## App Shell removed (2026-07-13)
+The user is redesigning the internal platform, so the App Shell preview (sidebar/topbar/dashboard)
+became noise in the design pane. Deleted `components/app-shell/AppShell/*` from the remote
+(`delete_files`) and from the repo; updated the README/conventions references to it.
+**`dashboard.css` is KEPT** in the closure (`_ds_bundle.css` → `styles.css`) — its removal wasn't
+requested and the redesign may still reference `.app-*`/`.dash-*`. If a clean slate is wanted later,
+the next step is dropping `dashboard.css` from the closure + the app-shell class docs.
