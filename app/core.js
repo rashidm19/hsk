@@ -119,7 +119,7 @@
     studySub: 'hub', curGrammar: null, curPair: null, curTopic: null, tqChoice: null,
     gqChoice: null, gqIdx: 0, pIdx: 0, pChoice: null, pScore: 0, sRecall: true,
     sRevealed: {}, trapChoice: {}, wrText: '', wrModel: false,
-    planId: '3mo', selPlan: '3mo', guideDone: [],
+    selPlan: '3mo', guideDone: [],
     profileSheet: false, planSheet: false, langSheet: false, uiLang: 'en', notif: true,
     profile: { name: '', email: '', country: '' },
     profileDraft: { name: '', email: '', country: '' },
@@ -130,7 +130,7 @@
     examOfficialOnly: false, examExitConfirm: false, progress: {}, examMode: 'exam', examSection: 'all',
     vMode: 'list', vSearch: '', vPos: 'all', vFilter: 'all', vSort: 'default', vMastered: [],
     wordSheetId: null,
-    flashIdx: 0, flashFlipped: false, deckIds: [], sessionKnown: 0,
+    flashIdx: 0, flashFlipped: false, deckIds: [],
     quizIdx: 0, quizChoice: null, quizCorrect: false, quizScore: 0,
     _focus: null
   };
@@ -272,6 +272,26 @@
     } catch (e) {}
   }
 
+  /* Scroll preservation across innerHTML swaps: a re-render of the same screen
+     produces the same .hsk-scroll structure, so index-keyed capture/restore is
+     stable. Intentional scroll-to-top still wins — nav actions call
+     App.util.scrollTop() AFTER setState()'s render, zeroing the restored value. */
+  function capScroll(el) {
+    var out = [];
+    try {
+      var els = el.querySelectorAll('.hsk-scroll');
+      for (var i = 0; i < els.length; i++) { if (els[i].scrollTop) out.push({ i: i, top: els[i].scrollTop }); }
+    } catch (e) {}
+    return out;
+  }
+  function resScroll(el, saved) {
+    if (!saved || !saved.length) return;
+    try {
+      var els = el.querySelectorAll('.hsk-scroll');
+      for (var k = 0; k < saved.length; k++) { var t = els[saved[k].i]; if (t) t.scrollTop = saved[k].top; }
+    } catch (e) {}
+  }
+
   App.render = function () {
     var s = App.state;
     var sel = captureSel();
@@ -288,9 +308,11 @@
       sigCache[id] = sig;
       var html = '';
       try { html = scr.html(s) || ''; } catch (e) { warn(e); html = ''; }
+      var sc = capScroll(el);
       el.innerHTML = html;
       swapped.push(el);
       initRegion(el, scr, s);
+      resScroll(el, sc);
     }
 
     /* subregions — any registered screen not bound to a main region whose
@@ -311,8 +333,10 @@
       sigCache[key] = ssig;
       var shtml = '';
       try { shtml = sscr.html(s) || ''; } catch (e4) { warn(e4); shtml = ''; }
+      var ssc = capScroll(sEl);
       sEl.innerHTML = shtml;
       initRegion(sEl, sscr, s);
+      resScroll(sEl, ssc);
     }
 
     restoreFocus(sel);
@@ -330,8 +354,10 @@
     sigCache[key] = computeSig(scr, s);
     var html = '';
     try { html = scr.html(s) || ''; } catch (e) { warn(e); html = ''; }
+    var sc = capScroll(el);
     el.innerHTML = html;
     initRegion(el, scr, s);
+    resScroll(el, sc);
     restoreFocus(sel);
   };
 
@@ -568,10 +594,17 @@
     var guide = App.store.getJSON('hsk4m-guide', null);
     if (Array.isArray(guide)) s.guideDone = guide;
     else if (guide && typeof guide === 'object') {
-      /* legacy hsk4-guide-path stored an object map — convert truthy numeric keys */
+      /* legacy hsk4-guide-path stored an object map keyed by data-step "1".."8"
+         (1-based) — convert to this app's 0-based indices and normalize the
+         stored value so the object form doesn't linger */
       var gd = [];
-      for (var gk in guide) { if (Object.prototype.hasOwnProperty.call(guide, gk) && guide[gk] && /^\d+$/.test(gk)) gd.push(parseInt(gk, 10)); }
+      for (var gk in guide) {
+        if (!Object.prototype.hasOwnProperty.call(guide, gk) || !guide[gk] || !/^\d+$/.test(gk)) continue;
+        var gi = parseInt(gk, 10) - 1;
+        if (gi >= 0 && gi <= 7 && gd.indexOf(gi) === -1) gd.push(gi);
+      }
       s.guideDone = gd;
+      App.store.setJSON('hsk4m-guide', gd);
     }
 
     applyThemeAttr(theme);
@@ -597,9 +630,10 @@
     /* auth hookup + other module boot hooks (more.js pushes the profile loader) */
     for (var i = 0; i < App.bootHooks.length; i++) { try { App.bootHooks[i](); } catch (e2) { warn(e2); } }
 
-    /* payment return */
+    /* payment return — `true` lets more.js fire the `purchase` goal when the
+       refreshed subscription carries a NEW order_id */
     if (pay === 'success') {
-      try { if (App.actions.refreshSubscription) App.actions.refreshSubscription(); } catch (e3) { warn(e3); }
+      try { if (App.actions.refreshSubscription) App.actions.refreshSubscription(true); } catch (e3) { warn(e3); }
       App.toast('Payment received — access extended');
     }
 

@@ -324,26 +324,29 @@
     a.sort(function (x, y) { return (x.ts || 0) - (y.ts || 0); });
     return a;
   }
-  function bandScore(a) {
+  /* Shared with shell.js via App.util (shell loads first and registers them);
+     identical local math kept only as a load-order-safe fallback so dashboard
+     and stats can never desync. */
+  var bandScore = (App.util && App.util.bandScore) || function (a) {
     var secs = a.sections || [];
     if (!secs.length) return Math.round((a.pct || 0) * 3);
     var band = 0;
     secs.forEach(function (sc) { band += Math.round((sc.tot ? sc.ok / sc.tot : 0) * 100); });
     return Math.round(band / (secs.length * 100) * 300);
-  }
+  };
   function dayKey(ts) { var d = new Date(ts); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
   function attemptDays(atts) {
     var m = {}; atts.forEach(function (a) { if (a.ts) m[dayKey(a.ts)] = (m[dayKey(a.ts)] || 0) + 1; });
     return m;
   }
-  function calcStreak(atts) {
+  var calcStreak = (App.util && App.util.calcStreak) || function (atts) {
     var days = attemptDays(atts);
     var d = new Date(); d.setHours(0, 0, 0, 0);
     if (!days[dayKey(d)]) d.setDate(d.getDate() - 1);
     var n = 0;
     while (days[dayKey(d)]) { n++; d.setDate(d.getDate() - 1); }
     return n;
-  }
+  };
   function weekDays() {
     var now = new Date(); now.setHours(0, 0, 0, 0);
     var dow = (now.getDay() + 6) % 7; /* Mon=0 */
@@ -395,13 +398,14 @@
         bars.push({ v: '', color: 'var(--surface-sunken)', h: '6%', label: label });
       }
     }
-    var estTrend = '—';
+    var estTrend = '—', estTrendColor = 'var(--stone)';
     if (nonEmpty.length >= 2) {
       var d = nonEmpty[nonEmpty.length - 1] - nonEmpty[0];
       estTrend = d >= 0 ? ('+' + d) : ('−' + Math.abs(d));
+      estTrendColor = d >= 0 ? 'var(--jade)' : 'var(--accent)';
     }
     var testsInRange = atts.filter(function (a) { return (a.ts || 0) >= start; }).length;
-    return { bars: bars, estTrend: estTrend, testsInRange: testsInRange };
+    return { bars: bars, estTrend: estTrend, estTrendColor: estTrendColor, testsInRange: testsInRange };
   }
   function statsOverviewHtml(s, atts) {
     var streak = calcStreak(atts);
@@ -465,7 +469,7 @@
       '<div style="display:flex;flex-direction:column;gap:15px">' + skills + '</div>' +
       '</div>' +
       '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px">' +
-      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px"><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">Score trend</div><div style="font-size:.72rem;font-weight:700;color:var(--jade)">' + esc(tr.estTrend) + '</div></div>' +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px"><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">Score trend</div><div style="font-size:.72rem;font-weight:700;color:' + tr.estTrendColor + '">' + esc(tr.estTrend) + '</div></div>' +
       '<div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px" class="hsk-scroll">' + rangeTabs + '</div>' +
       '<div style="display:flex;align-items:flex-end;gap:8px;height:92px">' + trendBars + '</div>' +
       '<div style="font-size:.7rem;color:var(--stone);margin-top:12px">' + tr.testsInRange + ' tests in this period</div>' +
@@ -889,12 +893,19 @@
   };
   A.closePlans = function () { set({ planSheet: false }); };
   A.setPlan = function (id) { if (PLAN_MONTHS[id]) set({ selPlan: id }); };
+  var PLAN_PRICE_NUM = { '1mo': 7990, '3mo': 13990, '12mo': 19990 };
   A.confirmPlan = function () {
     if (!canPay()) return;
     var s = S();
     var sel = PLANS.filter(function (p) { return p.id === (s.selPlan || '3mo'); })[0] || PLANS[1];
     var email = authEmail || (s.profile && s.profile.email) || '';
     var base = location.origin;
+    /* funnel-parity analytics (onboarding.js fires the same goal pre-redirect;
+       obTrack's value→order_price remap is applied here directly) + a
+       pre-checkout order marker so the ?pay=success return can detect a NEW
+       ledger row before firing `purchase` */
+    try { sessionStorage.setItem('hsk4m-pre-order', (s.sub && s.sub.order_id) || ''); } catch (e0) {}
+    try { if (window.ymGoal) window.ymGoal('begin_checkout', { plan: sel.id, order_price: PLAN_PRICE_NUM[sel.id], currency: 'KZT' }); } catch (e1) {}
     /* exact param names mirrored from onboarding.js startCheckout() */
     var url = CHECKOUT_URL +
       '?product=hsk' +
@@ -959,7 +970,36 @@
   App.more.hookupAuth = hookupAuth;
   App.more.loadProfile = hookupAuth;
   App.more.refreshSub = refreshSub;
-  A.refreshSubscription = refreshSub;      /* core calls this after ?pay=success */
+  /* purchase goal on a confirmed NEW ledger row only (order_id changed vs the
+     pre-checkout marker) — mirrors onboarding.js's confirmed-entitlement rule.
+     The StudyBox webhook can lag the browser redirect, so if the first refresh
+     still shows the old order we re-check ONCE after 6s (also updates the
+     displayed expiry); after that we drop the marker: better an undercounted
+     extension than a double-fired revenue goal. */
+  function checkPayReturn(sub, attempt) {
+    try {
+      var prev = sessionStorage.getItem('hsk4m-pre-order');
+      if (prev == null) return;
+      if (sub && sub.order_id && sub.order_id !== prev) {
+        sessionStorage.removeItem('hsk4m-pre-order');
+        if (window.ymGoal) window.ymGoal('purchase', { plan: sub.plan, order_price: sub.price, currency: sub.currency || 'KZT', order_id: sub.order_id });
+        return;
+      }
+      if (attempt < 1) {
+        setTimeout(function () {
+          refreshSub().then(function (s2) { checkPayReturn(s2, attempt + 1); });
+        }, 6000);
+      } else {
+        sessionStorage.removeItem('hsk4m-pre-order');
+      }
+    } catch (e) {}
+  }
+  A.refreshSubscription = function (fromPayReturn) {  /* core calls this after ?pay=success */
+    return refreshSub().then(function (sub) {
+      if (fromPayReturn) checkPayReturn(sub, 0);
+      return sub;
+    });
+  };
   App.bootHooks = App.bootHooks || [];
   App.bootHooks.push(hookupAuth);          /* contract: auth hookup runs from App.boot() */
   /* self-arm in case boot does not call the hook (idempotent) */

@@ -267,8 +267,6 @@ function computeCharFrequency() {
 // pages' "N× tested" stat — precomputed here so the client doesn't have to
 // fetch all the test papers. charFreq is limited to the 441 official HSK 4
 // characters (writing + recognition tiers); zero counts are omitted.
-// NOTE: scratchpad gen-app-data.js (used for out-of-band regeneration during
-// /app/ development) is a verbatim copy of this code path — keep in sync.
 function buildAppData() {
   console.log('[app-data] Building data/app-data.json...');
   const words = readJSON('vocabulary.json');
@@ -277,8 +275,13 @@ function buildAppData() {
   const official = readJSON('official-characters.json');
   const charFreq = {};
   official.rendu.forEach(ch => { const n = allCharFreq[ch]; if (n) charFreq[ch] = n; });
-  fs.writeFileSync(path.join(DATA, 'app-data.json'), JSON.stringify({ charFreq, vocabFreq }), 'utf8');
-  console.log(`[app-data] ${Object.keys(charFreq).length} chars + ${Object.keys(vocabFreq).length} words with exam-frequency counts`);
+  // Communicative-task metadata for the /app/ Study section — emitted from the
+  // same TASKS constant that builds the /topics/ task pages, so the mobile
+  // client cannot drift from the generator (app/data.js prefers this over its
+  // bundled fallback copy).
+  const tasks = TASKS.map(t => ({ slug: t.slug, cn: t.task_cn, en: t.task_en, topic_ids: t.topic_ids, requirement: t.syllabus_cn }));
+  fs.writeFileSync(path.join(DATA, 'app-data.json'), JSON.stringify({ charFreq, vocabFreq, tasks }), 'utf8');
+  console.log(`[app-data] ${Object.keys(charFreq).length} chars + ${Object.keys(vocabFreq).length} words with exam-frequency counts + ${tasks.length} task metas`);
 }
 
 function buildVocabulary() {

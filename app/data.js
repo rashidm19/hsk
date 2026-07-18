@@ -64,7 +64,9 @@
   }
 
   /* Strip scripts + inline event handlers from a pre-rendered HTML blob
-   * (traps.json fallback rendering). */
+   * (traps.json fallback rendering). TRUST ASSUMPTION: regex-based, adequate
+   * only because traps.json is repo-authored build output (it does not strip
+   * javascript: hrefs etc.) — never point this at untrusted content. */
   function sanitizeHtml(html) {
     var s = String(html || '');
     s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
@@ -314,7 +316,11 @@
 
   /* ---- 30 communicative tasks: joins mirrored from build.js buildTaskTopicPages ---- */
 
-  function normalizeTasks(topicsData, wordById, dialogues) {
+  function normalizeTasks(topicsData, wordById, dialogues, taskMetas) {
+    /* Prefer build-emitted metadata (data/app-data.json `tasks`, generated from
+       build.js's TASKS constant) — the bundled TASK_META below is a fallback
+       copy for older app-data.json files and offline dev. */
+    var METAS = (taskMetas && taskMetas.length) ? taskMetas : TASK_META;
     var topicWords = (topicsData && topicsData.topic_words) || {};
     var groups = (topicsData && topicsData.hierarchy) || [];
     var groupOf = {};
@@ -324,7 +330,7 @@
       });
     });
 
-    return TASK_META.map(function (meta) {
+    return METAS.map(function (meta) {
       /* Word join — identical to the generator: Set-union of topic_words
        * over topic_ids, in array order, mapped to vocabulary rows. */
       var seen = {};
@@ -344,8 +350,13 @@
         if (groupOf[meta.topic_ids[i]]) { cat = groupOf[meta.topic_ids[i]]; break; }
       }
 
-      /* Quick-check quiz — same deterministic PRNG + picks as build.js
+      /* Quick-check quiz — same seeded PRNG + pick logic as build.js
        * generateTopicQuiz(words, slug); the mobile card shows item #1.
+       * NOTE: `sort(() => rand() - 0.5)` comparator call counts are
+       * engine-specific, so picks match the static site's exactly only on V8
+       * (Chrome/Android); on JSC/SpiderMonkey the quiz is a different but
+       * equally valid draw — internally consistent either way, since the
+       * correct index is computed from the shuffled result.
        * The generator only renders a quiz for pages with >= 8 words. */
       var quiz = null;
       if (words.length >= 8) {
@@ -647,7 +658,7 @@
         };
       });
 
-      D.TASKS = normalizeTasks(topics, wordByIdMap, dialogues);
+      D.TASKS = normalizeTasks(topics, wordByIdMap, dialogues, appData && appData.tasks);
       D.TOPICS = D.TASKS;
 
       var tr = normalizeTraps(rawTraps);

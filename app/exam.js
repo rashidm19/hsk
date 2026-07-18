@@ -437,10 +437,11 @@
     stopClip({ full: true });
     var s = stateOf();
     var p = (resume === true) && s.progress && s.progress[s.testIdx];
+    var qCount = activeQuestions().length; /* clamp a corrupted stored curQ (0 = not loaded yet — skip clamp) */
     App.setState({
       examView: 'player', introOpen: false, examSection: 'all',
       examMode: (p && p.examMode) ? p.examMode : s.examMode,
-      curQ: p ? p.curQ : 0,
+      curQ: p ? (qCount > 0 ? Math.max(0, Math.min(p.curQ || 0, qCount - 1)) : Math.max(0, p.curQ || 0)) : 0,
       answers: p ? assign({}, p.answers) : {},
       flags: p ? assign({}, p.flags) : {},
       elapsed: p ? p.elapsed : 0,

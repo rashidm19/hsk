@@ -82,14 +82,18 @@
     return m ? m.length : 0;
   }
 
-  /* Grammar tile glyph: real pattern_cn strings ("尽管…但是…") overflow the fixed
-     44px icon box, so the tile shows the first hanzi run (max 3 chars). */
+  /* Tile glyph: real pattern_cn / task_cn strings ("尽管…但是…", "谈论某个人物")
+     overflow the fixed 44-46px icon boxes, so tiles show the first hanzi run
+     capped at 2 chars — the largest run that fits on one line at the tiles'
+     1.1-1.3rem sizes. */
   function gGlyph(cn) {
     cn = String(cn || '');
-    var m = cn.match(/[一-鿿]{1,3}/);
+    var m = cn.match(/[一-鿿]{1,2}/);
     return m ? m[0] : cn.slice(0, 2);
   }
 
+  /* TRUST ASSUMPTION: regex-based, adequate only for repo-authored traps.json
+   * blobs (does not strip javascript: hrefs) — never use on untrusted content. */
   function stripUnsafe(html) {
     html = String(html || '');
     html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
@@ -416,7 +420,7 @@
   function topicsListHtml() {
     var rows = TASKS().map(function (t) {
       return '<button type="button" data-a="openTopic" data-arg="' + esc(t.slug) + '" class="pa" style="display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border-subtle);border-radius:15px;box-shadow:var(--shadow);padding:14px 15px;cursor:pointer">' +
-        '<span class="serif-cn" style="width:46px;height:46px;flex:none;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);border-radius:13px;font-size:1.3rem;font-weight:700">' + esc(t.cn) + '</span>' +
+        '<span class="serif-cn" style="width:46px;height:46px;flex:none;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);border-radius:13px;font-size:1.3rem;font-weight:700">' + esc(gGlyph(t.cn)) + '</span>' +
         '<span style="flex:1;min-width:0"><span style="display:block;font-weight:700;color:var(--ink);font-size:.98rem">' + esc(t.en) + '</span><span style="display:block;font-size:.8rem;color:var(--stone)">' + esc(t.cat || t.category || '') + '</span></span>' +
         CHEV_R18 + '</button>';
     }).join('');
