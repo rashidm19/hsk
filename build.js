@@ -261,6 +261,26 @@ function computeCharFrequency() {
   return cf;
 }
 
+// Exam-frequency data consumed by the /app/ mobile client (app/data.js): the
+// same computeExamFrequency() counts that drive the vocabulary 常考/高频
+// badges, plus the same computeCharFrequency() counts behind the character
+// pages' "N× tested" stat — precomputed here so the client doesn't have to
+// fetch all the test papers. charFreq is limited to the 441 official HSK 4
+// characters (writing + recognition tiers); zero counts are omitted.
+// NOTE: scratchpad gen-app-data.js (used for out-of-band regeneration during
+// /app/ development) is a verbatim copy of this code path — keep in sync.
+function buildAppData() {
+  console.log('[app-data] Building data/app-data.json...');
+  const words = readJSON('vocabulary.json');
+  const vocabFreq = computeExamFrequency(words);
+  const allCharFreq = computeCharFrequency();
+  const official = readJSON('official-characters.json');
+  const charFreq = {};
+  official.rendu.forEach(ch => { const n = allCharFreq[ch]; if (n) charFreq[ch] = n; });
+  fs.writeFileSync(path.join(DATA, 'app-data.json'), JSON.stringify({ charFreq, vocabFreq }), 'utf8');
+  console.log(`[app-data] ${Object.keys(charFreq).length} chars + ${Object.keys(vocabFreq).length} words with exam-frequency counts`);
+}
+
 function buildVocabulary() {
   console.log('[vocab] Pre-rendering vocabulary...');
   const words = readJSON('vocabulary.json');
@@ -5510,6 +5530,7 @@ buildMixedPractice();
 buildCompleteSentence();
 buildPracticeHub();
 addTestLinksToHubs();
+buildAppData();
 buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, [...sentenceCatPages, ...trapCatPages, ...transcriptPages, { loc: '/practice/', priority: '0.8' }, { loc: '/writing/complete-sentence/', priority: '0.8' }, { loc: '/train/', priority: '0.9' }]);
 injectTheme();
 injectMetrika();
