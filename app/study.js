@@ -10,6 +10,7 @@
   App.actions = App.actions || {};
   App.screens = App.screens || {};
   App.util = App.util || {};
+  App.study = App.study || {};
 
   /* ---------- helpers ---------- */
 
@@ -702,6 +703,11 @@
     if (sub === 'writing' || sub === 'strategies' || sub === 'compare') return articleHtml(s, sub);
     return hubHtml();
   };
+
+  /* pure helpers exported for the desktop client (desktop-study.js) — the
+     security-relevant stripUnsafe regex list must exist exactly once */
+  App.study.normQuiz = normQuiz;
+  App.study.stripUnsafe = stripUnsafe;
 
   /* ---------- trap raw-html fallback quiz wiring (delegation, DOM-only) ---------- */
 

@@ -847,7 +847,7 @@
     var cur = (S().guideDone || []).slice();
     var at = cur.indexOf(idx);
     if (at >= 0) cur.splice(at, 1); else cur.push(idx);
-    lsSet('hsk4m-guide', JSON.stringify(cur));
+    App.saveGuide(cur); /* seam: mobile stores the array, desktop the site's object form */
     set({ guideDone: cur });
   };
 
@@ -876,12 +876,12 @@
   A.closeLang = function () { set({ langSheet: false }); };
   A.setLang = function (l) {
     var code = l === 'ru' ? 'ru' : 'en';
-    lsSet('hsk4m-lang', code);
+    lsSet(App.keys.lang, code);
     set({ uiLang: code, langSheet: false });
   };
   A.toggleNotif = function () {
     var next = !S().notif;
-    lsSet('hsk4m-notif', next ? '1' : '0');
+    lsSet(App.keys.notif, next ? '1' : '0');
     set({ notif: next });
   };
 
@@ -904,7 +904,7 @@
        obTrack's value→order_price remap is applied here directly) + a
        pre-checkout order marker so the ?pay=success return can detect a NEW
        ledger row before firing `purchase` */
-    try { sessionStorage.setItem('hsk4m-pre-order', (s.sub && s.sub.order_id) || ''); } catch (e0) {}
+    try { sessionStorage.setItem(App.keys.preOrder, (s.sub && s.sub.order_id) || ''); } catch (e0) {}
     try { if (window.ymGoal) window.ymGoal('begin_checkout', { plan: sel.id, order_price: PLAN_PRICE_NUM[sel.id], currency: 'KZT' }); } catch (e1) {}
     /* exact param names mirrored from onboarding.js startCheckout() */
     var url = CHECKOUT_URL +
@@ -970,6 +970,15 @@
   App.more.hookupAuth = hookupAuth;
   App.more.loadProfile = hookupAuth;
   App.more.refreshSub = refreshSub;
+  /* shared view-model exports — pure additions consumed by the desktop client
+     (desktop-more.js); the very objects/functions mobile checkout uses. */
+  App.more.PLANS = PLANS;
+  App.more.PLAN_NAMES = PLAN_NAMES;
+  App.more.PLAN_PRICES = PLAN_PRICES;
+  App.more.PLAN_MONTHS = PLAN_MONTHS;
+  App.more.subInfo = subInfo;
+  App.more.profVals = profVals;
+  App.more.profileDraft = function () { return draft; }; /* live profile-edit draft (seeded by openEdit) */
   /* purchase goal on a confirmed NEW ledger row only (order_id changed vs the
      pre-checkout marker) — mirrors onboarding.js's confirmed-entitlement rule.
      The StudyBox webhook can lag the browser redirect, so if the first refresh
@@ -978,10 +987,10 @@
      extension than a double-fired revenue goal. */
   function checkPayReturn(sub, attempt) {
     try {
-      var prev = sessionStorage.getItem('hsk4m-pre-order');
+      var prev = sessionStorage.getItem(App.keys.preOrder);
       if (prev == null) return;
       if (sub && sub.order_id && sub.order_id !== prev) {
-        sessionStorage.removeItem('hsk4m-pre-order');
+        sessionStorage.removeItem(App.keys.preOrder);
         if (window.ymGoal) window.ymGoal('purchase', { plan: sub.plan, order_price: sub.price, currency: sub.currency || 'KZT', order_id: sub.order_id });
         return;
       }
@@ -990,7 +999,7 @@
           refreshSub().then(function (s2) { checkPayReturn(s2, attempt + 1); });
         }, 6000);
       } else {
-        sessionStorage.removeItem('hsk4m-pre-order');
+        sessionStorage.removeItem(App.keys.preOrder);
       }
     } catch (e) {}
   }

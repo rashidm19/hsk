@@ -87,7 +87,7 @@
   }
 
   function persistMastered(next) {
-    try { localStorage.setItem('hsk4m-mastered', JSON.stringify(next)); } catch (e) {}
+    try { localStorage.setItem(App.keys.mastered, JSON.stringify(next)); } catch (e) {}
   }
 
   /* POS bucket helpers — chip filter matches ANY bucket the pos string carries
@@ -739,4 +739,16 @@
   App.vocab.setFcEl = setFcEl;
   App.vocab.dueCount = function () { return Math.max(0, words().length - countMastered(masteredSet())); };
   App.vocab.masteredCount = function () { return countMastered(masteredSet()); };
+  /* filter/quiz engine — pure exports consumed by the desktop client
+     (desktop-vocab.js); quizOptsFor especially must have exactly ONE
+     implementation, since quizPick above scores with it */
+  App.vocab.masteredSet = masteredSet;
+  App.vocab.hasPos = hasPos;
+  App.vocab.bucketOf = bucketOf;
+  App.vocab.freqLabel = freqLabel;
+  App.vocab.sortWords = sortWords;
+  App.vocab.filteredList = filteredList;
+  App.vocab.quizOptsFor = quizOptsFor;
+  App.vocab.exCn = exCn;
+  App.vocab.exEn = exEn;
 })();

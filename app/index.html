@@ -15,7 +15,25 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
-<link rel="stylesheet" href="/app/app.css">
+<!-- client picker (CONTRACT §1): one route, two presentation shells. Boot-time
+     decision only — crossing the breakpoint mid-session does nothing until
+     reload. localStorage 'hsk4-client' ('desktop'|'mobile') is a manual escape
+     hatch, not exposed in UI yet. -->
+<script>
+(function(){
+  var d=false;
+  try{
+    d=(window.matchMedia&&matchMedia('(hover: hover) and (pointer: fine)').matches)
+      ||Math.min(screen.width,screen.height)>=700;
+  }catch(e){}
+  try{ /* separate try: a storage SecurityError must not discard the heuristic */
+    var o=localStorage.getItem('hsk4-client');
+    if(o==='desktop')d=true;else if(o==='mobile')d=false;
+  }catch(e){}
+  window.HSK_DESKTOP=d;
+  document.write('<link rel="stylesheet" href="/app/'+(d?'desktop':'app')+'.css">');
+})();
+</script>
 <script defer src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.7/dist/hanzi-writer.min.js"></script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
@@ -32,12 +50,14 @@ window.ymGoal=function(name,params){try{if(window.ym)ym(110455584,"reachGoal",na
 <body class="app hsk-auth-pending">
 <div id="app-root"><div id="r-shell"></div><div id="r-player"></div><div id="r-results"></div><div id="r-sheet"></div><div id="r-overlay"></div></div>
 <script src="/app/core.js"></script>
+<script>if(window.HSK_DESKTOP)document.write('<script src="/app/desktop-config.js"><\/script>')</script>
 <script src="/app/data.js"></script>
 <script src="/app/shell.js"></script>
 <script src="/app/exam.js"></script>
 <script src="/app/vocab.js"></script>
 <script src="/app/more.js"></script>
 <script src="/app/study.js"></script>
+<script>if(window.HSK_DESKTOP)document.write('<script src="/app/desktop-shell.js"><\/script><script src="/app/desktop-exam.js"><\/script><script src="/app/desktop-vocab.js"><\/script><script src="/app/desktop-more.js"><\/script><script src="/app/desktop-study.js"><\/script>')</script>
 <script>App.boot()</script>
 <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
 </body>

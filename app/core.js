@@ -74,9 +74,11 @@
       every render/update — e.g. 'g-search', 'vocab-search'.
 
    9. STORE: App.store.get/set/del/getJSON/setJSON — all try/catch-guarded.
-      Pass FULL key names. Namespace keys: hsk4m-welcome, hsk4m-firstrun,
-      hsk4m-goal, hsk4m-mastered, hsk4m-attempts, hsk4m-guide, hsk4m-theme,
-      hsk4m-lang, hsk4m-notif, hsk4m-progress, hsk4m-migrated.
+      Pass FULL key names. Persistence key names live in App.keys (mobile
+      defaults = the hsk4m-* namespace; the desktop client's desktop-config.js
+      replaces the map with the canonical site keys). ALWAYS resolve
+      App.keys.<x> at CALL time — never copy a key into a module-local at
+      load time (desktop-config.js loads after core.js).
 
    10. CROSS-MODULE SLOTS:
       App.hw          — shared HanziWriter instance (owned by more.js; core
@@ -90,8 +92,10 @@
       App.toast(text) — small status toast (ok-panel colors), auto-dismisses.
 
    11. THEME: App.actions.setTheme('dark'|'light') / App.actions.toggleTheme().
-      Writes BOTH hsk4m-theme and hsk4_theme, then sets data-theme="dark" on
-      the html element or removes the attribute (light), then setState({theme}).
+      Persists via App.persistTheme (mobile default writes BOTH App.keys.theme
+      and the site's hsk4_theme; desktop-config.js overrides it to a single
+      canonical write), then sets data-theme="dark" on the html element or
+      removes the attribute (light), then setState({theme}).
       Screens that must re-init on theme change (HanziWriter colors) simply
       include state.theme in their deps — the re-render calls their init again.
 
@@ -147,6 +151,31 @@
   App.store = App.store || {};
   App.bootHooks = App.bootHooks || [];
   App.hw = null;
+
+  /* ---------- storage-key map + behavior seams (desktop-config.js overrides) ----------
+     Mobile defaults. The desktop client loads desktop-config.js between
+     core.js and data.js, which replaces App.keys WHOLESALE with the canonical
+     site keys and swaps persistTheme/saveGuide. Therefore every consumer must
+     resolve App.keys.<x> at call time — never cache a key at load time. */
+
+  App.keys = {
+    welcome: 'hsk4m-welcome', firstrun: 'hsk4m-firstrun', goal: 'hsk4m-goal',
+    mastered: 'hsk4m-mastered', attempts: 'hsk4m-attempts', guide: 'hsk4m-guide',
+    theme: 'hsk4m-theme', lang: 'hsk4m-lang', notif: 'hsk4m-notif',
+    progress: 'hsk4m-progress', migrated: 'hsk4m-migrated',
+    preOrder: 'hsk4m-pre-order' /* sessionStorage checkout marker (more.js) */
+  };
+
+  /* Theme persistence seam: mobile dual-writes its own key AND the site key so
+     index.html's pre-paint script (which reads hsk4_theme) stays consistent. */
+  App.persistTheme = function (theme) {
+    App.store.set(App.keys.theme, theme);
+    App.store.set('hsk4_theme', theme);
+  };
+
+  /* Guide-path persistence seam: mobile stores the 0-based step-index array
+     as-is. (Desktop overrides this to write the site's 1-based object form.) */
+  App.saveGuide = function (arr) { App.store.setJSON(App.keys.guide, arr); };
 
   function warn(e) { try { if (window.console && console.warn) console.warn('[App]', e); } catch (x) {} }
 
@@ -438,7 +467,7 @@
   document.addEventListener('input', handleInput);
   document.addEventListener('change', handleInput);
 
-  /* ---------- theme (writes hsk4m-theme AND hsk4_theme; attr on html el) ---------- */
+  /* ---------- theme (persists via App.persistTheme seam; attr on html el) ---------- */
 
   function applyThemeAttr(theme) {
     try {
@@ -449,8 +478,7 @@
   }
 
   App.actions.setTheme = function (theme) {
-    App.store.set('hsk4m-theme', theme);
-    App.store.set('hsk4_theme', theme);
+    App.persistTheme(theme);
     applyThemeAttr(theme);
     App.setState({ theme: theme }); /* char detail deps include theme ⇒ HanziWriter re-inits (prototype line 2137) */
   };
@@ -464,7 +492,10 @@
 
   /* ---------- one-time migration of legacy on-device progress ----------
      Port of prototype lines 1513-1530, extended per contract:
-     also migrates hsk4_progress_{i} → the hsk4m-progress map.
+     also migrates hsk4_progress_{i} → the App.keys.progress map.
+     SOURCE site keys stay literal by design; only the TARGETS go through
+     App.keys, so on desktop (canonical keys) the theme/mastered/guide copies
+     become same-key no-ops while the result/progress folding still works.
      Legacy shapes (exams/index.html):
        hsk4_result_{i}   = { pct, correct, total, ts }
        hsk4_progress_{i} = { answers, flags, currentQ, elapsed, ts }        */
@@ -474,15 +505,15 @@
 
   function migrateLegacy() {
     try {
-      if (localStorage.getItem('hsk4m-migrated') === '1') return;
+      if (localStorage.getItem(App.keys.migrated) === '1') return;
       var has = function (k) { return localStorage.getItem(k) != null; };
-      if (!has('hsk4m-theme')) {
+      if (!has(App.keys.theme)) {
         var t = localStorage.getItem('hsk4_theme');
-        if (t === 'dark' || t === 'light') localStorage.setItem('hsk4m-theme', t);
+        if (t === 'dark' || t === 'light') localStorage.setItem(App.keys.theme, t);
       }
-      if (!has('hsk4m-mastered') && has('hsk4-vocab-mastered')) localStorage.setItem('hsk4m-mastered', localStorage.getItem('hsk4-vocab-mastered'));
-      if (!has('hsk4m-guide') && has('hsk4-guide-path')) localStorage.setItem('hsk4m-guide', localStorage.getItem('hsk4-guide-path'));
-      if (!has('hsk4m-attempts')) {
+      if (!has(App.keys.mastered) && has('hsk4-vocab-mastered')) localStorage.setItem(App.keys.mastered, localStorage.getItem('hsk4-vocab-mastered'));
+      if (!has(App.keys.guide) && has('hsk4-guide-path')) localStorage.setItem(App.keys.guide, localStorage.getItem('hsk4-guide-path'));
+      if (!has(App.keys.attempts)) {
         var atts = [];
         for (var i = 0; i < LEGACY_TEST_COUNT; i++) {
           var raw = localStorage.getItem('hsk4_result_' + i);
@@ -496,11 +527,11 @@
         }
         if (atts.length) {
           atts.sort(function (a, b) { return a.ts - b.ts; });
-          localStorage.setItem('hsk4m-attempts', JSON.stringify(atts));
-          localStorage.setItem('hsk4m-firstrun', '1');
+          localStorage.setItem(App.keys.attempts, JSON.stringify(atts));
+          localStorage.setItem(App.keys.firstrun, '1');
         }
       }
-      if (!has('hsk4m-progress')) {
+      if (!has(App.keys.progress)) {
         var prog = {}, found = false;
         for (var j = 0; j < LEGACY_TEST_COUNT; j++) {
           var praw = localStorage.getItem('hsk4_progress_' + j);
@@ -521,9 +552,9 @@
             found = true;
           } catch (e2) {}
         }
-        if (found) localStorage.setItem('hsk4m-progress', JSON.stringify(prog));
+        if (found) localStorage.setItem(App.keys.progress, JSON.stringify(prog));
       }
-      localStorage.setItem('hsk4m-migrated', '1');
+      localStorage.setItem(App.keys.migrated, '1');
     } catch (e) {}
   }
 
@@ -555,15 +586,17 @@
 
     /* load persisted state (prototype componentDidMount, minus demo props) */
     var s = App.state;
-    s.welcome = App.store.get('hsk4m-welcome') !== 'done';
+    s.welcome = App.store.get(App.keys.welcome) !== 'done';
 
-    var mastered = App.store.getJSON('hsk4m-mastered', null);
+    var mastered = App.store.getJSON(App.keys.mastered, null);
     if (Array.isArray(mastered)) s.vMastered = mastered;
 
     var theme = null;
-    var t = App.store.get('hsk4m-theme');
+    var t = App.store.get(App.keys.theme);
     if (t === 'dark' || t === 'light') theme = t;
     if (!theme) {
+      /* site-key fallback (deliberately literal — on desktop App.keys.theme
+         already IS hsk4_theme and this read is a no-op) */
       var t2 = App.store.get('hsk4_theme');
       if (t2 === 'dark' || t2 === 'light') theme = t2;
     }
@@ -573,30 +606,31 @@
     }
     s.theme = theme;
 
-    var l = App.store.get('hsk4m-lang');
+    var l = App.store.get(App.keys.lang);
     if (l === 'en' || l === 'ru') s.uiLang = l;
 
-    var n = App.store.get('hsk4m-notif');
+    var n = App.store.get(App.keys.notif);
     if (n != null) s.notif = n === '1';
 
-    var attempts = App.store.getJSON('hsk4m-attempts', null);
+    var attempts = App.store.getJSON(App.keys.attempts, null);
     if (Array.isArray(attempts)) s.attempts = attempts;
 
-    var g = App.store.getJSON('hsk4m-goal', null);
+    var g = App.store.getJSON(App.keys.goal, null);
     if (g && g.level) { s.goalLevel = g.level; s.goalScore = g.score; }
 
-    var f = App.store.get('hsk4m-firstrun');
+    var f = App.store.get(App.keys.firstrun);
     s.firstRun = (f === '1' || f === '0') ? (f === '1') : true;
 
-    var prog = App.store.getJSON('hsk4m-progress', null);
+    var prog = App.store.getJSON(App.keys.progress, null);
     if (prog && typeof prog === 'object' && !Array.isArray(prog)) s.progress = prog;
 
-    var guide = App.store.getJSON('hsk4m-guide', null);
+    var guide = App.store.getJSON(App.keys.guide, null);
     if (Array.isArray(guide)) s.guideDone = guide;
     else if (guide && typeof guide === 'object') {
       /* legacy hsk4-guide-path stored an object map keyed by data-step "1".."8"
-         (1-based) — convert to this app's 0-based indices and normalize the
-         stored value so the object form doesn't linger */
+         (1-based) — convert to this app's 0-based indices, then re-persist via
+         the App.saveGuide seam (mobile normalizes to the array form; desktop
+         writes the site-compatible object form back) */
       var gd = [];
       for (var gk in guide) {
         if (!Object.prototype.hasOwnProperty.call(guide, gk) || !guide[gk] || !/^\d+$/.test(gk)) continue;
@@ -604,7 +638,7 @@
         if (gi >= 0 && gi <= 7 && gd.indexOf(gi) === -1) gd.push(gi);
       }
       s.guideDone = gd;
-      App.store.setJSON('hsk4m-guide', gd);
+      App.saveGuide(gd); /* seam: desktop re-persists the site's object form */
     }
 
     applyThemeAttr(theme);

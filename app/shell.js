@@ -69,10 +69,14 @@
     return streak;
   }
 
-  /* share formulas with other modules without clobbering theirs */
+  /* share formulas with other modules without clobbering theirs
+     (function declarations hoist, so the view-model exports below are safe) */
   if (!App.util.bandScore) App.util.bandScore = bandScore;
   if (!App.util.estScore) App.util.estScore = estScore;
   if (!App.util.calcStreak) App.util.calcStreak = calcStreak;
+  if (!App.util.skillsData) App.util.skillsData = skillsData;
+  if (!App.util.weeklyData) App.util.weeklyData = weeklyData;
+  if (!App.util.computeHome) App.util.computeHome = computeHome;
 
   function scrollTop() {
     try {
@@ -735,12 +739,12 @@
 
   /* welcome (prototype 1558-1568) */
   function saveGoal() {
-    try { localStorage.setItem('hsk4m-goal', JSON.stringify({ level: App.state.goalLevel, score: App.state.goalScore })); } catch (e) {}
+    try { localStorage.setItem(App.keys.goal, JSON.stringify({ level: App.state.goalLevel, score: App.state.goalScore })); } catch (e) {}
   }
   A.wNext = function () {
     var s = App.state;
     if ((s.welcomeStep || 0) >= 2) {
-      try { localStorage.setItem('hsk4m-welcome', 'done'); localStorage.setItem('hsk4m-firstrun', '1'); } catch (e) {}
+      try { localStorage.setItem(App.keys.welcome, 'done'); localStorage.setItem(App.keys.firstrun, '1'); } catch (e) {}
       saveGoal();
       App.setState({ welcome: false, welcomeStep: 0, firstRun: true });
       return;
@@ -749,7 +753,7 @@
   };
   A.wBack = function () { App.setState({ welcomeStep: Math.max(0, (App.state.welcomeStep || 0) - 1) }); };
   A.wSkip = function () {
-    try { localStorage.setItem('hsk4m-welcome', 'done'); localStorage.setItem('hsk4m-firstrun', '1'); } catch (e) {}
+    try { localStorage.setItem(App.keys.welcome, 'done'); localStorage.setItem(App.keys.firstrun, '1'); } catch (e) {}
     App.setState({ welcome: false, firstRun: true });
   };
   A.setGoalLevel = function (l) { App.setState({ goalLevel: l }, saveGoal); };

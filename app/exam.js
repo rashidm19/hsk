@@ -244,7 +244,9 @@
     var sec = s.examSection;
     return (sec && sec !== 'all') ? all.filter(function (q) { return q.section === sec; }) : all;
   }
-  function examLimit() { return activeQuestions().length * 63; }
+  /* seam: desktop-config.js sets App.examMinSeconds=120 → max(120, q*63);
+     mobile has no floor (examMinSeconds undefined → 0) — behavior unchanged */
+  function examLimit() { return Math.max(App.examMinSeconds || 0, activeQuestions().length * 63); }
   function secCounts(idx) {
     var qc = QCACHE[idx]; if (!qc) return null;
     var c = { Listening: 0, Reading: 0, Writing: 0 };
@@ -373,7 +375,9 @@
       var isExam = s.examMode === 'exam';
       var remain = Math.max(0, lim - (s.elapsed || 0));
       var txt = isExam ? fmtTime(remain) : fmtTime(s.elapsed || 0);
-      var urgent = isExam && remain <= 60;
+      /* seam: desktop-config.js sets App.timerWarnSecs=300 (pill red at ≤5 min);
+         mobile default stays 60 */
+      var urgent = isExam && remain <= (App.timerWarnSecs || 60);
       var tEl = document.querySelector('[data-live="examTime"]');
       if (tEl && tEl.textContent !== txt) tEl.textContent = txt;
       var pill = document.querySelector('[data-live="examTimePill"]');
@@ -413,7 +417,7 @@
 
   /* ================= engine (port 1634-1709) ================= */
 
-  /* Persist the live attempt into the progress map (hsk4m-progress) on every change.
+  /* Persist the live attempt into the progress map (App.keys.progress) on every change.
      Section drills are throwaway practice and never touch stored progress. */
   function persistLive() {
     var s = stateOf();
@@ -429,7 +433,7 @@
       ts: (prev && prev.ts) || Date.now()   /* "Started {date}" on the history card */
     };
     s.progress = progress;   /* silent — exams list is off-screen during play */
-    storeSet('hsk4m-progress', progress);
+    storeSet(App.keys.progress, progress);
   }
 
   function beginExam(resume) {
@@ -558,7 +562,7 @@
         ts: (prev && prev.ts) || Date.now()
       };
       patch.progress = progress;
-      storeSet('hsk4m-progress', progress);
+      storeSet(App.keys.progress, progress);
     }
     App.setState(patch);
     scrollTop();
@@ -573,7 +577,7 @@
       var progress = assign({}, s.progress);
       delete progress[s.testIdx];
       patch.progress = progress;
-      storeSet('hsk4m-progress', progress);
+      storeSet(App.keys.progress, progress);
     }
     App.setState(patch);
     scrollTop();
@@ -597,8 +601,8 @@
     var attempts = (s.attempts || []).concat([at]);
     var progress = assign({}, s.progress);
     delete progress[s.testIdx];
-    storeSet('hsk4m-attempts', attempts);
-    storeSet('hsk4m-progress', progress);
+    storeSet(App.keys.attempts, attempts);
+    storeSet(App.keys.progress, progress);
     App.setState({ examView: 'results', navOpen: false, examExitConfirm: false, audioPlaying: false, audioProg: 0, attempts: attempts, progress: progress });
     scrollTop();
   };

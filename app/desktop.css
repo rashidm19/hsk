@@ -1,0 +1,101 @@
+/* ==========================================================================
+   app/desktop.css — HSK Prep DESKTOP post-paywall client (/app/).
+   Ported from the desktop prototype's head <style> block (desktop-proto lines
+   14-59) per CONTRACT §5 + map-styles.md. All tokens come from /common.css;
+   [data-theme="dark"] on the html element remaps them automatically.
+   Loaded INSTEAD of app.css by the index.html client picker — the two
+   stylesheets never coexist on a page.
+   Owner: shell agent. Other desktop modules compose inline var(--*) styles
+   plus the .hv*/.field utilities below ONLY — do not extend this file.
+   ========================================================================== */
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body.app{background:var(--paper);color:var(--ink);font-family:'DM Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+#app-root button{font-family:inherit;color:inherit}
+#app-root input,#app-root textarea,#app-root select{font-family:inherit}
+
+/* interaction feel (proto 19-22): global transition set powers the .hv
+   overlay fades; pressed state = 1px dip on true-hover devices */
+button,a,[role="button"],[data-hoverable]{transition:background-color .15s ease,color .15s ease,border-color .15s ease,box-shadow .18s ease,transform .13s cubic-bezier(.2,.7,.3,1)}
+@media (hover:hover){button:not(:disabled):active{transform:translateY(1px)}}
+button:disabled{cursor:not-allowed}
+button:focus-visible,a:focus-visible,[role="button"]:focus-visible,[data-hoverable]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* dark-mode fix for the cream CTAs on gradient heroes (proto 25) */
+[data-theme="dark"] [data-plan-cta]{color:var(--invert-bg) !important}
+
+/* sidebar rail (proto 26-37) — collapse only exists ≥981px; state persisted
+   in localStorage 'hsk-rail', rendered as [data-rail="true"] */
+[data-sidebar]{transition:width .18s ease}
+[data-rail-toggle]{display:none;align-items:center;justify-content:center}
+@media (min-width:981px){
+  [data-rail-toggle]{display:inline-flex}
+  [data-sidebar][data-rail="true"]{width:74px !important;padding-left:12px !important;padding-right:12px !important}
+  [data-sidebar][data-rail="true"] nav button > span{display:none !important}
+  [data-sidebar][data-rail="true"] nav button{justify-content:center;gap:0;padding-left:0;padding-right:0}
+  [data-sidebar][data-rail="true"] [data-logo-btn]{justify-content:center;padding-left:0;padding-right:0}
+  [data-sidebar][data-rail="true"] [data-logo-btn] > span:last-child{display:none !important}
+  [data-sidebar][data-rail="true"] [data-profile-btn]{justify-content:center;padding-left:0;padding-right:0}
+  [data-sidebar][data-rail="true"] [data-profile-btn] > span:nth-child(2),[data-sidebar][data-rail="true"] [data-profile-btn] > svg{display:none !important}
+}
+
+/* links / selection / themed visible scrollbars (proto 38-43) */
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-hover);text-decoration:underline}
+::selection{background:var(--accent-soft);color:var(--ink)}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-thumb{background:var(--mist);border-radius:99px;border:3px solid var(--paper)}
+::-webkit-scrollbar-thumb:hover{background:var(--stone)}
+
+/* keyframes (proto 44-47) */
+@keyframes hsk-spin{to{transform:rotate(360deg)}}
+@keyframes hsk-fade{from{opacity:0}to{opacity:1}}
+@keyframes hsk-pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+
+/* drawer / narrow-viewport collapse (proto 48-59) */
+[data-hamburger]{display:none}
+[data-scrim]{display:none}
+@media (max-width:980px){
+  [data-sidebar]{position:fixed !important;left:0;top:0;z-index:60;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:var(--shadow-lg)}
+  [data-sidebar][data-open="true"]{transform:none}
+  [data-hamburger]{display:inline-flex !important}
+  [data-scrim][data-open="true"]{display:block !important}
+  [data-grid-2]{grid-template-columns:minmax(0,1fr) !important}
+  [data-qnav]{grid-template-columns:repeat(auto-fill,42px) !important;justify-content:start !important}
+  [data-qnav-aside]{position:static !important;top:auto !important}
+  [data-content]{padding:24px 18px 72px !important}
+}
+
+/* full-viewport root + region containers (core.js regions). Unlike mobile's
+   440px frame, the desktop page scrolls normally — shell/player/results are
+   plain document flow. The sheet/overlay hosts stay UNPOSITIONED with no
+   z-index: every registered child renders its own position:fixed wrapper +
+   scrim, so the children join the ROOT stacking context and their z-indexes
+   order globally per CONTRACT §5 (lang 82 < ⌘K 90 < exit 95 < welcome 110).
+   Do not re-position or z-index these hosts — a positioned host traps its
+   children in a sibling stacking context and inverts that order. */
+#app-root{min-height:100vh;background:var(--paper)}
+#r-shell:empty,#r-player:empty,#r-results:empty{display:none}
+#r-sheet:empty,#r-overlay:empty{display:none}
+
+/* hover/focus utilities replacing the prototype's style-hover / style-focus
+   attribute dialect (map-styles §4): .hv = the 129× standard inset overlay;
+   the named variants cover the known bespoke recipes. Hover recipes are
+   gated on (hover:hover) so touch-classified devices at desktop widths
+   (iPads ≥700px) don't get sticky hover states; focus rules stay global. */
+@media (hover:hover){
+  .hv:hover{box-shadow:inset 0 0 0 999px color-mix(in srgb, var(--ink) 8%, transparent)}
+  .hv-ink:hover{color:var(--ink) !important}
+  .hv-accent:hover{background:var(--accent-hover) !important}
+  .hv-accent2:hover{color:var(--accent-hover) !important}
+  .hv-raise:hover{transform:translateY(-1px);filter:brightness(1.04)}
+}
+.field:focus{border-color:var(--accent) !important;box-shadow:0 0 0 3px var(--accent-tint) !important;background:var(--surface) !important;outline:none}
+
+/* toast — core.js App.toast() appends .hsk-toast to #app-root (proto 66) */
+.hsk-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:120;max-width:min(85vw,480px);background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:12px;box-shadow:var(--shadow-lg);font-size:var(--fs-sm);font-weight:600;line-height:1.35;text-align:center;animation:hsk-pop .2s ease both;pointer-events:none}
+
+/* the DS floating theme toggle is build-injected on pages linking common.css;
+   the app's topbar has its own toggle — hide the injected one */
+body.app .theme-toggle{display:none}
