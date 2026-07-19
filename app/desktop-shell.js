@@ -64,8 +64,8 @@
       return new Date(sub.expires_at).getTime() > Date.now();
     } catch (e) { return false; }
   }
-  /* mirror of more.js PLAN_NAMES (module-local there) — welcome step-0 copy */
-  var PLAN_NAMES = { '1mo': '1-month access', '3mo': '3-month access', '12mo': '12-month access' };
+  /* welcome step-0 copy — plan names come from more.js's exported map */
+  function planNames() { return (App.more && App.more.PLAN_NAMES) || {}; }
 
   function stopExamTimer() {
     try {
@@ -346,9 +346,9 @@
       if (last) {
         (last.sections || []).forEach(function (x) { if (x.name === d.name && x.tot) pct = Math.round(x.ok / x.tot * 100); });
       }
-      if (pct == null && attempts && attempts.length && attempts[attempts.length - 1].pct != null) pct = Math.round(attempts[attempts.length - 1].pct);
-      if (pct == null) pct = 0;
-      return { name: d.name, cn: d.cn, pct: pct, w: pct + '%', color: d.color };
+      /* no sectioned attempt (e.g. only legacy site results were folded in):
+         show an honest em-dash instead of repeating the overall pct ×3 */
+      return { name: d.name, cn: d.cn, pct: pct, w: (pct == null ? 0 : pct) + '%', color: d.color };
     });
   }
 
@@ -483,7 +483,7 @@
       + '<div style="display:flex;flex-direction:column;gap:16px;margin-top:18px">'
       + secAccData(s.attempts).map(function (a) {
         return '<div>'
-          + '<div style="display:flex;justify-content:space-between;font-size:var(--fs-sm);margin-bottom:6px"><span style="color:var(--ink);font-weight:600">' + esc(a.name) + ' <span class="chinese" style="color:var(--stone);font-weight:400">' + esc(a.cn) + '</span></span><span style="font-weight:700;color:var(--ink)">' + a.pct + '%</span></div>'
+          + '<div style="display:flex;justify-content:space-between;font-size:var(--fs-sm);margin-bottom:6px"><span style="color:var(--ink);font-weight:600">' + esc(a.name) + ' <span class="chinese" style="color:var(--stone);font-weight:400">' + esc(a.cn) + '</span></span><span style="font-weight:700;color:var(--ink)">' + (a.pct == null ? '—' : a.pct + '%') + '</span></div>'
           + '<div style="height:7px;border-radius:99px;background:var(--surface-sunken);overflow:hidden"><div style="height:100%;width:' + a.w + ';background:' + a.color + ';border-radius:99px"></div></div>'
           + '</div>';
       }).join('')
@@ -564,7 +564,7 @@
 
     var body = '';
     if (step === 0) {
-      var planName = (s.sub && s.sub.plan && PLAN_NAMES[s.sub.plan]) ? PLAN_NAMES[s.sub.plan] : '';
+      var planName = (s.sub && s.sub.plan && planNames()[s.sub.plan]) ? planNames()[s.sub.plan] : '';
       var planLine = planName
         ? 'Your <b style="color:var(--ink)">' + esc(planName) + '</b> is active.'
         : 'Your <b style="color:var(--ink)">access</b> is active.';
@@ -652,19 +652,19 @@
     try { r = App.data.search(q) || {}; } catch (e) { r = {}; }
     var items = [];
     (r.words || []).forEach(function (w) {
-      items.push({ group: 'Words', glyph: w.word, glyphBg: 'var(--accent-soft)', glyphFg: 'var(--accent)', glyphFs: 'var(--fs-lg)', title: w.word, sub: w.pinyin + ' · ' + w.meaning, action: 'pickWord', arg: w.id, num: typeof w.id === 'number' });
+      items.push({ group: 'Words', glyph: w.word, glyphBg: 'var(--accent-soft)', glyphFg: 'var(--accent)', glyphFs: 'var(--fs-lg)', title: w.word, sub: w.pinyin + ' · ' + w.meaning, action: 'pickWord', arg: w.id });
     });
     (r.chars || []).forEach(function (c) {
-      items.push({ group: 'Characters', glyph: c.char, glyphBg: 'var(--gold-soft)', glyphFg: 'var(--gold)', glyphFs: 'var(--fs-lg)', title: c.char, sub: c.pinyin + ' · ' + c.meaning, action: 'pickChar', arg: c.char, num: false });
+      items.push({ group: 'Characters', glyph: c.char, glyphBg: 'var(--gold-soft)', glyphFg: 'var(--gold)', glyphFs: 'var(--fs-lg)', title: c.char, sub: c.pinyin + ' · ' + c.meaning, action: 'pickChar', arg: c.char });
     });
     (r.grammar || []).forEach(function (g) {
-      items.push({ group: 'Grammar', glyph: g.cn, glyphBg: 'var(--accent-soft)', glyphFg: 'var(--accent)', glyphFs: 'var(--fs-xs)', title: g.en, sub: g.structure, action: 'pickGrammar', arg: g.slug, num: false });
+      items.push({ group: 'Grammar', glyph: g.cn, glyphBg: 'var(--accent-soft)', glyphFg: 'var(--accent)', glyphFs: 'var(--fs-xs)', title: g.en, sub: g.structure, action: 'pickGrammar', arg: g.slug });
     });
     (r.pairs || []).forEach(function (p) {
-      items.push({ group: 'Confusables', glyph: p.a, glyphBg: 'var(--jade-soft)', glyphFg: 'var(--jade)', glyphFs: 'var(--fs-lg)', title: p.a + ' vs ' + p.b, sub: p.cat, action: 'pickPair', arg: p.slug, num: false });
+      items.push({ group: 'Confusables', glyph: p.a, glyphBg: 'var(--jade-soft)', glyphFg: 'var(--jade)', glyphFs: 'var(--fs-lg)', title: p.a + ' vs ' + p.b, sub: p.cat, action: 'pickPair', arg: p.slug });
     });
     (r.exams || []).forEach(function (t) {
-      items.push({ group: 'Exams', glyph: '模', glyphBg: 'var(--jade-soft)', glyphFg: 'var(--jade)', glyphFs: 'var(--fs-lg)', title: t.title, sub: (t.official ? 'Official HSK 4 exam' : 'Practice paper') + (t.q ? ' · ' + t.q + ' questions' : ''), action: 'pickExam', arg: (typeof t.idx === 'number') ? t.idx : 0, num: true });
+      items.push({ group: 'Exams', glyph: '模', glyphBg: 'var(--jade-soft)', glyphFg: 'var(--jade)', glyphFs: 'var(--fs-lg)', title: t.title, sub: (t.official ? 'Official HSK 4 exam' : 'Practice paper') + (t.q ? ' · ' + t.q + ' questions' : ''), action: 'pickExam', arg: (typeof t.idx === 'number') ? t.idx : 0 });
     });
     searchCacheKey = key;
     searchCacheItems = items;
@@ -962,10 +962,21 @@
         cur = k === 'ArrowDown' ? Math.min(items.length - 1, cur + 1) : Math.max(0, cur - 1);
         s.searchSel = cur;                 /* direct write + subregion swap */
         App.update('d-search-results');
+        /* keep the cursor row visible inside the scrollable results pane */
+        try {
+          var selEl = document.querySelector('[data-selidx="' + cur + '"]');
+          if (selEl && selEl.scrollIntoView) selEl.scrollIntoView({ block: 'nearest' });
+        } catch (x) {}
         return;
       }
       if (k === 'Enter') { e.preventDefault(); runSearchItem(s.searchSel || 0); return; }
       return;
+    }
+
+    /* Esc closes centered modals (desktop convention; palette handled above) */
+    if (k === 'Escape') {
+      if (s.examExitConfirm) { e.preventDefault(); if (A.cancelExit) A.cancelExit(); return; }
+      if (s.langSheet) { e.preventDefault(); if (A.closeLang) A.closeLang(); return; }
     }
 
     /* exam player keys — reuse exam.js actions; never hijack typing or the

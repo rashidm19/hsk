@@ -901,16 +901,9 @@
      mobile toggleGuide → App.saveGuide site-object seam), pass-guarantee
      callout (verbatim).
      ========================================================================== */
-  var GUIDE_PATH = [
-    { t: "Take one mock exam (don't study first)", cn: false },
-    { t: '把字句 + 被字句 + 比较句', cn: true },
-    { t: '才/就, 又/再, 的/得/地', cn: true },
-    { t: 'Daily Life + Food + Transport vocabulary', cn: false },
-    { t: '复句 connectors (尽管…但是, 不管…都, etc.)', cn: true },
-    { t: 'Sentence ordering + Paragraph writing', cn: false },
-    { t: 'Remaining vocabulary + all confusable words', cn: false },
-    { t: 'Mock exams under timed conditions', cn: false }
-  ];
+  /* the 8 learning-path steps live once, in more.js (indexes are shared
+     with the site's /guide/ page via hsk4-guide-path) */
+  function guidePath() { return (App.more && App.more.GUIDE_PATH) || []; }
   var GD_SECTIONS = [
     { cn: '听力', en: 'Listening', detail: 'Dialogues & short passages — every clip plays twice', q: '45 questions', time: '~30 min' },
     { cn: '阅读', en: 'Reading', detail: 'Gap-fill, ordering and comprehension', q: '40 questions', time: '40 min' },
@@ -926,7 +919,7 @@
         '<div style="text-align:right;flex:none"><div style="font-weight:700;color:var(--ink);font-size:var(--fs-sm)">' + g.q + '</div><div style="font-size:var(--fs-xs);color:var(--stone)">' + g.time + '</div></div>' +
         '</div>';
     }).join('');
-    var steps = GUIDE_PATH.map(function (p, i) {
+    var steps = guidePath().map(function (p, i) {
       var on = done.indexOf(i) >= 0;
       var boxBd = on ? 'var(--jade)' : 'var(--border-subtle)';
       var boxBg = on ? 'var(--jade)' : 'transparent';
@@ -940,7 +933,7 @@
         '<span class="' + cls + '" style="flex:1;font-size:var(--fs-md);color:' + txt + ';text-decoration:' + strike + '">' + esc(p.t) + '</span>' +
         '</button>';
     }).join('');
-    var pct = Math.round(done.length / GUIDE_PATH.length * 100) + '%';
+    var pct = Math.round(done.length / guidePath().length * 100) + '%';
     return '<div style="max-width:820px;margin:0 auto;animation:hsk-fade .4s ease both">' +
       subHeader('Study Guide', '学习指南', 'Everything about the HSK 4 exam — 2026 format') +
       '<div style="' + CARD + ';margin-bottom:20px">' +
@@ -955,7 +948,7 @@
       '<div style="margin-top:10px;font-size:var(--fs-xs);color:var(--stone);line-height:1.55">Section time ≈ 95 min (<span class="chinese">听力</span> ~30 · <span class="chinese">阅读</span> ~40 · <span class="chinese">书写</span> ~25) + ~10 min to fill in the answer sheet = <b style="color:var(--ink)">~105 min</b> total — same as the exam-mode countdown.</div>' +
       '</div>' +
       '<div style="' + CARD + '">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="' + LBL + '">Your study path · <span class="chinese">学习计划</span></span><span style="font-size:var(--fs-sm);font-weight:700;color:var(--accent)">' + done.length + ' / ' + GUIDE_PATH.length + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="' + LBL + '">Your study path · <span class="chinese">学习计划</span></span><span style="font-size:var(--fs-sm);font-weight:700;color:var(--accent)">' + done.length + ' / ' + guidePath().length + '</span></div>' +
       '<div style="height:8px;border-radius:99px;background:var(--surface-sunken);overflow:hidden;margin-bottom:18px"><div style="height:100%;width:' + pct + ';background:var(--jade);border-radius:99px;transition:width .3s ease"></div></div>' +
       '<div style="display:flex;flex-direction:column;gap:4px">' + steps + '</div>' +
       '</div>' +

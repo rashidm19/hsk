@@ -974,6 +974,7 @@
      (desktop-more.js); the very objects/functions mobile checkout uses. */
   App.more.PLANS = PLANS;
   App.more.PLAN_NAMES = PLAN_NAMES;
+  App.more.GUIDE_PATH = GUIDE_PATH;
   App.more.PLAN_PRICES = PLAN_PRICES;
   App.more.PLAN_MONTHS = PLAN_MONTHS;
   App.more.subInfo = subInfo;
