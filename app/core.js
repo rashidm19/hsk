@@ -485,6 +485,58 @@
   document.addEventListener('input', handleInput);
   document.addEventListener('change', handleInput);
 
+  /* ---------- keyboard shortcuts (MOBILE shell only) ----------
+     The desktop client already installs its own keydown handler in
+     desktop-shell.js (palette + exam keys), so this binds ONLY for the mobile
+     shell (window.HSK_DESKTOP is set by the boot picker before core.js) — else
+     both would fire and double every action. Exam player: 1–N select the answer
+     (skips self-check writing), F flags, ←/→ move between questions, Esc
+     opens/cancels the exit-confirm. Cmd/Ctrl+K toggles search; Esc closes it.
+     Ignored while typing in a field (except Esc, which blurs). */
+  function isTypingTarget(t) {
+    if (!t) return false;
+    var tag = t.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable;
+  }
+  function act(name, arg) { var fn = App.actions[name]; if (typeof fn === 'function') { try { fn(arg); } catch (e) { warn(e); } return true; } return false; }
+  if (!window.HSK_DESKTOP) document.addEventListener('keydown', function (e) {
+    try {
+      var s = App.state;
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        if (s.searchOpen) act('closeSearch'); else act('openSearch');
+        return;
+      }
+      if (isTypingTarget(e.target)) {
+        if (e.key === 'Escape') { try { e.target.blur(); } catch (x) {} if (s.searchOpen) { e.preventDefault(); act('closeSearch'); } }
+        return;
+      }
+      if (e.altKey || e.metaKey || e.ctrlKey) return; /* leave OS/browser combos alone */
+
+      if (e.key === 'Escape') {
+        if (s.searchOpen) { e.preventDefault(); act('closeSearch'); return; }
+        if (s.examView === 'player') { e.preventDefault(); act(s.examExitConfirm ? 'cancelExit' : 'askExit'); return; }
+        if (s.langSheet) { e.preventDefault(); act('closeLang'); return; }
+        return;
+      }
+
+      if (s.examView === 'player' && !s.examExitConfirm) {
+        var cur = null;
+        try { var qs = App.exam && App.exam.activeQuestions ? App.exam.activeQuestions() : []; cur = qs[s.curQ]; } catch (e2) {}
+        if (!cur) return;
+        if (/^[1-9]$/.test(e.key)) {
+          if (cur.selfCheck) return;                 /* writing is self-checked, no MC */
+          var oi = parseInt(e.key, 10) - 1;
+          if (oi < (cur.options || []).length) { e.preventDefault(); act('answerQ', oi); }
+          return;
+        }
+        if (e.key === 'f' || e.key === 'F') { e.preventDefault(); act('toggleFlagCur'); return; }
+        if (e.key === 'ArrowRight') { e.preventDefault(); act('nextQ'); return; }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); act('prevQ'); return; }
+      }
+    } catch (err) { warn(err); }
+  });
+
   /* ---------- theme (persists via App.persistTheme seam; attr on html el) ---------- */
 
   function applyThemeAttr(theme) {

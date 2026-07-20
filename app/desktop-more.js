@@ -420,23 +420,8 @@
       '</div></div>';
   };
 
-  /* Sign out — CONTRACT §4.8. Real API is HSKAuth.signOut() (auth.js:375);
-     redirect pattern mirrors auth-ui.js (go on either outcome + 5 s failsafe). */
-  App.actions.signOut = function (arg, ev) {
-    var btn = null;
-    try { btn = ev && ev.target && ev.target.closest ? ev.target.closest('[data-a="signOut"]') : null; } catch (e0) {}
-    if (btn) { try { btn.disabled = true; btn.textContent = 'Signing out…'; } catch (e1) {} }
-    var done = false;
-    var go = function () { if (done) return; done = true; try { location.href = '/'; } catch (e2) {} };
-    try {
-      if (window.HSKAuth && typeof HSKAuth.signOut === 'function') {
-        HSKAuth.signOut().then(go, go);
-        setTimeout(go, 5000);
-        return;
-      }
-    } catch (e3) {}
-    go();
-  };
+  /* Sign out — shared implementation lives in more.js (App.actions.signOut),
+     loaded before this file; the desktop settings button reuses it. */
 
   /* ============================================================================
      PROFILE EDIT (prototype 264-302) — full screen over the more.js draft

@@ -716,7 +716,8 @@
       '<span style="display:flex;align-items:center;gap:11px"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span style="font-weight:600;color:var(--ink);font-size:.92rem">Notifications</span></span>' +
       '<span style="display:flex;align-items:center;gap:11px"><span style="font-size:.82rem;color:var(--stone);font-weight:600">' + notifSub + '</span><span style="position:relative;width:38px;height:22px;flex:none;background:' + notifTrackBg + ';border-radius:99px;transition:background .2s ease"><span style="position:absolute;top:2px;left:' + notifKnobX + ';width:18px;height:18px;background:#fff;border-radius:99px;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .2s ease"></span></span></span>' +
       '</button>' +
-      '</div>';
+      '</div>' +
+      '<button type="button" class="pa" data-a="signOut" style="width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--border-subtle);background:var(--surface);color:var(--bad-ink);border-radius:14px;padding:14px;font-weight:700;font-size:.88rem;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Sign out</button>';
   }
 
   /* ============================ SHEETS ============================ */
@@ -884,6 +885,25 @@
     var next = !S().notif;
     lsSet(App.keys.notif, next ? '1' : '0');
     set({ notif: next });
+  };
+
+  /* Sign out — shared by both clients (mobile profile + desktop settings).
+     Real API is HSKAuth.signOut() (auth.js); redirect on either outcome with a
+     5 s failsafe so the button never spins forever. */
+  A.signOut = function (arg, ev) {
+    var btn = null;
+    try { btn = ev && ev.target && ev.target.closest ? ev.target.closest('[data-a="signOut"]') : null; } catch (e0) {}
+    if (btn) { try { btn.disabled = true; btn.textContent = 'Signing out…'; } catch (e1) {} }
+    var done = false;
+    var go = function () { if (done) return; done = true; try { location.href = '/'; } catch (e2) {} };
+    try {
+      if (window.HSKAuth && typeof HSKAuth.signOut === 'function') {
+        HSKAuth.signOut().then(go, go);
+        setTimeout(go, 5000);
+        return;
+      }
+    } catch (e3) {}
+    go();
   };
 
   /* plan sheet */

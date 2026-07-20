@@ -607,9 +607,13 @@
       fetchJson('/data/traps.json', []),
       fetchJson('/data/app-data.json', {}),
     ]).then(function (res) {
-      /* Both critical catalog files failed → reject (boot shows the
-         connection toast) and clear `loading` so a later call can retry. */
-      if (loadErrors.indexOf('/data/index.json') >= 0 && loadErrors.indexOf('/data/vocabulary.json') >= 0) {
+      /* Either core catalog file failing → reject so boot shows the error+retry
+         screen (App.reloadProgress/dataError) instead of a silently-empty Mock
+         Exams or Vocabulary section. index.json backs exams + the dashboard
+         counts; vocabulary.json backs the word bank + study vocab. Clear
+         `loading` so retryDataLoad can re-fetch. Secondary catalogs
+         (characters/grammar/…) keep their [] fallback and render an empty state. */
+      if (loadErrors.indexOf('/data/index.json') >= 0 || loadErrors.indexOf('/data/vocabulary.json') >= 0) {
         loading = null;
         throw new Error('catalog load failed: ' + loadErrors.join(', '));
       }
