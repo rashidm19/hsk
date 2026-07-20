@@ -213,13 +213,18 @@
   }
   var C_SORT_NAMES = { freq: 'Most tested', strokes: 'Fewest strokes', 'default': 'Default' };
 
+  var CHAR_CAP = 120; /* bound the no-search render + per-keystroke rebuild; a search narrows below this */
+  function charCapFoot(shown, total) {
+    return total > shown ? '<div style="text-align:center;color:var(--stone);font-size:var(--fs-sm);margin:14px 0 4px">Showing ' + shown + ' of ' + total + ' · search to narrow</div>' : '';
+  }
   function charGridInner(s) {
     var f = charFiltered(s);
     var out = '';
     if (f.write.length) {
+      var wShown = f.write.slice(0, CHAR_CAP);
       out += '<div style="' + LBL + ';margin-bottom:12px"><span class="chinese">书写</span> · Handwriting — ' + f.write.length + ' of ' + f.writeTotal + '</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:32px">' +
-        f.write.map(function (c) {
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:8px">' +
+        wShown.map(function (c) {
           return '<button type="button" data-a="openChar" data-arg="' + esc(c.char) + '" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow);padding:18px 12px;cursor:pointer">' +
             '<span class="serif-cn" style="font-size:3rem;line-height:1;color:var(--ink);font-weight:700">' + esc(c.char) + '</span>' +
             '<span style="font-size:var(--fs-sm);color:var(--accent);font-weight:600">' + esc(c.pinyin) + '</span>' +
@@ -227,18 +232,19 @@
             '<span style="font-size:var(--fs-xs);color:var(--gold);background:var(--gold-soft);padding:1px 8px;border-radius:99px;font-weight:600">🔥 ' + esc(c.freq || 0) + '×</span>' +
             '</button>';
         }).join('') +
-        '</div>';
+        '</div>' + charCapFoot(wShown.length, f.write.length) + '<div style="height:24px"></div>';
     }
     if (f.recog.length) {
+      var rShown = f.recog.slice(0, CHAR_CAP);
       out += '<div style="' + LBL + ';margin-bottom:12px"><span class="chinese">认读</span> · Recognition only — ' + f.recog.length + ' of ' + f.recogTotal + '</div>' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px">' +
-        f.recog.map(function (c) {
+        rShown.map(function (c) {
           return '<button type="button" data-a="openChar" data-arg="' + esc(c.char) + '" style="display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface-sunken);border:1px solid var(--border-subtle);border-radius:14px;padding:14px 10px;cursor:pointer">' +
             '<span class="serif-cn" style="font-size:2.2rem;line-height:1;color:var(--ink)">' + esc(c.char) + '</span>' +
             '<span style="font-size:var(--fs-xs);color:var(--stone)">' + esc(c.pinyin) + '</span>' +
             '</button>';
         }).join('') +
-        '</div>';
+        '</div>' + charCapFoot(rShown.length, f.recog.length);
     }
     if (!f.write.length && !f.recog.length) {
       out += '<div style="text-align:center;padding:60px 20px;background:var(--surface);border:1px dashed var(--border-subtle);border-radius:16px"><div class="serif-cn" style="font-size:2.6rem;color:var(--mist);line-height:1">空</div><div style="font-weight:600;color:var(--ink);font-size:var(--fs-md);margin-top:8px">No characters found</div><div style="font-size:var(--fs-sm);color:var(--stone);margin-top:2px">Try a different search term.</div></div>';
@@ -315,6 +321,8 @@
   }
 
   App.d.chars = function (s) {
+    /* Characters needs the phase-2 catalog (M7); spinner until it's in */
+    if (!s.dataReadyFull) return '<div style="max-width:1280px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:120px 20px;text-align:center"><span aria-hidden="true" style="width:24px;height:24px;border:3px solid var(--mist);border-top-color:var(--accent);border-radius:99px;animation:hsk-spin .8s linear infinite"></span><div style="color:var(--stone);font-size:var(--fs-sm);font-weight:600">Loading…</div></div>';
     if (s.curChar) return charDetailHtml(s);
     var tiers = charTiers();
     return '<div style="max-width:1280px;margin:0 auto;animation:hsk-fade .4s ease both">' +

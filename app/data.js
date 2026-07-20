@@ -589,13 +589,16 @@
     return null;
   };
 
-  var loading = null;
-  D.load = function () {
-    if (loading) return loading;
-    loadErrors = [];
-    loading = Promise.all([
-      fetchJson('/data/index.json', []),
-      fetchJson('/data/vocabulary.json', []),
+  var loading = null;      // phase 1 (core: index + vocabulary + app-data)
+  var loadingFull = null;  // phase 2 (Characters + Study catalogs)
+
+  /* Phase 2 — the heavy catalogs (~460 KB) that only Characters + Study need.
+     Streams in the background after core so first paint isn't gated on them.
+     Failure resolves (readyFull = true) so those sections show an empty state,
+     not a permanent spinner. */
+  function loadRest(appData) {
+    if (loadingFull) return loadingFull;
+    loadingFull = Promise.all([
       fetchJson('/data/hsk4-characters.json', []),
       fetchJson('/data/hsk4-rendu-characters.json', []),
       fetchJson('/data/character-data.json', {}),
@@ -605,43 +608,10 @@
       fetchJson('/data/topics.json', {}),
       fetchJson('/data/task-dialogues.json', {}),
       fetchJson('/data/traps.json', []),
-      fetchJson('/data/app-data.json', {}),
-    ]).then(function (res) {
-      /* Either core catalog file failing → reject so boot shows the error+retry
-         screen (App.reloadProgress/dataError) instead of a silently-empty Mock
-         Exams or Vocabulary section. index.json backs exams + the dashboard
-         counts; vocabulary.json backs the word bank + study vocab. Clear
-         `loading` so retryDataLoad can re-fetch. Secondary catalogs
-         (characters/grammar/…) keep their [] fallback and render an empty state. */
-      if (loadErrors.indexOf('/data/index.json') >= 0 || loadErrors.indexOf('/data/vocabulary.json') >= 0) {
-        loading = null;
-        throw new Error('catalog load failed: ' + loadErrors.join(', '));
-      }
-      var index = res[0], vocab = res[1], writeChars = res[2], recogChars = res[3],
-          charData = res[4], grammar = res[5], confusables = res[6], sentences = res[7],
-          topics = res[8], dialogues = res[9], rawTraps = res[10], appData = res[11];
-      var vocabFreq = (appData && appData.vocabFreq) || {};
+    ]).then(function (r) {
+      var writeChars = r[0], recogChars = r[1], charData = r[2], grammar = r[3],
+          confusables = r[4], sentences = r[5], topics = r[6], dialogues = r[7], rawTraps = r[8];
       var charFreq = (appData && appData.charFreq) || {};
-
-      D.TESTS = (index || []).map(function (meta, i) {
-        var official = !!meta.official;
-        return {
-          idx: i,
-          file: meta.file,
-          title: meta.title,
-          titleNorm: D.norm(meta.title),
-          short: String(meta.title || '').replace(/^HSK 4 /, ''),
-          sub: official ? 'Official HSK 4 exam' : 'Practice paper',
-          glyph: official ? 'HSK4' : String(i + 1).padStart(2, '0'),
-          official: official,
-          q: meta.questions || 0,
-        };
-      });
-      D.TOTAL_QUESTIONS = D.TESTS.reduce(function (s, t) { return s + t.q; }, 0);
-
-      D.WORDS = normalizeWords(vocab, vocabFreq);
-      wordByIdMap = {};
-      D.WORDS.forEach(function (w) { wordByIdMap[w.id] = w; });
 
       D.CHARS = normalizeChars(writeChars, recogChars, charData, charFreq);
       charByCharMap = {};
@@ -671,10 +641,66 @@
 
       D.PRACTICE = buildPracticePool(D.GRAMMAR, D.CONFUSABLES);
 
+      D.readyFull = true;
+      return D;
+    }).catch(function () { D.readyFull = true; return D; });
+    return loadingFull;
+  }
+
+  D.load = function () {
+    if (loading) return loading;
+    loadErrors = [];
+    /* Phase 1 — core catalogs only (index + vocabulary + app-data). Enough for the
+       dashboard, Mock Exams, Vocabulary and Statistics, so first paint doesn't wait
+       on the ~460 KB Characters/Study data (phase 2, loadRest). */
+    loading = Promise.all([
+      fetchJson('/data/index.json', []),
+      fetchJson('/data/vocabulary.json', []),
+      fetchJson('/data/app-data.json', {}),
+    ]).then(function (res) {
+      /* Either core catalog file failing → reject so boot shows the error+retry
+         screen (dataError) instead of a silently-empty Mock Exams or Vocabulary.
+         Clear `loading` so retryDataLoad can re-fetch. */
+      if (loadErrors.indexOf('/data/index.json') >= 0 || loadErrors.indexOf('/data/vocabulary.json') >= 0) {
+        loading = null;
+        throw new Error('catalog load failed: ' + loadErrors.join(', '));
+      }
+      var index = res[0], vocab = res[1], appData = res[2];
+      var vocabFreq = (appData && appData.vocabFreq) || {};
+
+      D.TESTS = (index || []).map(function (meta, i) {
+        var official = !!meta.official;
+        return {
+          idx: i,
+          file: meta.file,
+          title: meta.title,
+          titleNorm: D.norm(meta.title),
+          short: String(meta.title || '').replace(/^HSK 4 /, ''),
+          sub: official ? 'Official HSK 4 exam' : 'Practice paper',
+          glyph: official ? 'HSK4' : String(i + 1).padStart(2, '0'),
+          official: official,
+          q: meta.questions || 0,
+        };
+      });
+      D.TOTAL_QUESTIONS = D.TESTS.reduce(function (s, t) { return s + t.q; }, 0);
+
+      D.WORDS = normalizeWords(vocab, vocabFreq);
+      wordByIdMap = {};
+      D.WORDS.forEach(function (w) { wordByIdMap[w.id] = w; });
+
       D.ready = true;
+      loadRest(appData);   // kick phase 2 in the background (non-blocking)
       return D;
     });
     return loading;
+  };
+
+  /* Resolves when phase 2 (Characters/Study data) is in. Characters + Study gate
+     on D.readyFull / App.state.dataReadyFull until then. */
+  D.loadFull = function () {
+    if (loadingFull) return loadingFull;
+    if (loading) return loading.then(function () { return loadingFull || D; });
+    return Promise.resolve(D);
   };
 
 })();

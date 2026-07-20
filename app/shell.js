@@ -588,6 +588,7 @@
   function loadingHtml() {
     return '<div style="display:flex;flex-direction:column;height:100%;min-height:0;align-items:center;justify-content:center;gap:14px">'
       + '<span class="serif-cn" style="width:64px;height:64px;display:grid;place-items:center;background:var(--accent);color:#fff8f1;border-radius:18px;font-size:34px;font-weight:700">汉</span>'
+      + '<span aria-hidden="true" style="width:22px;height:22px;border:3px solid var(--mist);border-top-color:var(--accent);border-radius:99px;animation:hsk-spin .8s linear infinite"></span>'
       + '<div style="color:var(--stone);font-size:.9rem;font-weight:600">Loading your prep…</div>'
       + '</div>';
   }
@@ -660,13 +661,13 @@
      subregion (focus preservation, core.js §2). */
   App.overlays.search = {
     open: function (s) { return !!s.searchOpen; },
-    deps: function (s) { return [s.dataReady]; },
+    deps: function (s) { return [s.dataReady, s.dataReadyFull]; },
     html: searchHtml
   };
 
   /* focus-safe subregion for search results (core.js subregion machinery) */
   App.screens['search-results'] = {
-    deps: function (s) { return [s.gQuery, s.dataReady]; },
+    deps: function (s) { return [s.gQuery, s.dataReady, s.dataReadyFull]; },
     html: searchResultsHtml
   };
 

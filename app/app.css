@@ -24,6 +24,7 @@ body.app{background:#e4ddd0;font-family:'DM Sans',system-ui,-apple-system,sans-s
 @keyframes hsk-pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
 @keyframes hsk-audio{from{width:4%}to{width:100%}}
 @keyframes hsk-ring{from{stroke-dashoffset:339}}
+@keyframes hsk-spin{to{transform:rotate(360deg)}}
 
 /* Outer phone frame (prototype line 33). data-theme lives on the html element
    (site convention), NOT on this div. 100dvh with 100vh fallback. */

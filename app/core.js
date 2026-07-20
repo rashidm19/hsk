@@ -127,7 +127,7 @@
     profileSheet: false, planSheet: false, langSheet: false, uiLang: 'en', notif: true,
     profile: { name: '', email: '', country: '' },
     profileDraft: { name: '', email: '', country: '' },
-    sub: null, dataReady: false,
+    sub: null, dataReady: false, dataReadyFull: false,
     examView: 'list', introOpen: false, testIdx: 0,
     curQ: 0, answers: {}, flags: {}, elapsed: 0, reviewFilter: 'all', reviewOpen: {},
     audioPlaying: false, audioProg: 0, audioPlays: {}, navOpen: false,
@@ -648,18 +648,28 @@
 
   /* Kick the async data load; drive dataReady / dataError so the shell can show a
      skeleton, then either the app or a retry screen. Re-runnable (retryDataLoad). */
+  /* Phase 2 (Characters/Study data) resolves separately; flip dataReadyFull so
+     those sections swap their spinner for content. Failure still flips it (empty
+     state, not a permanent spinner). */
+  function markFull() {
+    try {
+      if (App.data && typeof App.data.loadFull === 'function') {
+        App.data.loadFull().then(function () { App.setState({ dataReadyFull: true }); }, function () { App.setState({ dataReadyFull: true }); });
+      } else { App.setState({ dataReadyFull: true }); }
+    } catch (e) { App.setState({ dataReadyFull: true }); }
+  }
   function loadData() {
-    if (!(App.data && typeof App.data.load === 'function')) { App.setState({ dataReady: true }); return; }
+    if (!(App.data && typeof App.data.load === 'function')) { App.setState({ dataReady: true, dataReadyFull: true }); return; }
     App.setState({ dataError: false });
     try {
       var p = App.data.load();
       if (p && typeof p.then === 'function') {
         p.then(
-          function () { App.setState({ dataReady: true, dataError: false }); },
+          function () { App.setState({ dataReady: true, dataError: false }); markFull(); },
           function (err) { warn(err); App.setState({ dataError: true }); App.toast('Failed to load study data — check your connection'); }
         );
       } else {
-        App.setState({ dataReady: true });
+        App.setState({ dataReady: true, dataReadyFull: true });
       }
     } catch (e) { warn(e); App.setState({ dataError: true }); }
   }

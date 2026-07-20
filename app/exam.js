@@ -1089,7 +1089,9 @@
     withR.sort(function (a, b) { return (a.r - b.r) || (a.name === 'Writing' ? -1 : b.name === 'Writing' ? 1 : 0); });
     var weak = withR[0] || { name: 'Writing', cn: '书写', r: 0 };
     var weakR = weak.r != null ? weak.r : 0;
-    var ringOffset = 339 - (339 * pct / 100);
+    /* ring reflects the /300 band (same basis as the pass verdict) so they never
+       disagree; raw counts live in the stat cards below */
+    var ringOffset = 339 - (339 * Math.max(0, Math.min(300, band)) / 300);
     var wrong = total - correct - skipped;
 
     var sectionsHtml = secList.map(function (x) {
@@ -1178,7 +1180,7 @@
         '<div style="position:relative;overflow:hidden;background:' + heroBg + ';color:#fff8f1;border-radius:22px;padding:24px;box-shadow:var(--shadow-lg);text-align:center">' +
           '<div style="position:relative;width:120px;height:120px;margin:0 auto">' +
             '<svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="11"/><circle cx="60" cy="60" r="54" fill="none" stroke="#fff8f1" stroke-width="11" stroke-linecap="round" stroke-dasharray="339" stroke-dashoffset="' + ringOffset + '" style="transition:stroke-dashoffset 1s ease"/></svg>' +
-            '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:2.1rem;font-weight:700;line-height:1">' + pct + '%</span><span style="font-size:.72rem;opacity:.9">' + correct + '/' + total + '</span></div>' +
+            '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:2.1rem;font-weight:700;line-height:1">' + band + '</span><span style="font-size:.72rem;opacity:.9">/ 300</span></div>' +
           '</div>' +
           '<div class="serif-cn" style="font-size:1.5rem;font-weight:700;margin-top:14px">' + esc(verdict) + '</div>' +
           '<div style="opacity:.9;font-size:.88rem;margin-top:2px">' + esc(verdictEn) + ' · ' + esc(fmtTime(s.elapsed || 0)) + '</div>' +

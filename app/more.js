@@ -193,10 +193,16 @@
     else if (s.cSort === 'strokes') { write = write.slice().sort(strokeSort); } /* recognition tier has no stroke data → default order */
     return { write: write, recog: recog };
   }
+  var CHAR_CAP = 120; /* bound the no-search render + per-keystroke rebuild; a search narrows below this so all matches still show */
   function charGridsHtml(s) {
     var f = charFiltered(s);
+    var wShown = f.write.slice(0, CHAR_CAP);
+    var rShown = f.recog.slice(0, CHAR_CAP);
+    var capFoot = function (shown, total) {
+      return total > shown ? '<div style="text-align:center;color:var(--stone);padding:14px 4px 0;font-size:.8rem">Showing ' + shown + ' of ' + total + ' · search to narrow</div>' : '';
+    };
     var flame = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>';
-    var writeTiles = f.write.map(function (c) {
+    var writeTiles = wShown.map(function (c) {
       return '<button type="button" class="pa" data-a="openChar" data-arg="' + esc(c.char) + '" style="display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border-subtle);border-radius:15px;box-shadow:var(--shadow);padding:14px 8px;cursor:pointer">' +
         '<span class="serif-cn" style="font-size:2.4rem;line-height:1;color:var(--ink);font-weight:700">' + esc(c.char) + '</span>' +
         '<span style="font-size:.82rem;color:var(--accent);font-weight:600">' + esc(c.pinyin) + '</span>' +
@@ -204,16 +210,16 @@
         '<span style="display:inline-flex;align-items:center;gap:3px;font-size:.66rem;color:var(--gold);background:var(--gold-soft);padding:2px 8px;border-radius:99px;font-weight:700">' + flame + esc(c.freq || 0) + '×</span>' +
         '</button>';
     }).join('');
-    var recogTiles = f.recog.map(function (c) {
+    var recogTiles = rShown.map(function (c) {
       return '<button type="button" class="pa" data-a="openChar" data-arg="' + esc(c.char) + '" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--surface-sunken);border:1px solid var(--border-subtle);border-radius:12px;padding:11px 6px;cursor:pointer">' +
         '<span class="serif-cn" style="font-size:1.7rem;line-height:1;color:var(--ink)">' + esc(c.char) + '</span>' +
         '<span style="font-size:.68rem;color:var(--stone)">' + esc(c.pinyin) + '</span>' +
         '</button>';
     }).join('');
     return '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:10px">Writing tier · <span class="chinese">书写</span> · ' + f.write.length + ' of 150</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">' + writeTiles + '</div>' +
-      '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:10px">Recognition · <span class="chinese">认读</span> · ' + f.recog.length + ' of 291</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px">' + recogTiles + '</div>';
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">' + writeTiles + '</div>' + capFoot(wShown.length, f.write.length) +
+      '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin:20px 0 10px">Recognition · <span class="chinese">认读</span> · ' + f.recog.length + ' of 291</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px">' + recogTiles + '</div>' + capFoot(rShown.length, f.recog.length);
   }
   function findChar(ch) {
     var tiers = charTiers();
@@ -1074,12 +1080,19 @@
   }
 
   /* ============================ screen registration ============================ */
+  /* Characters + Study need the heavy phase-2 catalogs (M7 two-phase load); show
+     a spinner until dataReadyFull rather than a briefly-empty grid. */
+  function moreLoading() {
+    return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:80px 20px;text-align:center">'
+      + '<span aria-hidden="true" style="width:22px;height:22px;border:3px solid var(--mist);border-top-color:var(--accent);border-radius:99px;animation:hsk-spin .8s linear infinite"></span>'
+      + '<div style="color:var(--stone);font-size:.9rem;font-weight:600">Loading…</div></div>';
+  }
   function renderMore(s) {
     var v = s.moreView;
     var inner;
     if (!v) inner = menuHtml(s);
-    else if (v === 'characters') inner = charsHtml(s);
-    else if (v === 'study') inner = (App.screens.studySection ? App.screens.studySection(s) : (App.screens.study ? App.screens.study(s) : ''));
+    else if (v === 'characters') inner = s.dataReadyFull ? charsHtml(s) : moreLoading();
+    else if (v === 'study') inner = !s.dataReadyFull ? moreLoading() : (App.screens.studySection ? App.screens.studySection(s) : (App.screens.study ? App.screens.study(s) : ''));
     else if (v === 'stats') inner = statsHtml(s);
     else if (v === 'guide') inner = guideHtml(s);
     else if (v === 'profile') inner = profileHtml(s);

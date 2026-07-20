@@ -630,6 +630,8 @@
 
   App.d.study = function (s) {
     s = s || App.state || {};
+    /* Study needs the phase-2 catalogs (grammar/confusables/topics/…; M7) */
+    if (!s.dataReadyFull) return '<div style="max-width:1280px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:120px 20px;text-align:center"><span aria-hidden="true" style="width:24px;height:24px;border:3px solid var(--mist);border-top-color:var(--accent);border-radius:99px;animation:hsk-spin .8s linear infinite"></span><div style="color:var(--stone);font-size:var(--fs-sm);font-weight:600">Loading…</div></div>';
     var sub = s.studySub || 'hub';
     var inner;
     if (sub === 'grammar') inner = s.curGrammar ? grammarDetailHtml(s) : grammarListHtml();
