@@ -191,14 +191,22 @@
 
   /* ---------- store (all try/catch; full key names) ---------- */
 
+  /* Notify the (optional) cross-device sync layer of a durable write, so it can
+     schedule a debounced push. Skipped while hydrating (sync/boot writing local
+     from a merge) to avoid feedback loops. Fully guarded — no-op without sync.js. */
+  function noteWrite(k) {
+    if (App._hydrating) return;
+    if (App.sync && typeof App.sync.onWrite === 'function') { try { App.sync.onWrite(k); } catch (e) {} }
+  }
+
   App.store.get = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  App.store.set = function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} };
+  App.store.set = function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} noteWrite(k); };
   App.store.del = function (k) { try { localStorage.removeItem(k); } catch (e) {} };
   App.store.getJSON = function (k, fb) {
     try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? fb : v; }
     catch (e) { return fb; }
   };
-  App.store.setJSON = function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  App.store.setJSON = function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} noteWrite(k); };
 
   /* ---------- util ---------- */
 
@@ -604,15 +612,11 @@
     } catch (e) { warn(e); App.setState({ dataError: true }); }
   }
 
-  /* ---------- boot ---------- */
-
-  App.boot = function () {
-    if (App._booted) return;
-    App._booted = true;
-
-    migrateLegacy();
-
-    /* load persisted state (prototype componentDidMount, minus demo props) */
+  /* Read durable persisted progress from localStorage into App.state. Called at
+     boot and again by App.reloadProgress() after a cross-device sync merge, so
+     the two paths can never drift. Callers wrap in App._hydrating so the writes
+     here (guide re-persist) don't re-trigger a sync push. */
+  function loadPersisted() {
     var s = App.state;
     s.welcome = App.store.get(App.keys.welcome) !== 'done';
 
@@ -623,8 +627,8 @@
     var t = App.store.get(App.keys.theme);
     if (t === 'dark' || t === 'light') theme = t;
     if (!theme) {
-      /* site-key fallback (deliberately literal — on desktop App.keys.theme
-         already IS hsk4_theme and this read is a no-op) */
+      /* site-key fallback (deliberately literal — App.keys.theme already IS
+         hsk4_theme now, so this read is a no-op) */
       var t2 = App.store.get('hsk4_theme');
       if (t2 === 'dark' || t2 === 'light') theme = t2;
     }
@@ -665,10 +669,30 @@
         if (gi >= 0 && gi <= 7 && gd.indexOf(gi) === -1) gd.push(gi);
       }
       s.guideDone = gd;
-      App.saveGuide(gd); /* seam: desktop re-persists the site's object form */
+      App.saveGuide(gd);
     }
+  }
 
-    applyThemeAttr(theme);
+  /* Re-hydrate state from localStorage and re-render — used by the sync layer
+     after it merges remote progress into local storage. */
+  App.reloadProgress = function () {
+    App._hydrating = true;
+    try { loadPersisted(); applyThemeAttr(App.state.theme); } finally { App._hydrating = false; }
+    try { App.render(); } catch (e) { warn(e); }
+  };
+
+  /* ---------- boot ---------- */
+
+  App.boot = function () {
+    if (App._booted) return;
+    App._booted = true;
+
+    migrateLegacy();
+
+    /* load persisted state (prototype componentDidMount, minus demo props) */
+    App._hydrating = true;
+    try { loadPersisted(); } finally { App._hydrating = false; }
+    applyThemeAttr(App.state.theme);
 
     var pay = stripPayParam();
 

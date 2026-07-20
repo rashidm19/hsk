@@ -87,7 +87,7 @@
   }
 
   function persistMastered(next) {
-    try { localStorage.setItem(App.keys.mastered, JSON.stringify(next)); } catch (e) {}
+    App.store.setJSON(App.keys.mastered, next);
   }
 
   /* POS bucket helpers — chip filter matches ANY bucket the pos string carries

@@ -751,12 +751,12 @@
 
   /* welcome (prototype 1558-1568) */
   function saveGoal() {
-    try { localStorage.setItem(App.keys.goal, JSON.stringify({ level: App.state.goalLevel, score: App.state.goalScore })); } catch (e) {}
+    App.store.setJSON(App.keys.goal, { level: App.state.goalLevel, score: App.state.goalScore });
   }
   A.wNext = function () {
     var s = App.state;
     if ((s.welcomeStep || 0) >= 2) {
-      try { localStorage.setItem(App.keys.welcome, 'done'); localStorage.setItem(App.keys.firstrun, '1'); } catch (e) {}
+      App.store.set(App.keys.welcome, 'done'); App.store.set(App.keys.firstrun, '1');
       saveGoal();
       App.setState({ welcome: false, welcomeStep: 0, firstRun: true });
       return;
@@ -765,7 +765,7 @@
   };
   A.wBack = function () { App.setState({ welcomeStep: Math.max(0, (App.state.welcomeStep || 0) - 1) }); };
   A.wSkip = function () {
-    try { localStorage.setItem(App.keys.welcome, 'done'); localStorage.setItem(App.keys.firstrun, '1'); } catch (e) {}
+    App.store.set(App.keys.welcome, 'done'); App.store.set(App.keys.firstrun, '1');
     App.setState({ welcome: false, firstRun: true });
   };
   A.setGoalLevel = function (l) { App.setState({ goalLevel: l }, saveGoal); };

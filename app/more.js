@@ -29,7 +29,8 @@
     if (typeof App.setState === 'function') { App.setState(patch, cb); return; }
     try { Object.assign(App.state = App.state || {}, patch); if (cb) cb(); } catch (e) {}
   }
-  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  /* route through App.store so the cross-device sync write-hook fires (lang/notif) */
+  function lsSet(k, v) { if (App.store && App.store.set) { App.store.set(k, v); return; } try { localStorage.setItem(k, v); } catch (e) {} }
   function scrollTop() {
     try {
       if (App.util && typeof App.util.scrollTop === 'function') return App.util.scrollTop();
