@@ -247,9 +247,20 @@
       + '</div>';
   }
 
+  /* Data load failed — error + retry instead of a spinner that never resolves.
+     data.js nulls its `loading` latch on settle, so retryDataLoad re-runs it. */
+  function errorHtml() {
+    return '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;background:var(--paper);padding:24px;text-align:center">'
+      + '<span style="width:60px;height:60px;display:grid;place-items:center;background:var(--bad-bg);color:var(--bad-ink);border-radius:16px;font-size:28px" aria-hidden="true">⚠</span>'
+      + '<div style="color:var(--ink);font-size:var(--fs-lg);font-weight:700">Couldn’t load your study data</div>'
+      + '<div style="color:var(--stone);font-size:var(--fs-sm);max-width:320px;line-height:1.55">Check your connection and try again.</div>'
+      + '<button type="button" data-a="retryDataLoad" class="hv" style="border:0;background:var(--accent);color:var(--invert-fg);border-radius:12px;padding:12px 24px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">Try again</button>'
+      + '</div>';
+  }
+
   function shellHtml(s) {
     if (s.examView && s.examView !== 'list') return ''; /* r-player / r-results own the viewport */
-    if (!s.dataReady) return loadingHtml();
+    if (!s.dataReady) return s.dataError ? errorHtml() : loadingHtml();
     if (s.introOpen) return callD('intro', s); /* fullscreen exam intro, no sidebar (proto 1344-1406) */
     return '<div style="display:flex;min-height:100vh;background:var(--paper)">'
       + '<div data-scrim data-open="' + (s.menuOpen ? 'true' : 'false') + '" data-a="closeMenu" style="position:fixed;inset:0;background:rgba(26,22,20,.4);z-index:55"></div>'

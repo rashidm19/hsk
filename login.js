@@ -10,7 +10,7 @@
   if (!host) return;
 
   var params = new URLSearchParams(location.search);
-  var NEXT = (window.HSKAuth && HSKAuth.safeNextPath) ? HSKAuth.safeNextPath(params.get('next')) : '/exams/';
+  var NEXT = (window.HSKAuth && HSKAuth.safeNextPath) ? HSKAuth.safeNextPath(params.get('next')) : '/app/';
   var FUNNEL = '/quiz/';
   var email = '';
 
@@ -41,7 +41,7 @@
     host.innerHTML =
       '<h1 class="lg-h1">Local preview</h1>' +
       '<p class="lg-sub">Auth is not configured — the site is open.</p>' +
-      '<a class="lg-btn" href="/exams/">Enter</a>';
+      '<a class="lg-btn" href="/app/">Enter</a>';
     return;
   }
 

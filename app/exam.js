@@ -123,7 +123,8 @@
       audio: q.audio || '', sharedTrack: '', transcript: q.transcript || '',
       image: q.image || '', note: q.note || '', explanation: q.explanation || '',
       passage: '', orderLines: [], bank: null, words: '',
-      prompt: '', options: options, correct: correct
+      prompt: '', options: options, correct: correct,
+      selfCheck: false, modelAnswers: null
     };
     if (section === 'Listening') {
       out.typeLabel = (type === 'listening_true_false') ? '判断对错' : '听力选择';
@@ -149,14 +150,18 @@
       out.typeLabel = '阅读理解';
       passageSplit(out, text);
     } else if (type === 'writing_construction') {
+      /* Free-response writing: 看图造句 carries many equally-valid model sentences,
+         完成句子 supplies the one finished sentence — and the source has no
+         correct_answer_index. It is NOT auto-gradable as multiple-choice (the old
+         /exams/ pages self-check it). Mark self-check, keep the model answer(s) for
+         a reveal, and drop options so scoring skips it and never marks a valid
+         sentence wrong. The band is derived from the auto-scored sections. */
+      out.selfCheck = true;
+      out.modelAnswers = options.slice();
+      out.options = [];
       if (out.image) {
         out.typeLabel = '看图造句';
         out.prompt = stripNum(text);
-        if (options.length > 4) {
-          var vis = options.slice(0, 4);
-          if (correct >= 4) { vis[3] = options[correct]; out.correct = 3; }
-          out.options = vis;
-        }
       } else {
         out.typeLabel = '完成句子';
         var tx = stripNum(text);
@@ -493,8 +498,10 @@
   function computeAttempt() {
     var s = stateOf();
     var qs = activeQuestions();
-    var secMap = {}; var correct = 0;
+    var secMap = {}; var correct = 0; var total = 0;
     qs.forEach(function (q, i) {
+      if (q.selfCheck) return;               // writing is self-assessed, not auto-scored
+      total++;
       var a = (s.answers || {})[i];
       var ok = a != null && a === q.correct;
       if (ok) correct++;
@@ -502,7 +509,6 @@
       secMap[q.section].tot++;
       if (ok) secMap[q.section].ok++;
     });
-    var total = qs.length;
     var t = testAt(s.testIdx);
     return {
       testIdx: s.testIdx, title: shortTitle(t), official: !!t.official,
@@ -865,6 +871,25 @@
     '</div>';
   }
 
+  /* Writing self-check: reveal the model answer(s) for the learner to compare.
+     Shared with the desktop client (App.exam.writeModelHtml). Uses a native
+     <details> so no extra state/action is needed. */
+  function writeModelHtml(q) {
+    var ans = ((q && q.modelAnswers) || []).filter(Boolean);
+    if (!ans.length) return '';
+    var many = ans.length > 1;
+    var body = many
+      ? '<ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px">' +
+          ans.map(function (a) { return '<li class="chinese" style="font-size:1rem;color:var(--ink);line-height:1.7">' + esc(cleanOpt(a)) + '</li>'; }).join('') +
+        '</ul>'
+      : '<div class="chinese" style="font-size:1.08rem;color:var(--ink);line-height:1.85">' + esc(cleanOpt(ans[0])) + '</div>';
+    return '<details class="hsk-selfcheck" style="background:var(--surface-sunken);border:1px solid var(--border-subtle);border-radius:14px;padding:14px 16px;margin-bottom:8px">' +
+      '<summary style="cursor:pointer;font-weight:700;color:var(--accent);font-size:.92rem">显示参考答案 · ' + (many ? 'Sample answers' : 'Model answer') + '</summary>' +
+      '<div style="margin-top:12px">' + body + '</div>' +
+      '<div style="margin-top:11px;font-size:.78rem;color:var(--stone);line-height:1.55">On the real HSK, 书写 is graded by a human examiner — compare your sentence with the model and self-assess.</div>' +
+    '</details>';
+  }
+
   /* ---------- exam player (prototype 944-1035) ---------- */
 
   function playerTpl() {
@@ -962,7 +987,9 @@
             '<span class="chinese" style="font-size:.74rem;color:var(--stone)">' + esc(cur.typeLabel) + '</span>' +
           '</div>' +
           blocks +
-          '<div style="display:flex;flex-direction:column;gap:11px">' + optsHtml + '</div>' +
+          (cur.selfCheck
+            ? '<div style="font-size:.85rem;color:var(--stone);background:var(--surface-sunken);border-radius:11px;padding:11px 14px;margin-bottom:12px;line-height:1.55">Write your sentence, then check it against the model. This section is self-assessed — it is not auto-scored.</div>' + writeModelHtml(cur)
+            : '<div style="display:flex;flex-direction:column;gap:11px">' + optsHtml + '</div>') +
           '<div style="text-align:center;color:var(--mist);font-size:.72rem;margin-top:20px">‹ swipe to move between questions ›</div>' +
         '</div>' +
       '</div>' +
@@ -981,18 +1008,21 @@
   function resultsTpl() {
     var s = stateOf();
     var qs = activeQuestions();
-    var total = qs.length;
+    var qCount = qs.length;
     var answers = s.answers || {};
     var head = '<div style="flex:none;display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--border-subtle)">' +
       '<button type="button" data-a="exitExam" aria-label="Close" class="pa" style="width:38px;height:38px;flex:none;display:grid;place-items:center;border:1px solid var(--border-subtle);background:var(--surface);border-radius:11px;cursor:pointer;color:var(--ink)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
       '<div style="font-weight:700;color:var(--ink);font-size:.95rem">Results</div></div>';
-    if (!total) {
+    if (!qCount) {
       return '<div data-screen-label="Exam results" style="display:flex;flex-direction:column;height:100%;min-height:0;background:var(--paper);animation:hsk-fade .25s ease both">' + head + '</div>';
     }
 
-    var correct = 0, skipped = 0;
+    var writeQs = qs.filter(function (q) { return q.selfCheck; });
+    var correct = 0, skipped = 0, total = 0;
     var secMap = {};
     qs.forEach(function (q, i) {
+      if (q.selfCheck) return;               // writing self-assessed below, not auto-scored
+      total++;
       var a = answers[i]; var has = a != null; var ok = has && a === q.correct;
       if (ok) correct++;
       if (!has) skipped++;
@@ -1000,15 +1030,56 @@
       secMap[q.section].tot++;
       if (ok) secMap[q.section].ok++;
     });
-    var pct = Math.round(correct / total * 100);
-    /* Canon (X-2): verdict graded against the pass line by band score, not raw %. */
+    var pct = total ? Math.round(correct / total * 100) : 0;
+    /* Canon (X-2): verdict graded against the pass line by band score, not raw %.
+       Writing is self-assessed, so the band is projected from the auto-scored
+       sections onto the /300 HSK scale (mean section % × 3, pass 180) — the same
+       scaling App.util.bandScore uses for <3-section attempts, so the results
+       verdict and the dashboard estimate stay in agreement. */
     var secList = Object.keys(secMap).map(function (k) { return secMap[k]; });
     var secScores = secList.map(function (x) { return x.tot ? Math.round(x.ok / x.tot * 100) : 0; });
-    var band = secScores.reduce(function (a, b) { return a + b; }, 0);
-    var bandMax = (secScores.length || 1) * 100;
-    var pass = Math.round(bandMax * 0.6);
+    var meanSec = secScores.length ? secScores.reduce(function (a, b) { return a + b; }, 0) / secScores.length : 0;
+    var band = Math.round(meanSec * 3);
+    var pass = 180;
     var passed = band >= pass;
     var rBand = pass ? band / pass : 0;
+
+    /* Writing self-check card — model answer(s) for the learner to compare against.
+       Rendered for any paper that carries 书写 items (full papers and the Writing
+       section drill). */
+    var writeReviewHtml = '';
+    if (writeQs.length) {
+      writeReviewHtml = '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-top:16px">' +
+        '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:6px">书写 · Writing — self-check</div>' +
+        '<div style="font-size:.82rem;color:var(--stone);line-height:1.55;margin-bottom:14px">Not auto-scored. Compare each answer with the model and mark yourself honestly.</div>' +
+        '<div style="display:flex;flex-direction:column;gap:14px">' +
+        writeQs.map(function (q) {
+          var promptLine = q.prompt ? '<div class="chinese" style="font-size:.92rem;color:var(--ink);font-weight:600;margin-bottom:8px">' + esc(q.prompt) + '</div>' : '';
+          var imgLine = q.image ? '<div style="text-align:center;margin-bottom:8px"><img src="' + esc(q.image) + '" alt="HSK 4 看图造句 prompt" loading="lazy" style="max-width:160px;max-height:150px;border-radius:10px"></div>' : '';
+          var wordsLine = q.words ? '<div class="chinese" style="background:var(--surface-sunken);border-radius:10px;padding:9px 12px;font-size:.92rem;font-weight:600;color:var(--ink);text-align:center;letter-spacing:.04em;margin-bottom:8px">' + esc(q.words.split(/\s+/).join(' · ')) + '</div>' : '';
+          return '<div style="border:1px solid var(--border-subtle);border-radius:13px;padding:13px">' + promptLine + imgLine + wordsLine + writeModelHtml(q) + '</div>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    /* Writing-only drill (Writing section practice): nothing auto-scored — show the
+       self-check card without a band/ring verdict. */
+    if (!total) {
+      return '<div data-screen-label="Exam results" style="display:flex;flex-direction:column;height:100%;min-height:0;background:var(--paper);animation:hsk-fade .25s ease both">' +
+        head +
+        '<div class="hsk-scroll" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px 16px 24px">' +
+          '<div style="background:var(--accent-soft);border:1px solid var(--border-subtle);border-radius:18px;padding:20px;text-align:center">' +
+            '<div class="serif-cn" style="font-size:1.3rem;font-weight:700;color:var(--ink)">书写练习完成</div>' +
+            '<div style="font-size:.88rem;color:var(--stone);margin-top:4px">Writing is self-assessed — check your sentences against the models below.</div>' +
+          '</div>' +
+          writeReviewHtml +
+          '<div style="display:flex;gap:11px;margin-top:20px">' +
+            '<button type="button" data-a="restartExam" class="pa" style="flex:1;border:1.5px solid var(--border-subtle);background:var(--surface);color:var(--ink);border-radius:14px;padding:15px;font-weight:700;font-size:.9rem;cursor:pointer">Retake</button>' +
+            '<button type="button" data-a="resultsNextTest" class="pa" style="flex:1;border:0;background:var(--accent);color:#fff8f1;border-radius:14px;padding:15px;font-weight:700;font-size:.9rem;cursor:pointer">Next paper →</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
     var verdict, verdictEn, heroBg;
     if (passed) { verdict = '恭喜通过!'; verdictEn = 'Passed — you cleared the bar'; heroBg = 'linear-gradient(150deg,#2f6349,#24503b)'; }
     else if (rBand >= 0.85) { verdict = '就差一点!'; verdictEn = 'So close — almost at the pass line'; heroBg = 'linear-gradient(140deg,#8a6420,#6b4d17)'; }
@@ -1051,6 +1122,7 @@
     var rWrFg = s.reviewFilter === 'wrong' ? 'var(--ink)' : 'var(--stone)';
 
     var reviewHtml = qs.map(function (q, i) {
+      if (q.selfCheck) return '';            // writing lives in its own self-check card
       var a = answers[i]; var has = a != null; var ok = has && a === q.correct;
       if (s.reviewFilter !== 'all' && ok) return '';
       var statusBg = ok ? 'var(--ok-bg)' : 'var(--bad-bg)';
@@ -1116,11 +1188,12 @@
           '<div style="flex:1;text-align:center;background:var(--bad-bg);border-radius:14px;padding:14px 8px"><div style="font-size:1.4rem;font-weight:700;color:var(--bad-ink)">' + wrong + '</div><div style="font-size:.72rem;color:var(--stone);font-weight:600">Wrong</div></div>' +
           '<div style="flex:1;text-align:center;background:var(--surface-sunken);border-radius:14px;padding:14px 8px"><div style="font-size:1.4rem;font-weight:700;color:var(--stone)">' + skipped + '</div><div style="font-size:.72rem;color:var(--stone);font-weight:600">Skipped</div></div>' +
         '</div>' +
-        '<div style="text-align:center;font-size:.74rem;color:var(--stone);margin-top:12px">' + total + ' questions · scored /300</div>' +
+        '<div style="text-align:center;font-size:.74rem;color:var(--stone);margin-top:12px">' + total + ' auto-scored · projected to /300' + (writeQs.length ? ' · writing self-checked below' : '') + '</div>' +
         '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-top:16px">' +
           '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:15px">By section</div>' +
           '<div style="display:flex;flex-direction:column;gap:14px">' + sectionsHtml + '</div>' +
         '</div>' +
+        writeReviewHtml +
         focusHtml +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin:22px 2px 12px"><span style="font-size:1.05rem;font-weight:700;color:var(--ink)">Review answers</span>' +
           '<div style="display:flex;background:var(--surface-sunken);border-radius:10px;padding:3px">' +
@@ -1316,6 +1389,7 @@
   ex.beginExam = beginExam;
   ex.beginSection = beginSection;
   ex.updateTimerDom = updateTimerDom;
+  ex.writeModelHtml = writeModelHtml;
   App.exam = ex;
 
 })();

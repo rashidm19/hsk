@@ -6,11 +6,14 @@
 (function (root) {
   'use strict';
 
+  // '/app/' is the post-paywall home (the redesigned client). It is the default
+  // landing for a subscribed user with no explicit deep-link; a valid explicit
+  // `next` (e.g. a gated content page the user was headed to) is still honoured.
   function safeNext(raw) {
-    var next = raw || '/exams/';
-    try { next = decodeURIComponent(next); } catch (e) { next = '/exams/'; }
+    var next = raw || '/app/';
+    try { next = decodeURIComponent(next); } catch (e) { next = '/app/'; }
     if (next.charAt(0) !== '/' || next.slice(0, 2) === '//' || next.indexOf('\\') !== -1) {
-      next = '/exams/';
+      next = '/app/';
     }
     return next;
   }

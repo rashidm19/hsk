@@ -400,11 +400,15 @@
       blocks += '<p class="chinese" style="font-size:var(--fs-lg);font-weight:600;color:var(--ink);line-height:1.7;margin:0 0 20px">' + esc(cur.prompt) + '</p>';
     }
 
-    /* --- options: TF (判断对错) 2-col big buttons vs lettered rows --- */
+    /* --- options: writing is self-check (no MC), TF 2-col, else lettered rows --- */
     var curSel = answers[s.curQ];
     var isTF = cur.type === 'listening_true_false';
+    var writeFn = (App.exam && App.exam.writeModelHtml);
     var optsHtml;
-    if (isTF) {
+    if (cur.selfCheck) {
+      optsHtml = '<div style="font-size:var(--fs-sm);color:var(--stone);background:var(--surface-sunken);border-radius:11px;padding:12px 15px;margin-bottom:14px;line-height:1.6">Write your sentence, then check it against the model. This section is self-assessed — it is not auto-scored.</div>' +
+        (writeFn ? writeFn(cur) : '');
+    } else if (isTF) {
       optsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
         (cur.options || []).map(function (o, i) {
           var sel = curSel === i;
@@ -446,7 +450,7 @@
       return '<button type="button" data-a="gotoQ" data-argn="' + i + '" class="hv" title="' + title + '" style="position:relative;aspect-ratio:1;display:grid;place-items:center;border:1.5px solid ' + bd + ';background:' + bg + ';color:' + fg + ';border-radius:9px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">' + esc(q.n) + marks + '</button>';
     }).join('');
 
-    var keysHint = 'Keys 1–' + Math.min((cur.options || []).length || 4, 9) + ' to answer · F to flag';
+    var keysHint = cur.selfCheck ? 'Self-check — compare with the model answer' : ('Keys 1–' + Math.min((cur.options || []).length || 4, 9) + ' to answer · F to flag');
     var pillStroke = urgent ? 'var(--wrong)' : 'var(--accent)';
 
     return '<div data-screen-label="Exam player" style="min-height:100vh;background:var(--paper);display:flex;flex-direction:column;animation:hsk-fade .2s ease both">' +
@@ -498,19 +502,25 @@
   function resultsTpl() {
     var s = stateOf();
     var qs = activeQs();
-    var total = qs.length;
+    var qCount = qs.length;
     var answers = s.answers || {};
+    var writeFn = (App.exam && App.exam.writeModelHtml);
     var back = '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px">' +
       '<button type="button" data-a="exitExam" class="hv" style="display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--stone);font-weight:600;font-size:var(--fs-sm);cursor:pointer;padding:8px 10px;margin-left:-10px;border-radius:9px">← All exams</button>' +
     '</div>';
-    if (!total) {
+    if (!qCount) {
       return '<div data-screen-label="Exam results" style="min-height:100vh;background:var(--paper);padding:26px 20px 60px;animation:hsk-fade .3s ease both"><div style="max-width:820px;margin:0 auto">' + back + '</div></div>';
     }
 
-    /* --- scoring (band verdict — mobile computeAttempt/resultsTpl canon) --- */
-    var correct = 0, skipped = 0;
+    /* --- scoring: writing is self-assessed (see mobile computeAttempt/resultsTpl);
+       exclude it and project the auto-scored sections onto the /300 scale (pass 180),
+       matching App.util.bandScore so the verdict and dashboard estimate agree. --- */
+    var writeQs = qs.filter(function (q) { return q.selfCheck; });
+    var correct = 0, skipped = 0, total = 0;
     var secMap = {};
     qs.forEach(function (q, i) {
+      if (q.selfCheck) return;
+      total++;
       var a = answers[i]; var has = a != null; var ok = has && a === q.correct;
       if (ok) correct++;
       if (!has) skipped++;
@@ -524,12 +534,45 @@
       var sc = x.tot ? Math.round(x.ok / x.tot * 100) : 0;
       return { name: x.name, cn: x.cn, ok: x.ok, tot: x.tot, score: sc, color: n === 'Listening' ? 'var(--gold)' : n === 'Reading' ? 'var(--jade)' : 'var(--accent)' };
     });
-    var bandMax = (sections.length || 1) * 100;
-    var pass = Math.round(bandMax * 0.6);
-    var band = sections.reduce(function (a, x) { return a + x.score; }, 0);
+    var bandMax = 300;
+    var pass = 180;
+    var meanSec = sections.length ? sections.reduce(function (a, x) { return a + x.score; }, 0) / sections.length : 0;
+    var band = Math.round(meanSec * 3);
     var passed = band >= pass;
     var wrong = total - correct - skipped;
     var r = pass ? band / pass : 0;
+
+    /* writing self-check card (model answers to compare against) */
+    var writeReviewHtml = '';
+    if (writeQs.length) {
+      writeReviewHtml = '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:24px;margin-top:20px">' +
+        '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:6px">书写 · Writing — self-check</div>' +
+        '<div style="font-size:var(--fs-sm);color:var(--stone);line-height:1.55;margin-bottom:16px">Not auto-scored. Compare each answer with the model and mark yourself honestly.</div>' +
+        '<div style="display:flex;flex-direction:column;gap:16px">' +
+        writeQs.map(function (q) {
+          var promptLine = q.prompt ? '<div class="chinese" style="font-size:var(--fs-md);color:var(--ink);font-weight:600;margin-bottom:9px">' + esc(q.prompt) + '</div>' : '';
+          var imgLine = q.image ? '<div style="text-align:center;margin-bottom:9px"><img src="' + esc(q.image) + '" alt="HSK 4 看图造句 prompt" loading="lazy" style="max-width:200px;max-height:170px;border-radius:10px"></div>' : '';
+          var wordsLine = q.words ? '<div class="chinese" style="background:var(--surface-sunken);border-radius:10px;padding:10px 13px;font-size:var(--fs-md);font-weight:600;color:var(--ink);text-align:center;letter-spacing:.04em;margin-bottom:9px">' + esc(q.words.split(/\s+/).join(' · ')) + '</div>' : '';
+          return '<div style="border:1px solid var(--border-subtle);border-radius:13px;padding:15px">' + promptLine + imgLine + wordsLine + (writeFn ? writeFn(q) : '') + '</div>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    /* writing-only drill: nothing auto-scored — skip the band hero, show self-check */
+    if (!total) {
+      return '<div data-screen-label="Exam results" style="min-height:100vh;background:var(--paper);padding:26px 20px 60px;animation:hsk-fade .3s ease both"><div style="max-width:820px;margin:0 auto">' +
+        back +
+        '<div style="background:var(--accent-soft);border:1px solid var(--border-subtle);border-radius:18px;padding:24px;text-align:center">' +
+          '<div class="serif-cn" style="font-size:var(--fs-2xl);font-weight:700;color:var(--ink)">书写练习完成</div>' +
+          '<div style="font-size:var(--fs-sm);color:var(--stone);margin-top:4px">Writing is self-assessed — check your sentences against the models below.</div>' +
+        '</div>' +
+        writeReviewHtml +
+        '<div style="display:flex;gap:12px;margin-top:22px">' +
+          '<button type="button" data-a="restartExam" class="hv" style="border:1px solid var(--border-subtle);background:var(--surface);color:var(--ink);border-radius:12px;padding:13px 22px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">Retake</button>' +
+          '<button type="button" data-a="resultsNextTest" class="hv" style="border:0;background:var(--accent);color:var(--invert-fg);border-radius:12px;padding:13px 22px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">Next paper →</button>' +
+        '</div>' +
+      '</div></div>';
+    }
     /* weakest section: lowest ratio, Writing wins ties (mobile resultsGoNext canon) */
     var withR = sections.map(function (x) { return { name: x.name, r: x.tot ? x.ok / x.tot : 0 }; });
     withR.sort(function (a, b) { return (a.r - b.r) || (a.name === 'Writing' ? -1 : b.name === 'Writing' ? 1 : 0); });
@@ -551,6 +594,7 @@
     /* --- review list (All / Mistakes only; collapsible rows) --- */
     var rAll = s.reviewFilter === 'all';
     var reviewHtml = qs.map(function (q, i) {
+      if (q.selfCheck) return '';            // writing lives in its own self-check card
       var a = answers[i]; var has = a != null; var ok = has && a === q.correct;
       if (!rAll && ok) return '';
       var statusBg = ok ? 'var(--ok-bg)' : 'var(--bad-bg)';
@@ -619,13 +663,14 @@
               '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)">⏱ ' + esc(fmtTime(s.elapsed || 0)) + '</span>' +
             '</div>' +
             '<div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:var(--fs-sm);opacity:.95">' + SVG_ARROW + '<span><b>Next:</b> ' + esc(tier.next) + '</span></div>' +
-            '<div style="margin-top:12px;font-size:var(--fs-xs);opacity:.82;line-height:1.5">' + total + ' questions · scored /' + bandMax + '</div>' +
+            '<div style="margin-top:12px;font-size:var(--fs-xs);opacity:.82;line-height:1.5">' + total + ' auto-scored · projected to /' + bandMax + (writeQs.length ? ' · writing self-checked below' : '') + '</div>' +
           '</div>' +
         '</div>' +
         '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:24px;margin-top:20px">' +
           '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:16px">Score by section · each /100</div>' +
           '<div style="display:flex;flex-direction:column;gap:16px">' + sectionsHtml + '</div>' +
         '</div>' +
+        writeReviewHtml +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 14px">' +
           '<h3 style="margin:0;font-size:var(--fs-lg);font-weight:700;color:var(--ink)">Review answers</h3>' +
           '<div style="display:flex;background:var(--surface-sunken);border-radius:10px;padding:4px;gap:3px">' +

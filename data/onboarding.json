@@ -2,7 +2,7 @@
   "_comment": "Onboarding funnel content (EN copy) + config. Source of truth for /quiz/. Generated into quiz/index.html by buildQuizFunnel() in build.js. Token syntax: {{mocks}}/{{questions}} = build-time derived counts; {dynamic} (target_level, diagnostic_result, weak_section, daily_time, name, plan, price, interval, discount) = runtime substitution from answers; any other {placeholder} (learner_count, pass_rate, n, testimonial_1, starter_kit) renders literally — DO NOT invent values.",
 
   "brand": "HSK Prep",
-  "handoffUrl": "/exams/",
+  "handoffUrl": "/app/",
   "pay": { "checkoutUrl": "https://pay.studybox.kz/checkout", "returnBase": "https://www.hskprep.cc" },
 
   "_mocksDisplay_comment": "Mock-exam count shown in funnel copy ({{mocks}}). Marketing claim, decoupled from the real TEST_COUNT and from syncCounts (which skips /quiz/).",

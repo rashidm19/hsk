@@ -576,6 +576,24 @@
     return pay;
   }
 
+  /* Kick the async data load; drive dataReady / dataError so the shell can show a
+     skeleton, then either the app or a retry screen. Re-runnable (retryDataLoad). */
+  function loadData() {
+    if (!(App.data && typeof App.data.load === 'function')) { App.setState({ dataReady: true }); return; }
+    App.setState({ dataError: false });
+    try {
+      var p = App.data.load();
+      if (p && typeof p.then === 'function') {
+        p.then(
+          function () { App.setState({ dataReady: true, dataError: false }); },
+          function (err) { warn(err); App.setState({ dataError: true }); App.toast('Failed to load study data — check your connection'); }
+        );
+      } else {
+        App.setState({ dataReady: true });
+      }
+    } catch (e) { warn(e); App.setState({ dataError: true }); }
+  }
+
   /* ---------- boot ---------- */
 
   App.boot = function () {
@@ -645,18 +663,10 @@
 
     var pay = stripPayParam();
 
-    /* data load (async) — screens show a minimal skeleton until dataReady */
-    if (App.data && typeof App.data.load === 'function') {
-      try {
-        var p = App.data.load();
-        if (p && typeof p.then === 'function') {
-          p.then(
-            function () { App.setState({ dataReady: true }); },
-            function (err) { warn(err); App.toast('Failed to load study data — check your connection'); }
-          );
-        }
-      } catch (e) { warn(e); }
-    }
+    /* data load (async) — screens show a minimal skeleton until dataReady, or an
+       error+retry (dataError) if it fails, so a blip never leaves a dead spinner */
+    App.actions.retryDataLoad = loadData;
+    loadData();
 
     /* first render */
     App.render();

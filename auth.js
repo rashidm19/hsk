@@ -137,14 +137,15 @@
     return session ? session.user : null;
   }
 
+  // '/app/' is the post-paywall home; an explicit valid `next` is preserved.
   function safeNextPath(raw) {
-    let next = raw || '/exams/';
+    let next = raw || '/app/';
     try {
       next = decodeURIComponent(next);
     } catch {
-      next = '/exams/';
+      next = '/app/';
     }
-    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) next = '/exams/';
+    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) next = '/app/';
     return next;
   }
 
@@ -155,7 +156,7 @@
   }
 
   function readAuthNext(fallback) {
-    var next = fallback || '/exams/';
+    var next = fallback || '/app/';
     try {
       var stored = global.sessionStorage.getItem(AUTH_NEXT_KEY);
       if (stored) next = stored;
@@ -265,7 +266,7 @@
       password,
       options: {
         data: { name, country },
-        emailRedirectTo: authOrigin() + '/auth/callback.html?next=' + encodeURIComponent('/exams/'),
+        emailRedirectTo: authOrigin() + '/auth/callback.html?next=' + encodeURIComponent('/app/'),
       },
     });
     if (error) throw error;
@@ -301,7 +302,7 @@
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
     markAuthPending();
-    const nextPath = safeNextPath(next || '/exams/');
+    const nextPath = safeNextPath(next || '/app/');
     storeAuthNext(nextPath);
     const { data, error } = await c.auth.signInWithOAuth({
       provider: 'google',
@@ -325,7 +326,7 @@
     const c = getClient();
     if (!c) throw new Error('Auth is not configured. Add your Supabase keys in config/auth.js');
     opts = opts || {};
-    const next = safeNextPath(opts.next || '/exams/');
+    const next = safeNextPath(opts.next || '/app/');
     const { data, error } = await c.auth.signInWithOtp({
       email,
       options: {

@@ -586,6 +586,18 @@
       + '</div>';
   }
 
+  /* Data load failed (offline / CDN blip): an error state with a retry, instead of
+     a skeleton that never resolves. data.js nulls its `loading` latch on settle, so
+     retryDataLoad can re-run the fetch. */
+  function errorHtml() {
+    return '<div style="display:flex;flex-direction:column;height:100%;min-height:0;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">'
+      + '<span style="width:56px;height:56px;display:grid;place-items:center;background:var(--bad-bg);color:var(--bad-ink);border-radius:16px;font-size:26px" aria-hidden="true">⚠</span>'
+      + '<div style="color:var(--ink);font-size:1rem;font-weight:700">Couldn’t load your study data</div>'
+      + '<div style="color:var(--stone);font-size:.85rem;max-width:280px;line-height:1.55">Check your connection and try again.</div>'
+      + '<button type="button" data-a="retryDataLoad" class="pa" style="border:0;background:var(--accent);color:#fff8f1;border-radius:12px;padding:12px 22px;font-weight:700;font-size:.9rem;cursor:pointer">Try again</button>'
+      + '</div>';
+  }
+
   function screenHtml(s) {
     var S = App.screens || {};
     var fn = null;
@@ -598,7 +610,7 @@
 
   function shellHtml(s) {
     if (s.examView && s.examView !== 'list') return '';
-    if (!s.dataReady) return '<div style="display:flex;flex-direction:column;height:100%;min-height:0">' + loadingHtml() + '</div>';
+    if (!s.dataReady) return '<div style="display:flex;flex-direction:column;height:100%;min-height:0">' + (s.dataError ? errorHtml() : loadingHtml()) + '</div>';
     return '<div style="display:flex;flex-direction:column;height:100%;min-height:0">'
       + topBar(s)
       + '<div id="shell-scroll" class="hsk-scroll" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden">' + screenHtml(s) + '</div>'

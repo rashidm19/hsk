@@ -6,7 +6,7 @@
    Flow: welcome -> assessment -> diagnostic -> processing ->
    mirror -> name -> email-gate -> growth -> timeline ->
    value-stack -> wheel -> paywall -> checkout/exit-intent ->
-   success -> handoff to /exams/.
+   success -> handoff to /app/ (the post-paywall client).
 
    Payment is SIMULATED. The single seam to swap in a real
    provider is startCheckout() (see below).
@@ -33,7 +33,7 @@
   var LS_PAY_PENDING = 'hsk_pay_pending';
   var PAY_PENDING_TTL_MS = 30 * 60 * 1000;
 
-  var HANDOFF = CFG.handoffUrl || '/exams/';
+  var HANDOFF = CFG.handoffUrl || '/app/';
 
   // ---------- utilities ----------
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
@@ -1198,7 +1198,7 @@
       '<div class="ob-summary-row"><dt>Focus</dt><dd>' + subst('{weak_section}') + '</dd></div></dl>' +
       '<p class="ob-sub">' + subst(c.next) + '</p>' +
       // While the entitlement is still being confirmed, keep the CTA disabled so
-      // the user can't race to /exams/ before the webhook lands (auth-guard would
+      // the user can't race to the app before the webhook lands (auth-guard would
       // bounce them to ?sub=required). finishSuccess() re-enables it.
       ctaBtn(pollActive ? (c.settingUp || 'Setting up your access…') : (c.cta || 'Start studying'),
         { id: 'go', lg: true, disabled: pollActive }),
