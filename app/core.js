@@ -74,11 +74,11 @@
       every render/update — e.g. 'g-search', 'vocab-search'.
 
    9. STORE: App.store.get/set/del/getJSON/setJSON — all try/catch-guarded.
-      Pass FULL key names. Persistence key names live in App.keys (mobile
-      defaults = the hsk4m-* namespace; the desktop client's desktop-config.js
-      replaces the map with the canonical site keys). ALWAYS resolve
-      App.keys.<x> at CALL time — never copy a key into a module-local at
-      load time (desktop-config.js loads after core.js).
+      Pass FULL key names. Persistence key names live in App.keys — ONE
+      canonical site-key namespace shared by BOTH clients and the live site
+      pages (no hsk4m-* split). ALWAYS resolve App.keys.<x> at CALL time —
+      never copy a key into a module-local at load time (desktop-config.js,
+      which tunes the exam-engine seams, loads after core.js).
 
    10. CROSS-MODULE SLOTS:
       App.hw          — shared HanziWriter instance (owned by more.js; core
@@ -92,9 +92,9 @@
       App.toast(text) — small status toast (ok-panel colors), auto-dismisses.
 
    11. THEME: App.actions.setTheme('dark'|'light') / App.actions.toggleTheme().
-      Persists via App.persistTheme (mobile default writes BOTH App.keys.theme
-      and the site's hsk4_theme; desktop-config.js overrides it to a single
-      canonical write), then sets data-theme="dark" on the html element or
+      Persists via App.persistTheme (a single canonical write to App.keys.theme
+      = the site's hsk4_theme, shared with index.html's pre-paint loader and the
+      theme toggle), then sets data-theme="dark" on the html element or
       removes the attribute (light), then setState({theme}).
       Screens that must re-init on theme change (HanziWriter colors) simply
       include state.theme in their deps — the re-render calls their init again.
@@ -152,30 +152,40 @@
   App.bootHooks = App.bootHooks || [];
   App.hw = null;
 
-  /* ---------- storage-key map + behavior seams (desktop-config.js overrides) ----------
-     Mobile defaults. The desktop client loads desktop-config.js between
-     core.js and data.js, which replaces App.keys WHOLESALE with the canonical
-     site keys and swaps persistTheme/saveGuide. Therefore every consumer must
-     resolve App.keys.<x> at call time — never cache a key at load time. */
+  /* ---------- storage-key map + behavior seams ----------
+     ONE canonical namespace for BOTH clients and the live site pages
+     (/exams/, /guide/, /vocabulary/). Both form factors on the same device —
+     and the app and the old site pages — read/write the same localStorage
+     family, so progress is shared, not split across an hsk4m-* namespace.
+     desktop-config.js only overrides the exam-engine behavior seams
+     (examMinSeconds/timerWarnSecs), not these keys. Every consumer still
+     resolves App.keys.<x> at call time. (True cross-DEVICE sync is a separate
+     backend concern; this removes the on-device divergence.) */
 
   App.keys = {
-    welcome: 'hsk4m-welcome', firstrun: 'hsk4m-firstrun', goal: 'hsk4m-goal',
-    mastered: 'hsk4m-mastered', attempts: 'hsk4m-attempts', guide: 'hsk4m-guide',
-    theme: 'hsk4m-theme', lang: 'hsk4m-lang', notif: 'hsk4m-notif',
-    progress: 'hsk4m-progress', migrated: 'hsk4m-migrated',
-    preOrder: 'hsk4m-pre-order' /* sessionStorage checkout marker (more.js) */
+    welcome: 'hsk4-welcome', firstrun: 'hsk4-firstrun', goal: 'hsk4-goal',
+    mastered: 'hsk4-vocab-mastered', attempts: 'hsk4-attempts', guide: 'hsk4-guide-path',
+    theme: 'hsk4_theme', lang: 'hsk4-lang', notif: 'hsk4-notif',
+    progress: 'hsk4-exam-progress', migrated: 'hsk4-app-migrated',
+    preOrder: 'hsk4m-pre-order' /* sessionStorage checkout marker (more.js) — name shared with any in-flight checkout, kept stable */
   };
 
-  /* Theme persistence seam: mobile dual-writes its own key AND the site key so
-     index.html's pre-paint script (which reads hsk4_theme) stays consistent. */
+  /* Theme persistence seam: single canonical write. App.keys.theme IS the
+     site's hsk4_theme, which index.html's pre-paint script + the theme toggle
+     also read/write — so all stay consistent. */
   App.persistTheme = function (theme) {
     App.store.set(App.keys.theme, theme);
-    App.store.set('hsk4_theme', theme);
   };
 
-  /* Guide-path persistence seam: mobile stores the 0-based step-index array
-     as-is. (Desktop overrides this to write the site's 1-based object form.) */
-  App.saveGuide = function (arr) { App.store.setJSON(App.keys.guide, arr); };
+  /* Guide-path persistence seam: the site's /guide/ page (build.js) reads
+     hsk4-guide-path as a 1-BASED OBJECT map {"1":true,…}. App state keeps a
+     0-based array (boot parses both forms), so persist the site-compatible
+     object shape — the app and /guide/ agree. */
+  App.saveGuide = function (arr) {
+    var o = {};
+    for (var i = 0; i < (arr || []).length; i++) o[String(arr[i] + 1)] = true;
+    App.store.setJSON(App.keys.guide, o);
+  };
 
   function warn(e) { try { if (window.console && console.warn) console.warn('[App]', e); } catch (x) {} }
 
@@ -493,9 +503,9 @@
   /* ---------- one-time migration of legacy on-device progress ----------
      Port of prototype lines 1513-1530, extended per contract:
      also migrates hsk4_progress_{i} → the App.keys.progress map.
-     SOURCE site keys stay literal by design; only the TARGETS go through
-     App.keys, so on desktop (canonical keys) the theme/mastered/guide copies
-     become same-key no-ops while the result/progress folding still works.
+     SOURCE site keys stay literal by design; the TARGETS go through App.keys,
+     which now IS the canonical site family, so the theme/mastered/guide copies
+     are same-key no-ops while the hsk4_result_/hsk4_progress_ folding runs once.
      Legacy shapes (exams/index.html):
        hsk4_result_{i}   = { pct, correct, total, ts }
        hsk4_progress_{i} = { answers, flags, currentQ, elapsed, ts }        */
@@ -645,10 +655,9 @@
     var guide = App.store.getJSON(App.keys.guide, null);
     if (Array.isArray(guide)) s.guideDone = guide;
     else if (guide && typeof guide === 'object') {
-      /* legacy hsk4-guide-path stored an object map keyed by data-step "1".."8"
-         (1-based) — convert to this app's 0-based indices, then re-persist via
-         the App.saveGuide seam (mobile normalizes to the array form; desktop
-         writes the site-compatible object form back) */
+      /* hsk4-guide-path stored (by the site's /guide/ page) as an object map
+         keyed by data-step "1".."8" (1-based) — convert to this app's 0-based
+         indices, then re-persist the site-compatible object form via saveGuide */
       var gd = [];
       for (var gk in guide) {
         if (!Object.prototype.hasOwnProperty.call(guide, gk) || !guide[gk] || !/^\d+$/.test(gk)) continue;
