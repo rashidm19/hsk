@@ -952,6 +952,30 @@
       }).catch(function () { return null; });
     } catch (e) { return Promise.resolve(null); }
   }
+  /* Day-0 personalization: seed the app from the funnel's saved onboarding
+     answers (profiles.onboarding — written by the /quiz/ funnel) so a fresh
+     subscriber isn't re-asked what they already told it. Gap-fill only: never
+     overrides a goal the user has saved in the app; the welcome step still shows
+     (with their level pre-selected) so they can change it. Name is folded into
+     the profile resolution below; here we seed the goal level + Day-0 weak-section
+     focus. */
+  function normLevel(v) { var m = /HSK\s*([3-6])/i.exec(String(v || '')); return m ? 'HSK ' + m[1] : null; }
+  function seedOnboarding(onb) {
+    if (!onb || typeof onb !== 'object') return;
+    var patch = {};
+    if (onb.section && onb.section.short) patch.onbWeak = { key: String(onb.section.key || ''), short: String(onb.section.short) };
+    var savedGoal = App.store.getJSON(App.keys.goal, null);
+    if (!(savedGoal && savedGoal.level)) {
+      var lvl = normLevel(onb.target);
+      if (lvl) {
+        var score = S().goalScore || 250;
+        patch.goalLevel = lvl; patch.goalScore = score;
+        App.store.setJSON(App.keys.goal, { level: lvl, score: score }); /* persist (+ sync) so it survives and doesn't re-seed */
+      }
+    }
+    if (Object.keys(patch).length) set(patch);
+  }
+
   function hookupAuth() {
     if (authArmed) return;
     authArmed = true;
@@ -970,20 +994,27 @@
         set({ profile: { name: metaName || (user.email || '').split('@')[0] || 'Student', email: user.email || '', country: '' } });
         var pProf = (HSKAuth.getProfile ? HSKAuth.getProfile(user.id) : Promise.resolve(null));
         var pSub = HSKAuth.getSubscriptionStatus(user.id);
+        var pOnb = (HSKAuth.getOnboarding ? HSKAuth.getOnboarding(user.id) : Promise.resolve(null));
         return Promise.all([
           Promise.resolve(pProf).catch(function () { return null; }),
-          Promise.resolve(pSub).catch(function () { return { sub: null }; })
+          Promise.resolve(pSub).catch(function () { return { sub: null }; }),
+          Promise.resolve(pOnb).catch(function () { return null; })
         ]).then(function (res) {
           var prof = res[0] || {};
           var subRes = res[1] || {};
+          var onb = res[2] || null;
+          var onbName = (onb && onb.name) ? String(onb.name).trim() : '';
           set({
+            /* funnel name (s16) beats the email-prefix fallback, but a real
+               profile/auth name still wins */
             profile: {
-              name: prof.name || metaName || (user.email || '').split('@')[0] || 'Student',
+              name: prof.name || metaName || onbName || (user.email || '').split('@')[0] || 'Student',
               email: prof.email || user.email || '',
               country: prof.country || ''
             },
             sub: (subRes && subRes.sub) || null
           });
+          try { seedOnboarding(onb); } catch (e) {}
         });
       }).catch(function () {});
     } catch (e) {}

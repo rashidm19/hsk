@@ -151,6 +151,12 @@
       heading = 'Welcome' + (first ? ', ' + first : '');
       headingCn = '你好';
       sub = 'Set your baseline — take your first mock';
+      /* Day-0: if the funnel flagged a weak section (profiles.onboarding), name
+         it here before any attempt exists to compute one from. */
+      if (s.onbWeak && s.onbWeak.short) {
+        var wk = String(s.onbWeak.short).replace(/\s*[（(].*?[）)]\s*/g, '').trim() || s.onbWeak.short;
+        sub = 'Your focus: ' + wk + ' — start with a diagnostic';
+      }
     } else {
       heading = 'Welcome back' + (first ? ', ' + first : '');
       headingCn = '加油';
