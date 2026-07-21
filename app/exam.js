@@ -1252,7 +1252,7 @@
 
     return '<div style="position:absolute;inset:0;z-index:80">' +
       '<div data-a="closeIntro" style="position:absolute;inset:0;background:rgba(26,22,20,.42);animation:hsk-scrim .25s ease both"></div>' +
-      '<div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 0 0;animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:88%;display:flex;flex-direction:column;overflow:hidden">' +
+      '<div role="dialog" aria-modal="true" aria-label="Exam overview" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 0 0;animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:88%;display:flex;flex-direction:column;overflow:hidden">' +
         '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 0;flex:none"></div>' +
         '<div class="hsk-scroll" style="overflow-y:auto;padding:16px 18px 0">' +
           '<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:#fff8f1;border-radius:18px;padding:20px">' +
@@ -1314,7 +1314,7 @@
     }).join('');
     return '<div style="position:absolute;inset:0;z-index:80">' +
       '<div data-a="closeNav" style="position:absolute;inset:0;background:rgba(26,22,20,.42);animation:hsk-scrim .25s ease both"></div>' +
-      '<div class="hsk-scroll" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:80%;overflow-y:auto">' +
+      '<div role="dialog" aria-modal="true" aria-label="Question navigator" class="hsk-scroll" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:80%;overflow-y:auto">' +
         '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 16px"></div>' +
         '<h3 style="margin:0 0 4px;font-size:1.15rem;font-weight:700;color:var(--ink)">Questions</h3>' +
         '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:.74rem;color:var(--stone);margin-bottom:16px">' +
@@ -1333,7 +1333,7 @@
   function exitSheetTpl() {
     return '<div style="position:absolute;inset:0;z-index:80">' +
       '<div data-a="cancelExit" style="position:absolute;inset:0;background:rgba(26,22,20,.5);animation:hsk-scrim .25s ease both"></div>' +
-      '<div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 20px calc(20px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both">' +
+      '<div role="dialog" aria-modal="true" aria-label="Leave exam" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 20px calc(20px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both">' +
         '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 16px"></div>' +
         '<div style="color:var(--accent);display:flex;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 4.14 2.3 18a2 2 0 0 0 1.71 3h15.98a2 2 0 0 0 1.71-3L13.71 4.14a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>' +
         '<h3 style="margin:10px 0 6px;font-size:1.2rem;font-weight:700;color:var(--ink)">Leave exam? <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.7em">离开</span></h3>' +
@@ -1369,24 +1369,41 @@
     html: function (s) { return s.examView === 'results' ? resultsTpl() : ''; }
   };
 
+  /* D2: on open, move focus to the dialog container so a screen reader announces it
+     ("dialog, <label>") and the keyboard user is inside it. Focus the container itself
+     (not the first button) so a confirm dialog never pre-arms Save/Discard. Guarded so a
+     re-render while already-focused-inside doesn't steal focus. (composite fires init on
+     each render while open, passing the r-sheet element.) */
+  function focusDialog(el) {
+    try {
+      var dlg = el && el.querySelector && el.querySelector('[role="dialog"]');
+      if (!dlg || dlg.contains(document.activeElement)) return;
+      dlg.setAttribute('tabindex', '-1');
+      dlg.focus();
+    } catch (e) {}
+  }
+
   /* bottom sheets — registration order = priority in core's composite */
   App.sheets = App.sheets || {};
   App.sheets.exit = {
     open: function (s) { return !!s.examExitConfirm; },
     deps: function (s) { return [s.testIdx]; },
-    html: exitSheetTpl
+    html: exitSheetTpl,
+    init: focusDialog
   };
   App.sheets.navigator = {
     open: function (s) { return !!s.navOpen && s.examView === 'player'; },
     deps: function (s) { return [s.testIdx, s.examSection, s.curQ, s.answers, s.flags, s.qReady]; },
-    html: navSheetTpl
+    html: navSheetTpl,
+    init: focusDialog
   };
   App.sheets.intro = {
     open: function (s) { return !!s.introOpen; },
     deps: function (s) {
       return [s.testIdx, s.examMode, s.examSection, s.qReady, s.qPending, s.progress, s.dataReady];
     },
-    html: introSheetTpl
+    html: introSheetTpl,
+    init: focusDialog
   };
 
   /* public surface (CONTRACT names App.exam.audioEl) */

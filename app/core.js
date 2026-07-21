@@ -257,6 +257,20 @@
   App.toast = function (text) {
     try {
       var root = document.getElementById('app-root') || document.body;
+      /* D5b: mirror the toast into a persistent visually-hidden polite live region so
+         screen-reader users hear it (a transient visual toast alone is never announced).
+         Clear-then-set on a tick so an identical repeated message still re-announces. */
+      var live = document.getElementById('hsk-live');
+      if (!live) {
+        live = document.createElement('div');
+        live.id = 'hsk-live';
+        live.setAttribute('role', 'status');
+        live.setAttribute('aria-live', 'polite');
+        live.setAttribute('style', 'position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0');
+        root.appendChild(live);
+      }
+      live.textContent = '';
+      setTimeout(function () { try { live.textContent = text; } catch (e) {} }, 30);
       var el = document.createElement('div');
       el.className = 'hsk-toast';
       el.textContent = text;
@@ -545,11 +559,24 @@
       if (e.altKey || e.metaKey || e.ctrlKey) return; /* leave OS/browser combos alone */
 
       if (e.key === 'Escape') {
-        if (s.searchOpen) { e.preventDefault(); act('closeSearch'); return; }
-        if (s.examView === 'player') { e.preventDefault(); act(s.examExitConfirm ? 'cancelExit' : 'askExit'); return; }
-        if (s.langSheet) { e.preventDefault(); act('closeLang'); return; }
+        /* Close the TOPMOST open layer (same order as the History-Back handler) so Escape
+           over the navigator/intro closes IT, instead of falling into the player branch and
+           stacking a second exit-confirm sheet (D6). */
+        var esc = s.searchOpen ? 'closeSearch'
+          : s.introOpen ? 'closeIntro'
+            : s.navOpen ? 'closeNav'
+              : s.langSheet ? 'closeLang'
+                : s.planSheet ? 'closePlans'
+                  : s.profileSheet ? 'closeEdit'
+                    : s.examExitConfirm ? 'cancelExit'
+                      : s.examView === 'player' ? 'askExit'
+                        : null;
+        if (esc) { e.preventDefault(); act(esc); }
         return;
       }
+
+      /* A sheet/overlay above the player swallows the answer/flag/arrow keys. */
+      if (s.navOpen || s.introOpen || s.langSheet || s.planSheet || s.profileSheet || s.examExitConfirm) return;
 
       if (s.examView === 'player' && !s.examExitConfirm) {
         var cur = null;
