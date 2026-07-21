@@ -625,9 +625,10 @@
           if (x.name === d.name && x.tot) { sum += x.ok / x.tot * 100; c++; }
         });
       });
-      if (!c) last5.forEach(function (a) { if (a.pct != null) { sum += a.pct; c++; } });
+      if (!c && d.name !== 'Writing') last5.forEach(function (a) { if (a.pct != null) { sum += a.pct; c++; } });
+      var selfCheck = d.name === 'Writing' && !c;
       var score = c ? Math.round(sum / c) : 0;
-      return { name: d.name, cn: d.cn, icon: d.icon, color: d.color, soft: d.soft, score: score, w: score + '%' };
+      return { name: d.name, cn: d.cn, icon: d.icon, color: d.color, soft: d.soft, score: score, w: score + '%', selfCheck: selfCheck };
     });
   }
   function skillCards(atts) {
@@ -644,8 +645,8 @@
       }
       return {
         name: d.name, cn: d.cn, icon: d.icon, color: d.color, soft: d.soft,
-        sub: (count || last5.length) + (((count || last5.length) === 1) ? ' mock' : ' mocks'),
-        score: d.score, w: Math.max(0, Math.min(100, d.score)) + '%', trend: trend, tCol: tCol
+        sub: d.selfCheck ? 'self-checked' : ((count || last5.length) + (((count || last5.length) === 1) ? ' mock' : ' mocks')),
+        score: d.score, w: Math.max(0, Math.min(100, d.score)) + '%', trend: trend, tCol: tCol, selfCheck: d.selfCheck
       };
     });
   }
@@ -659,7 +660,7 @@
       '<div style="display:flex;align-items:center;gap:12px">' +
       '<span class="chinese" style="width:40px;height:40px;flex:none;display:grid;place-items:center;background:' + k.soft + ';border-radius:11px;color:' + k.color + ';font-size:18px;font-weight:700">' + k.icon + '</span>' +
       '<div style="flex:1;min-width:0"><div style="font-weight:700;color:var(--ink);font-size:var(--fs-md)">' + k.name + ' <span class="chinese" style="color:var(--stone);font-weight:400;font-size:var(--fs-sm)">' + k.cn + '</span></div><div style="font-size:var(--fs-xs);color:var(--stone)">' + esc(k.sub) + '</div></div>' +
-      '<div style="text-align:right"><div style="font-size:var(--fs-xl);font-weight:700;color:var(--ink);line-height:1">' + esc(k.score) + '</div><div style="font-size:var(--fs-xs);font-weight:700;color:' + k.tCol + '">' + esc(k.trend) + '</div></div>' +
+      '<div style="text-align:right"><div style="font-size:var(--fs-xl);font-weight:700;color:var(--ink);line-height:1">' + (k.selfCheck ? '<span style="font-size:var(--fs-sm);font-weight:600;color:var(--stone)">Self-check</span>' : esc(k.score)) + '</div><div style="font-size:var(--fs-xs);font-weight:700;color:' + k.tCol + '">' + (k.selfCheck ? '' : esc(k.trend)) + '</div></div>' +
       '</div>' +
       '<div style="height:6px;border-radius:99px;background:var(--surface-sunken);overflow:hidden;margin-top:14px"><div style="height:100%;width:' + k.w + ';background:' + k.color + ';border-radius:99px"></div></div>' +
       '</div>';

@@ -245,7 +245,7 @@
               '<div style="display:flex;gap:11px;align-items:flex-start;font-size:var(--fs-base);color:var(--stone)"><span class="chinese" style="color:var(--accent);font-weight:700">听力</span><span>' + esc(lineL) + '</span></div>' +
               '<div style="display:flex;gap:11px;align-items:flex-start;font-size:var(--fs-base);color:var(--stone)"><span class="chinese" style="color:var(--accent);font-weight:700">阅读</span><span>' + esc(lineR) + '</span></div>' +
               '<div style="display:flex;gap:11px;align-items:flex-start;font-size:var(--fs-base);color:var(--stone)"><span class="chinese" style="color:var(--accent);font-weight:700">书写</span><span>' + esc(lineW) + '</span></div>' +
-              '<div style="display:flex;gap:11px;align-items:flex-start;font-size:var(--fs-base);color:var(--stone)"><span class="chinese" style="color:var(--accent);font-weight:700">评分</span><span>Band score out of 300 · pass at 180 · auto-graded instantly</span></div>' +
+              '<div style="display:flex;gap:11px;align-items:flex-start;font-size:var(--fs-base);color:var(--stone)"><span class="chinese" style="color:var(--accent);font-weight:700">评分</span><span>Listening &amp; Reading auto-graded to a /300 band (pass 180) · Writing self-checked against models</span></div>' +
             '</div>' +
             '<h3 style="font-size:var(--fs-md);font-weight:700;color:var(--ink);margin:24px 0 12px">Choose your mode</h3>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +

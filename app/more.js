@@ -386,9 +386,12 @@
       last5.forEach(function (a) {
         (a.sections || []).forEach(function (sc) { if (sc.name === d.key && sc.tot) vals.push(sc.ok / sc.tot * 100); });
       });
-      if (!vals.length) last5.forEach(function (a) { if (a.pct != null) vals.push(a.pct); });
+      /* Writing is self-checked (never auto-scored) — no section data of its own;
+         skip the overall-% fallback so it is not mislabelled as a Writing score. */
+      if (!vals.length && d.key !== 'Writing') last5.forEach(function (a) { if (a.pct != null) vals.push(a.pct); });
+      var selfCheck = d.key === 'Writing' && !vals.length;
       var score = vals.length ? Math.round(vals.reduce(function (x, y) { return x + y; }, 0) / vals.length) : 0;
-      return { icon: d.icon, name: d.name, cn: d.cn, color: d.color, soft: d.soft, score: score, w: Math.max(0, Math.min(100, score)) + '%' };
+      return { icon: d.icon, name: d.name, cn: d.cn, color: d.color, soft: d.soft, score: score, w: Math.max(0, Math.min(100, score)) + '%', selfCheck: selfCheck };
     });
   }
   function trendVals(s, atts) {
@@ -445,7 +448,7 @@
     var skills = skillRows(atts).map(function (sk) {
       return '<div style="display:flex;align-items:center;gap:12px">' +
         '<span class="chinese" style="width:34px;height:34px;flex:none;display:grid;place-items:center;background:' + sk.soft + ';color:' + sk.color + ';border-radius:10px;font-size:16px;font-weight:700">' + sk.icon + '</span>' +
-        '<div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px"><span style="color:var(--ink);font-weight:600">' + sk.name + ' <span class="chinese" style="color:var(--stone);font-weight:400">' + sk.cn + '</span></span><span style="font-weight:700;color:var(--ink)">' + sk.score + '</span></div><div style="height:6px;border-radius:99px;background:var(--surface-sunken);overflow:hidden"><div style="height:100%;width:' + sk.w + ';background:' + sk.color + ';border-radius:99px"></div></div></div>' +
+        '<div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px"><span style="color:var(--ink);font-weight:600">' + sk.name + ' <span class="chinese" style="color:var(--stone);font-weight:400">' + sk.cn + '</span></span><span style="font-weight:700;color:var(--ink)">' + (sk.selfCheck ? '<span style="font-weight:600;color:var(--stone);font-size:.72rem">Self-check</span>' : sk.score) + '</span></div><div style="height:6px;border-radius:99px;background:var(--surface-sunken);overflow:hidden"><div style="height:100%;width:' + sk.w + ';background:' + sk.color + ';border-radius:99px"></div></div></div>' +
         '</div>';
     }).join('');
     var tr = trendVals(s, atts);
