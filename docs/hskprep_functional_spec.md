@@ -6,7 +6,7 @@
 
 HSK Prep — B2C-платформа подготовки к экзамену HSK 4 (китайский язык, стандарт HSK 3.0 / 2026): пробные экзамены с автопроверкой, словарь, иероглифы, грамматика, предложения, «ловушки» экзамена и тренажёры. Интерфейс английский, контент двуязычный (EN + 中文). Продукт продаётся как **разовый платёж без автопродления** за доступ на срок: 1 месяц — 7 990 ₸, 3 месяца — 13 990 ₸ (тариф по умолчанию, «MOST POPULAR»), 12 месяцев — 19 990 ₸; валюта — казахстанский тенге (data/onboarding.json:25-33, supabase/PAYMENTS_SETUP.md:56-61). Зачёркнутые «базовые» цены ровно вдвое выше фактических — «скидка 50%» вшита в прайс, а не вычисляется (см. §7.6).
 
-Путь покупателя: маркетинговый лендинг `/` → онбординг-воронка `/quiz/` (26 экранов: анкета → диагностика → email-гейт → пейволл) → внешний эквайринг `pay.studybox.kz` → возврат в воронку → платформа `/exams/`. Возвращающиеся пользователи входят через выделенную страницу `/login/` (только существующие аккаунты). Весь платный контент — те же статические страницы, закрытые **клиентским** гейтом «аккаунт + активный entitlement» (см. §8.4 об ограничениях этой модели).
+Путь покупателя: маркетинговый лендинг `/` → онбординг-воронка `/quiz/` (26 экранов: анкета → диагностика → email-гейт → пейволл) → внешний эквайринг `pay.studybox.kz` → возврат в воронку → **пост-paywall клиент `/app/`** (SPA, добавлен 2026-07 — см. §5.1). Возвращающиеся пользователи входят через выделенную страницу `/login/` (только существующие аккаунты) и также попадают в `/app/`. Старые статические страницы `/exams/` и разделы остаются для SEO и по-прежнему за клиентским гейтом, но больше не основной пост-paywall UI. Весь платный контент — те же статические страницы, закрытые **клиентским** гейтом «аккаунт + активный entitlement» (см. §8.4 об ограничениях этой модели).
 
 Продукт несёт публичное обещание «Pass guarantee»: полный возврат денег, если пользователь выполнил ≥90% плана и в течение 60 дней после завершения сдал официальный HSK, приложив score report (`guarantee.completionPct: 90`, `windowDays: 60` — data/onboarding.json:38-44). Лендинг дополнительно обещает оплату пересдачи (index.html:697). Страниц с юридическими условиями (/terms/, /privacy/, /refunds/) не существует — ссылки на них в футере и кнопка «Guarantee terms» закомментированы (index.html:701, 787-789), дисклеймер чекаута упоминает их текстом без ссылок.
 
@@ -37,7 +37,7 @@ Backend — Supabase (auth + Postgres + 2 edge-функции), целиком �
 3. `injectTheme()` — no-flash-лоадер тёмной темы первым тегом `<head>` каждой страницы + плавающая кнопка-переключатель (только на страницах с common.css);
 4. `injectMetrika()` — сниппет Метрики перед `</head>` (идемпотентно, пропускает ds-bundle);
 5. `injectFavicon()` — favicon.png 96×96 + apple-touch-icon;
-6. `injectAppShell()` (scripts/app-shell.js) — оборачивает каждую страницу с `<main>` (кроме `body.lp` и корня/404) в дашборд-шелл: вырезает статический `<header>` шаблона, ставит `body.app`, подключает dashboard.css, shell.js, auth-ui.js;
+6. `injectAppShell()` (scripts/app-shell.js) — оборачивает каждую страницу с `<main>` (кроме `body.lp`, корня/404 и **каталога `app/`** — он в SKIP_DIRS, т.к. это рукописный пост-paywall SPA со своим шеллом) в дашборд-шелл: вырезает статический `<header>` шаблона, ставит `body.app`, подключает dashboard.css, shell.js, auth-ui.js;
 7. `syncCounts()` — последним, по финальному HTML: приводит все фразы «N mock exams / N questions» к производным константам, **намеренно пропуская quiz/index.html** (у воронки собственная маркетинговая цифра, build.js:1550-1552).
 
 Отдельным ручным шагом запускается `node scripts/inject-auth.js`: в `<head>` каждой страницы с `body.app` (сразу после theme-лоадера) вставляется блок supabase-js CDN → /config/auth.js → /auth.js → /auth-guard.js → /auth-ui.js defer, а в тег body добавляется класс `hsk-auth-pending` (scripts/inject-auth.js:16-21, 76-80). Он не вызывается из build.js — забытый запуск после пересборки оставит новые страницы без гейта.
@@ -46,7 +46,7 @@ Backend — Supabase (auth + Postgres + 2 edge-функции), целиком �
 
 - **полностью генерируемые** (перезаписываются с нуля): test/, topics/{slug}/, words/{slug}/ (кроме 9 custom), grammar/patterns/ (кроме 1 custom), characters/, sentences/{slug}/, traps/{slug}/, practice/, train/, writing/complete-sentence/, quiz/;
 - **рукописные, но патчащиеся билдом по маркерам**: хабы (exams/, topics/, words/, sentences/, traps/), vocabulary/, writing/, writing/sentence-order/, guide/, strategies/picture-templates/ — билд идемпотентно врезает/заменяет блоки между HTML-маркерами;
-- **полностью рукописные**: корневой index.html + landing.js/landing.css, login/, admin/, auth/callback.html, 404.html, compare/ (4 страницы), strategies/ (хаб + 9), writing/paragraph/ — билд трогает их только сквозными инъекциями.
+- **полностью рукописные**: корневой index.html + landing.js/landing.css, **app/ (пост-paywall SPA — app/index.html + app/*.js; injectAppShell path-skips app/ через SKIP_DIRS, но inject-auth врезает auth-блок, т.к. body.app — после правок нужен inject-auth)**, login/, admin/, auth/callback.html, 404.html, compare/ (4 страницы), strategies/ (хаб + 9), writing/paragraph/ — билд трогает их только сквозными инъекциями.
 
 ### 2.3 Производные константы и синхронизация счётчиков
 
@@ -54,7 +54,7 @@ Backend — Supabase (auth + Postgres + 2 edge-функции), целиком �
 
 ### 2.4 Локальная разработка
 
-`python3 -m http.server 8080` из корня. Конфиг auth — `config/auth.js` (копия config/auth.example.js: `url`, `anonKey`, `siteUrl`). Пока в конфиге плейсхолдеры, `HSKAuth.isConfigured()` возвращает false и **весь сайт открыт**: auth-guard выходит первой строкой (auth-guard.js:9), /login/ показывает карточку «Local preview» с кнопкой в /exams/, воронка пропускает email-гейт, а чекаут заменяется симуляцией (см. §9.6). Локальная разработка не требует Supabase. Замечание: файл `config/auth.js` фактически закоммичен в git, хотя README называет его gitignored (§16.Д).
+`python3 -m http.server 8080` из корня. Конфиг auth — `config/auth.js` (копия config/auth.example.js: `url`, `anonKey`, `siteUrl`). Пока в конфиге плейсхолдеры, `HSKAuth.isConfigured()` возвращает false и **весь сайт открыт**: auth-guard выходит первой строкой (auth-guard.js:9), /login/ показывает карточку «Local preview» с кнопкой в /app/, воронка пропускает email-гейт, а чекаут заменяется симуляцией (см. §9.6). Локальная разработка не требует Supabase. Замечание: файл `config/auth.js` фактически закоммичен в git, хотя README называет его gitignored (§16.Д).
 
 ### 2.5 Intent-документация в репозитории
 
@@ -174,11 +174,25 @@ Backend — Supabase (auth + Postgres + 2 edge-функции), целиком �
 | hsk4_kt_words | тренажёр 看图造句 | освоенные слова-промпты |
 | hsk4-guide-path | гайд | отмеченные шаги плана |
 
-Серверного хранения прогресса нет — весь прогресс локален устройству; на сервере хранятся только ответы онбординга (profiles.onboarding) и подписка.
+**Кросс-девайс синхронизация (2026-07):** клиент `/app/` union-merge'ит сводный blob прогресса (попытки, освоенные слова, шаги гайда, цель, префы) в `profiles.progress` (jsonb) через `app/sync.js` — gated на auth+session, non-blocking, при сбое откат на локальное хранилище. Старые страницы сайта пишут только локальный localStorage. Namespace `/app/` унифицирован на канонические ключи `hsk4_*`/`hsk4-*` (без прежнего mobile-only `hsk4m-*`), плюс `hsk4-writing-draft` (черновик тренажёра письма). В `profiles` на сервере: `onboarding`, `subscription`, `progress`.
 
 ## 5. Дашборд-шелл
 
 Единственный источник навигации — массив NAV из 11 разделов (scripts/app-shell.js:11-23): Mock Exams, Vocabulary, Characters, Grammar, Sentences, Strategies, Topics, Words, Compare, Traps, Guide. Активный пункт — по каталогу; test/, train/, practice/ подсвечивают Mock Exams, writing/ — Grammar. Сайдбар: бренд-ссылка и «Home» ведут на /exams/. Топбар: гамбургер (оверлей ≤900px, shell.js), поле поиска «Search tests, vocabulary…» — **отрисовано с disabled, поиск не реализован**, кнопка темы, виджет профиля (auth-ui.js: мгновенно из sessionStorage-кэша `hsk_profile_cache` TTL 24 ч, затем refresh; меню с единственным пунктом Sign out → редирект на /, failsafe 5 с; гость — «Guest / Sign in to save progress»). shell.js дополнительно префетчит nav-ссылки (mouseenter/idle). Тёмная тема: ключ `hsk4_theme`, сохранённое значение перебивает системную prefers-color-scheme.
+
+### 5.1 Пост-paywall клиент /app/ (основной пост-paywall UI, добавлен 2026-07)
+
+`/app/` — одностраничный клиент (SPA), куда попадает подписчик после воронки/логина: пост-auth роутинг по умолчанию ведёт в `/app/`, не `/exams/` (route-decision.js, auth.js safeNextPath, login.js, funnel handoffUrl в data/onboarding.json → quiz/index.html + onboarding.js). Дашборд-шелл §5 и статические разделы `/exams/` остаются для SEO и по-прежнему за клиентским гейтом, но больше не основной UI.
+
+**Два presentation-шелла, один роут.** Boot-picker в `app/index.html` выбирает mobile (дефолт) или desktop: `(hover:hover)&&(pointer:fine)` ИЛИ `min(screen.width,height) ≥ 700`; ручной оверрайд `localStorage 'hsk4-client'` ('desktop'|'mobile'); решение — только на загрузке. Общие **логические** модули `app/{core,data,shell,exam,vocab,more,study}.js` грузятся для обоих; desktop дополнительно грузит `app/desktop-config.js` (перед модулями) + `app/desktop-{shell,exam,vocab,more,study}.js` — оверрайд **только представления** (переназначают `App.screens`, сбрасывают `App.sheets`/`App.overlays`, переопределяют часть actions). `app/index.html` **рукописный, не генерируется** (§2.2): `injectAppShell` path-skips `app/` через SKIP_DIRS, но `inject-auth` врезает auth-блок (body.app) — после правок нужен `node scripts/inject-auth.js`. Desktop-бандл прелоадится в `<head>` (rel=preload, gated на HSK_DESKTOP), чтобы грузиться параллельно.
+
+**Хранилище/синк.** Канонические ключи `hsk4_*`/`hsk4-*` (общие со старыми страницами на устройстве — namespace унифицирован, прежний `hsk4m-*` убран); `migrateLegacy` один раз сворачивает legacy `hsk4_result_*`/`hsk4_progress_*` (скан 0..60, маркер `hsk4-app-migrated`). Кросс-девайс синк — `app/sync.js` union-merge'ит blob прогресса в `profiles.progress` (§4.11, §11), gated на auth+session, non-blocking.
+
+**Экзамен-плеер.** Тот же формат HSK 4, но **интерактивный с автопроверкой**. Ключевое отличие: секция 书写 (письмо) — **self-check** (показ эталонных ответов), НЕ авто-оценивается как multiple-choice; band /300 проецируется из Listening+Reading (порог 180), кольцо результата показывает band/300. Аудио-клип «плюс два прослушивания» списывается на **старте** (не на конце), чтобы уход с вопроса не сбрасывал лимит.
+
+**Day-0 персонализация.** Клиент читает `profiles.onboarding` (ответы воронки) → приветствие по имени, предвыбор уровня цели (не переспрашивает), фокус Day-0 на слабой секции (`HSKAuth.getOnboarding`, more.js hookupAuth).
+
+**Устойчивость.** Двухфазная загрузка (дашборд/экзамены/словарь рисуются на ядровых `index`/`vocabulary`/`app-data`; Characters/Study догружаются фазой 2 со спиннером); экран «ошибка + Try again» при сбое загрузки ядрового каталога; глобальный error-boundary (`window.error`/`unhandledrejection` → Метрика) + boot-fallback в `app/index.html`; статичный глиф-fallback при недоступности CDN HanziWriter.
 
 ## 6. Маркетинговый лендинг (/)
 
@@ -223,18 +237,18 @@ landing-auth.js — session-aware CTA: **никогда не редиректи�
 | s22 | **пейволл**: 3 тарифа, циклический таймер 10:00, чипы персонализации, пример score report с пометкой «Example», «857 learners started this week», «One-time payment. No auto-renewal»; цель paywall_view |
 | s23 | модал чекаута: тариф, «Total due today», селект страны (значение никуда не отправляется), дисклеймер; закрытие → s24 |
 | s24 | exit-intent «−50% Special offer» (фактически те же цены) → снова s23 |
-| s25 | success: «You're in!», CTA «Start studying» → /exams/; до подтверждения entitlement CTA disabled «Setting up your access…» |
+| s25 | success: «You're in!», CTA «Start studying» → **/app/** (handoffUrl, §5.1); до подтверждения entitlement CTA disabled «Setting up your access…» |
 
 Диагностический результат: levelScale [2.3, 2.9, 3.2, 3.4, 3.7, 4.1] по числу правильных (0–5), Math.round → 0 верных = «HSK 2», 1–3 = «HSK 3», 4–5 = «HSK 4» — «You now» никогда не выше HSK 4, чтобы кривая роста показывала разрыв до цели.
 
 ### 7.2 Состояние и гейты порядка
 
-State в localStorage `hsk_onboarding_v1` `{idx, answers}`. Порядок enforced: onboarding → auth (s17) → paywall (s22) → app. `gateIdx()` на восстановленном idx: откат на первый незаполненный анкетный экран (GATE_ANSWERS для 9 экранов; s13 требует полный diag), откат на s17 при отсутствии stored-session-токена; асинхронная перепроверка getUser() ловит мёртвый токен. navLock 350 мс — защита от даблкликов по CTA. `?reset=1` — сброс state/complete/subscription (ключ hsk_pay_pending не трогается). Завершённая воронка (`hsk_onboarding_complete='1'` + наличие stored-токена сессии; живость токена проверит уже гард на /exams/) — once-only redirect на /exams/.
+State в localStorage `hsk_onboarding_v1` `{idx, answers}`. Порядок enforced: onboarding → auth (s17) → paywall (s22) → app. `gateIdx()` на восстановленном idx: откат на первый незаполненный анкетный экран (GATE_ANSWERS для 9 экранов; s13 требует полный diag), откат на s17 при отсутствии stored-session-токена; асинхронная перепроверка getUser() ловит мёртвый токен. navLock 350 мс — защита от даблкликов по CTA. `?reset=1` — сброс state/complete/subscription (ключ hsk_pay_pending не трогается). Завершённая воронка (`hsk_onboarding_complete='1'` + наличие stored-токена сессии; живость токена проверит уже гард на /app/) — once-only redirect на **/app/** (handoffUrl).
 
 ### 7.3 URL-протокол
 
 - `?signin=1` — легаси-вход от старого гарда (сейчас гард шлёт на /login/?next=): цель signin_required; на s17 (или первый незаполненный экран) пользователя приводит уже кламп gateIdx;
-- `?sub=required` — от auth-guard при аккаунте без подписки: однократная перепроверка сервера; активна → цель sub_required{restored} + возврат в /exams/; достоверно нет → локальные completion-флаги стираются, ответы регидрируются из profiles.onboarding (для нового устройства), воронка переоткрывается на s22 (цель sub_required{reopened}); ошибка чтения → пейволл, но флаги сохраняются (сетевой сбой ≠ отсутствие подписки);
+- `?sub=required` — от auth-guard при аккаунте без подписки: однократная перепроверка сервера; активна → цель sub_required{restored} + возврат в **/app/** (handoffUrl); достоверно нет → локальные completion-флаги стираются, ответы регидрируются из profiles.onboarding (для нового устройства), воронка переоткрывается на s22 (цель sub_required{reopened}); ошибка чтения → пейволл, но флаги сохраняются (сетевой сбой ≠ отсутствие подписки);
 - `?pay=success` / `?pay=cancel` — возврат с эквайринга (§9.4);
 - `?oauth_error=1` — назначение из auth.js при провале OAuth-обмена; параметр никем не читается.
 
@@ -270,11 +284,11 @@ State в localStorage `hsk_onboarding_v1` `{idx, answers}`. Порядок enfor
 
 ### 8.3 Маршрутизация после входа
 
-`decideRoute({sub, next})`: none → /quiz/?sub=required; active|error → safeNext(next) (fail-open). `safeNext`/`safeNextPath` нейтрализуют open-redirect (не-/, //, \ → /exams/). `routeAfterAuth(next)`: failsafe-таймер 8 с, прогрев hsk_sub_cache при активной подписке (целевая страница открывается без вуали). Callback: обмен голого code (не URL — иначе flow_state_not_found), upsert профиля, routeAfterAuth; ошибка → карточка «Sign-in failed» → /login/.
+`decideRoute({sub, next})`: none → /quiz/?sub=required; active|error → safeNext(next) (fail-open). `safeNext`/`safeNextPath` подставляют дефолт `/app/` и нейтрализуют open-redirect (не-/, //, \, отсутствие next → **/app/**; с 2026-07 — не /exams/). `routeAfterAuth(next)`: failsafe-таймер 8 с, прогрев hsk_sub_cache при активной подписке (целевая страница открывается без вуали). Callback: обмен голого code (не URL — иначе flow_state_not_found), upsert профиля, routeAfterAuth; ошибка → карточка «Sign-in failed» → /login/.
 
 ### 8.4 /login/ — вход для существующих аккаунтов
 
-noindex, robots Disallow. Состояния: Checking session (при живой сессии форма не показывается — сразу routeAfterAuth) → Email («Welcome back», «Send login code», Google, «New here? Take the free assessment →» → /quiz/, неброская ссылка «Log in with password») → Code (verify, Resend с кулдауном 4 с и блокировкой во время верификации, «← Use a different email») → при неизвестном email «No account found» с CTA в воронку → Password-экран («Wrong email or password.»). Без конфига — «Local preview → Enter» в /exams/. Целей Метрики /login/ не шлёт (кроме центральной цели auth из auth.js).
+noindex, robots Disallow. Состояния: Checking session (при живой сессии форма не показывается — сразу routeAfterAuth) → Email («Welcome back», «Send login code», Google, «New here? Take the free assessment →» → /quiz/, неброская ссылка «Log in with password») → Code (verify, Resend с кулдауном 4 с и блокировкой во время верификации, «← Use a different email») → при неизвестном email «No account found» с CTA в воронку → Password-экран («Wrong email or password.»). Без конфига — «Local preview → Enter» в /app/. Целей Метрики /login/ не шлёт (кроме центральной цели auth из auth.js).
 
 Ограничение архитектуры (важно для ТЗ): гейт — **клиентский JavaScript поверх статических файлов**. Файлы контента физически доступны прямым запросом; гейт защищает UX-поверхность, а не сами данные; /data/*.json публичны. Совокупно с попаданием тех же страниц в sitemap это осознанно-компромиссная модель «SEO-индексация платного контента» — целевая политика зафиксирована как открытый вопрос (§16.Б).
 
@@ -354,7 +368,7 @@ s22 пейволл → s23 чекаут → [2 pre-check'а дублей] → re
 
 `supabase/schema.sql` (идемпотентен, запускается в SQL Editor):
 
-- **profiles**: id uuid PK = auth.users(id) on delete cascade, email, name, country, created_at/updated_at, `onboarding jsonb` (пишет клиент), `subscription jsonb` (пишет только сервер). RLS: три политики «только своя строка» (select/insert/update по auth.uid()=id), delete-политики нет.
+- **profiles**: id uuid PK = auth.users(id) on delete cascade, email, name, country, created_at/updated_at, `onboarding jsonb` (пишет клиент), `subscription jsonb` (пишет только сервер), **`progress jsonb`** (пишет клиент — сводный blob прогресса `/app/` для кросс-девайс синка, §4.11; добавлен миграцией add_profiles_progress, применённой на прод-БД). RLS: три политики «только своя строка» (select/insert/update по auth.uid()=id), delete-политики нет.
 - **Триггер handle_new_user** (after insert on auth.users, security definer): создаёт профиль из raw_user_meta_data (name|full_name, country); on conflict обновляет только email/updated_at — не затирает name/onboarding/subscription. Смена email существующего auth-пользователя профиль не обновляет (триггер только на insert; комментарий в схеме обещает больше — §16.Г).
 - **payments** — §9.5. Индекс (user_id, paid_at).
 - **Функции**: hsk_iso() (JS-формат ISO), apply_hsk_entitlement() (execute только service_role; владелец может вызывать из SQL-редактора для раннбуков), guard_subscription_write().

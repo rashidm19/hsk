@@ -57,9 +57,10 @@ output, find its `buildX()` function — each one ends in `fs.writeFileSync(.../
   `sentences.json`, `topics.json`, `traps.json`, `task-dialogues.json`.
 
 **Shared dashboard shell** lives in `scripts/app-shell.js` (the `NAV` array defines the sidebar
-sections). `build.js` calls `injectAppShell()` to inject the sidebar/topbar into every
-`<body class="app">` page, and page generators call `renderAppShellOpen()/renderAppShellClose()`.
-Edit the shell here, not in generated pages.
+sections). `build.js` calls `injectAppShell()` to inject the sidebar/topbar into the **generated**
+`<body class="app">` pages, and page generators call `renderAppShellOpen()/renderAppShellClose()`.
+Edit the shell here, not in generated pages. Note: `injectAppShell()` **path-skips the `/app/` SPA**
+(`app/` is in `SKIP_DIRS`), which supplies its own shell — see the `/app/` section below.
 
 **Auth (Supabase, client-side only):**
 - `auth.js` exposes the `HSKAuth` global (sign up / sign in / Google OAuth via PKCE, profile
@@ -71,7 +72,27 @@ Edit the shell here, not in generated pages.
   URL + anon key. **When auth is unconfigured (placeholder values), the whole site stays open**
   for static preview — `isConfigured()` short-circuits the guard. So local dev needs no Supabase.
 - Backend schema is `supabase/schema.sql` (a `profiles` table with RLS + a `handle_new_user`
-  trigger); run it once in the Supabase SQL Editor.
+  trigger); run it once in the Supabase SQL Editor. `profiles` carries `onboarding`, `subscription`,
+  and `progress` jsonb columns — the last two back `/app/` (see below): `progress` is the cross-device
+  study-progress blob (`app/sync.js`), `onboarding` drives Day-0 personalization.
+
+**Post-paywall client (`/app/`) — the production logged-in UI.** A single-route SPA a subscriber
+lands on after completing `/quiz/` or signing in at `/login/`. **Post-auth routing now defaults to
+`/app/`, not `/exams/`** (`route-decision.js`, `auth.js` `safeNextPath`, `login.js`, and the funnel
+`handoffUrl` in `data/onboarding.json` → regenerated `quiz/index.html` + `onboarding.js`); the old
+`/exams/` + section pages remain for SEO and stay subscription-gated, but are no longer the primary
+UI. It is **one route, two presentation shells** — mobile (default) + desktop — chosen by a
+boot-time picker in `app/index.html` (`(hover:hover)&&(pointer:fine)` OR min screen dim ≥700;
+`localStorage 'hsk4-client'` override). Shared **logic** modules `app/{core,data,shell,exam,vocab,more,study}.js`
+load for both; the desktop client additionally loads `app/desktop-config.js` +
+`app/desktop-{shell,exam,vocab,more,study}.js`, which override **presentation** only. `app/index.html`
+is **hand-maintained, NOT build-generated** (like the root landing): `injectAppShell()` path-skips
+`app/` (`SKIP_DIRS`), but because it is `body.app`, `scripts/inject-auth.js` **must be re-run after
+editing it** to wire in the auth block. Storage uses the canonical `hsk4_*`/`hsk4-*` keys (shared with
+the old site pages on a device — no separate namespace). Cross-device sync: `app/sync.js` union-merges
+a study-progress blob to `profiles.progress` (gated on auth+session, non-blocking). The exam Writing
+section (书写) is **self-check** (model answers shown), excluded from the auto-scored band; the /300
+band is projected from Listening+Reading (pass 180).
 
 ## Gotchas
 
@@ -97,3 +118,7 @@ Edit the shell here, not in generated pages.
   no per-block code. Keep mobile section ids `m-`-prefixed (e.g. `#m-platform`) to avoid
   duplicate ids, and keep funnel CTAs relative (`/quiz/`) so the `landing_cta` analytics goal
   fires. `body.lp` so `scripts/inject-auth.js` skips it.
+- **`app/index.html` is likewise hand-maintained, NOT generated** — `injectAppShell()` path-skips
+  `app/` (`SKIP_DIRS`), so the "don't hand-edit generated `index.html`" rule does **not** apply to
+  it. Unlike the root landing it IS `body.app`, so re-run `node scripts/inject-auth.js` after edits.
+  See the `/app/` post-paywall client section under Architecture.

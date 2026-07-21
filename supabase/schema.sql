@@ -13,9 +13,15 @@ create table if not exists public.profiles (
 -- Onboarding funnel: quiz answers + (simulated) subscription status, written by
 -- HSKAuth.updateProfile() once the user has a session. The existing
 -- "profiles_update_own" policy already authorizes the owner to write these.
+--
+-- `progress` (added by the add_profiles_progress migration) holds the /app/
+-- post-paywall client's cross-device study-progress blob (attempts, mastered
+-- words, guide steps, goal, prefs), union-merged client-side by app/sync.js and
+-- written by the owner under the same "profiles_update_own" policy.
 alter table public.profiles
   add column if not exists onboarding   jsonb,
-  add column if not exists subscription jsonb;
+  add column if not exists subscription jsonb,
+  add column if not exists progress     jsonb;
 
 alter table public.profiles enable row level security;
 

@@ -227,7 +227,7 @@ Target: 30-50 pages total.
 ## Priority 4: Mock Exam Results Analysis
 
 After completing a mock exam, show:
-- Section breakdown (listening/reading/writing scores)
+- Section breakdown (listening/reading auto-scored → projected /300 band, pass 180; writing shown as self-check against model answers, not auto-graded — see the /app/ client)
 - Weak grammar points identified from wrong answers
 - Recommended practice links to grammar/vocabulary pages
 - Historical progress chart

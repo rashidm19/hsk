@@ -268,7 +268,7 @@
 - **Sub:** Payment confirmed — your receipt is on its way to your email.
 - **Recap:** Plan: {plan} · Goal: {target_level} · Focus: {weak_section}
 - **What's next:** Your Week 1 starts now — first up: {weak_section}.
-- **CTA:** Start studying → главный экран платформы.
+- **CTA:** Start studying → главный экран платформы (с 2026-07 — пост-paywall SPA `/app/`, не `/exams/`).
 - 🔧 Только happy-path. При отмене/ошибке оплаты — не сюда, а назад на checkout (S23) с понятной ошибкой.
 
 ---
