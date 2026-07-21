@@ -5,15 +5,17 @@
  * session or subscription — so this NEVER redirects. It only relabels the
  * CTAs (signed-in visitors get a "workspace" shortcut; the app itself stays
  * subscription-gated by auth-guard.js). Auto-forwarding signed-in users to
- * /exams/ would also collide with that gate (a logged-in, unsubscribed user
- * would bounce / -> /exams/ -> /quiz/?sub=required and never see the page).
+ * /app/ would also collide with that gate (a logged-in, unsubscribed user
+ * would bounce / -> /app/ -> /quiz/?sub=required and never see the page).
  */
 (function () {
   'use strict';
 
   if (!document.body.classList.contains('lp')) return;
 
-  var APP_HOME = '/exams/';
+  // Post-paywall home is the redesigned client at /app/ (matches route-decision.js,
+  // login.js NEXT, and the funnel handoffUrl — NOT the old /exams/ shell).
+  var APP_HOME = '/app/';
   var FUNNEL = '/quiz/';
 
   // Every red funnel CTA on the landing is <a class="mkt-link" href="/quiz/">
