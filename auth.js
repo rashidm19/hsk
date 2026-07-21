@@ -96,6 +96,23 @@
     } catch (e) {}
   }
 
+  // Wipe this device's study-progress on sign-out so account A's exam attempts /
+  // mastered words never bleed into account B on a shared device (A1). Backstop for
+  // non-/app/ sign-out entry points (login, landing); on /app/ the client stops
+  // sync and clears these first. Device prefs (theme/lang/notif) are left intact.
+  function clearStudyProgress() {
+    try {
+      var ls = global.localStorage;
+      [
+        'hsk4-attempts', 'hsk4-vocab-mastered', 'hsk4-guide-path', 'hsk4-goal',
+        'hsk4-welcome', 'hsk4-firstrun', 'hsk4-exam-progress',
+        'hsk4-progress-updatedAt', 'hsk4-progress-mastered-updatedAt',
+        'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner'
+      ].forEach(function (k) { try { ls.removeItem(k); } catch (e) {} });
+    } catch (e) {}
+    try { global.sessionStorage.removeItem('hsk_sub_cache'); } catch (e) {}
+  }
+
   function waitForSession(timeoutMs) {
     timeoutMs = timeoutMs == null ? (hasStoredSession() ? 1200 : 4000) : timeoutMs;
     return new Promise(function (resolve) {
@@ -143,10 +160,20 @@
     try {
       next = decodeURIComponent(next);
     } catch {
-      next = '/app/';
+      return '/app/';
     }
-    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) next = '/app/';
-    return next;
+    // Reject protocol-relative ('//') / backslash tricks, then require a
+    // same-origin resolution — this kills TAB/LF/CR vectors the URL parser turns
+    // into an authority (e.g. '/<TAB>//evil.com' -> host evil.com), which the old
+    // prefix-only check let through as an open redirect. Mirrors route-decision.js.
+    if (next.charAt(0) !== '/' || next.charAt(1) === '/' || next.charAt(1) === '\\') return '/app/';
+    try {
+      const u = new URL(next, 'https://hskprep.cc');
+      if (u.origin !== 'https://hskprep.cc') return '/app/';
+      return u.pathname + u.search + u.hash;
+    } catch {
+      return '/app/';
+    }
   }
 
   function storeAuthNext(next) {
@@ -375,6 +402,7 @@
 
   async function signOut() {
     clearProfileCache();
+    clearStudyProgress();
     const c = getClient();
     if (c) await c.auth.signOut();
   }

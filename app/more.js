@@ -912,6 +912,10 @@
     var btn = null;
     try { btn = ev && ev.target && ev.target.closest ? ev.target.closest('[data-a="signOut"]') : null; } catch (e0) {}
     if (btn) { try { btn.disabled = true; btn.textContent = 'Signing out…'; } catch (e1) {} }
+    /* Stop sync THEN clear this device's study-progress so account A's attempts /
+       mastered words never bleed into account B on a shared device (A1). Stop first
+       so the pagehide flush can't repopulate or push the cleared data. */
+    try { if (App.sync) { if (App.sync.stop) App.sync.stop(); if (App.sync.clearLocal) App.sync.clearLocal(); } } catch (eS) {}
     var done = false;
     var go = function () { if (done) return; done = true; try { location.href = '/'; } catch (e2) {} };
     try {

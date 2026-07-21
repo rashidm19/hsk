@@ -25,10 +25,19 @@
   var TABLE = 'profiles';
   var COL = 'progress';
   var STAMP = 'hsk4-progress-updatedAt'; /* this device's last durable-change time */
+  /* Per-collection change stamps. mastered + guide are REMOVABLE sets, so a pure
+     union would resurrect an un-mastered word / un-checked step on the next pull
+     (A3). We stamp each on every write and let the newer side win outright. */
+  var MSTAMP = 'hsk4-progress-mastered-updatedAt';
+  var GSTAMP = 'hsk4-progress-guide-updatedAt';
+  /* Which account this device's localStorage progress belongs to. Guards the
+     cross-account bleed (A1): never merge/push one account's data into another. */
+  var OWNER = 'hsk4-progress-owner';
   var DEBOUNCE_MS = 2000;
 
   var pushTimer = null;
   var busy = false;
+  var stopped = false; /* set on sign-out so a pending flush can't repopulate cleared storage */
 
   function client() {
     try { return (window.HSKAuth && HSKAuth.isConfigured() && HSKAuth.getClient()) || null; }
@@ -71,6 +80,8 @@
     var K = App.keys, S = App.store;
     return {
       updatedAt: Number(S.get(STAMP)) || 0,
+      masteredAt: Number(S.get(MSTAMP)) || 0,
+      guideAt: Number(S.get(GSTAMP)) || 0,
       attempts: S.getJSON(K.attempts, null) || [],
       mastered: S.getJSON(K.mastered, null) || [],
       guide: S.getJSON(K.guide, null),   /* object {"1":true} or array */
@@ -83,7 +94,20 @@
     };
   }
 
-  /* Pure union-merge. Never drops an attempt / mastered word / guide step. */
+  function ident(v) { return v || []; }
+
+  /* Merge a REMOVABLE collection. If EITHER side lacks a per-collection stamp
+     (a legacy blob written before A3), fall back to a data-safe UNION so an
+     un-upgraded device never loses items. Once BOTH sides stamp, the newer set
+     wins outright — so a removal actually sticks instead of being resurrected. */
+  function mergeColl(aItems, bItems, aAt, bAt, toArr) {
+    var A = toArr(aItems), B = toArr(bItems);
+    if (!aAt || !bAt || aAt === bAt) return uniq(A.concat(B));
+    return (aAt > bAt) ? uniq(A) : uniq(B);
+  }
+
+  /* Union for append-only attempts (never removed); LWW-by-collection for the
+     removable mastered/guide sets; last-write-wins by updatedAt for scalars. */
   function mergeBlobs(a, b) {
     a = a || {}; b = b || {};
     var seen = {}, attempts = [];
@@ -98,9 +122,11 @@
 
     return {
       updatedAt: Math.max(a.updatedAt || 0, b.updatedAt || 0),
+      masteredAt: Math.max(a.masteredAt || 0, b.masteredAt || 0),
+      guideAt: Math.max(a.guideAt || 0, b.guideAt || 0),
       attempts: attempts,
-      mastered: uniq((a.mastered || []).concat(b.mastered || [])),
-      guide: uniq(stepArray(a.guide).concat(stepArray(b.guide))), /* 0-based array */
+      mastered: mergeColl(a.mastered, b.mastered, a.masteredAt, b.masteredAt, ident),
+      guide: mergeColl(a.guide, b.guide, a.guideAt, b.guideAt, stepArray), /* 0-based array */
       goal: pick('goal'),
       theme: pick('theme'),
       lang: pick('lang'),
@@ -126,6 +152,8 @@
       if (m.welcome != null) S.set(K.welcome, m.welcome);
       if (m.firstrun != null) S.set(K.firstrun, m.firstrun);
       S.set(STAMP, String(m.updatedAt || now()));
+      if (m.masteredAt != null) S.set(MSTAMP, String(m.masteredAt));
+      if (m.guideAt != null) S.set(GSTAMP, String(m.guideAt));
     } finally { App._hydrating = false; }
   }
 
@@ -146,12 +174,25 @@
 
   /* Boot: pull remote, union-merge with local, write both sides, re-hydrate UI. */
   function pull() {
+    if (stopped) return Promise.resolve();
     var c = client(); if (!c) return Promise.resolve();
     return session().then(function (sess) {
       var uid = sess && sess.user && sess.user.id; if (!uid) return;
       return readRemote(c, uid).then(function (remote) {
+        var ownerLocal = App.store.get(OWNER);
+        if (ownerLocal && ownerLocal !== uid) {
+          /* A DIFFERENT account's study data is sitting in this device's shared
+             localStorage (an account switch without a clean sign-out). Never merge
+             it into this account or push it up — wipe it and adopt the server copy. */
+          clearLocal();
+          if (remote) applyToLocal(remote);
+          App.store.set(OWNER, uid);
+          try { if (App.reloadProgress) App.reloadProgress(); } catch (e) {}
+          return; /* nothing of OURS to contribute upward */
+        }
         var merged = mergeBlobs(localBlob(), remote);
         applyToLocal(merged);
+        App.store.set(OWNER, uid); /* claim this device's progress for this account */
         try { if (App.reloadProgress) App.reloadProgress(); } catch (e) {}
         return writeRemote(c, uid, merged); /* push local-only items up */
       });
@@ -160,17 +201,20 @@
 
   /* Debounced push: read-merge-write so a concurrent device is never clobbered. */
   function schedulePush() {
-    if (!client()) return;
+    if (stopped || !client()) return;
     if (pushTimer) { clearTimeout(pushTimer); }
     pushTimer = setTimeout(run, DEBOUNCE_MS);
   }
   function run() {
     pushTimer = null;
+    if (stopped) return;
     if (busy) { schedulePush(); return; }
     var c = client(); if (!c) return;
     busy = true;
     session().then(function (sess) {
       var uid = sess && sess.user && sess.user.id; if (!uid) return;
+      var ownerLocal = App.store.get(OWNER);
+      if (ownerLocal && ownerLocal !== uid) return; /* never push another account's local data (A1) */
       return readRemote(c, uid).then(function (remote) {
         var merged = mergeBlobs(localBlob(), remote);
         applyToLocal(merged);                 /* keep local consistent (storage only) */
@@ -182,11 +226,37 @@
   /* core's store hook calls this on every durable write. */
   function onWrite(key) {
     if (syncedKeys().indexOf(key) < 0) return; /* ignore in-flight exam + non-progress keys */
-    try { App.store.set(STAMP, String(now())); } catch (e) {} /* stamp this device's change */
+    var K = App.keys;
+    try {
+      var t = String(now());
+      App.store.set(STAMP, t); /* stamp this device's change */
+      if (key === K.mastered) App.store.set(MSTAMP, t);   /* per-collection stamp for A3 LWW */
+      else if (key === K.guide) App.store.set(GSTAMP, t);
+    } catch (e) {}
     schedulePush();
   }
 
-  App.sync = { pull: pull, schedulePush: schedulePush, onWrite: onWrite, merge: mergeBlobs };
+  /* Wipe this device's synced study-progress from localStorage (sign-out / account
+     switch). Uses del() (not set) so no write-hook fires; wrapped in _hydrating for
+     belt-and-suspenders. Leaves device prefs (theme/lang/notif) alone. */
+  function clearLocal() {
+    App._hydrating = true;
+    try {
+      var K = App.keys, S = App.store;
+      [K.attempts, K.mastered, K.guide, K.goal, K.welcome, K.firstrun, K.progress,
+        STAMP, MSTAMP, GSTAMP, OWNER].forEach(function (k) { if (k) { try { S.del(k); } catch (e) {} } });
+    } finally { App._hydrating = false; }
+  }
+
+  /* Stop all sync activity (called on sign-out BEFORE clearing storage, so the
+     pagehide/visibility flush can't read the cleared storage and push an empty
+     blob, nor re-hydrate the just-cleared keys). */
+  function stop() {
+    stopped = true;
+    if (pushTimer) { try { clearTimeout(pushTimer); } catch (e) {} pushTimer = null; }
+  }
+
+  App.sync = { pull: pull, schedulePush: schedulePush, onWrite: onWrite, merge: mergeBlobs, stop: stop, clearLocal: clearLocal };
 
   /* Flush a pending push when the tab is hidden/closed (best-effort). */
   try {
