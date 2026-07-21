@@ -17,6 +17,7 @@ const HEAD_SNIPPET = `
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
+<script src="/access-decision.js"></script>
 <script src="/auth-guard.js"></script>
 <script src="/auth-ui.js" defer></script>`;
 
@@ -33,7 +34,7 @@ function walk(dir, out) {
 }
 
 function injectHead(html) {
-  if (html.includes('/auth-ui.js" defer')) return html;
+  if (html.includes('/access-decision.js')) return html;
   if (!/\bclass="[^"]*\bapp\b/.test(html)) return html;
   // Start of the inline anti-FOUC dark-mode loader injected by build.js'
   // injectTheme(). The auth scripts must come AFTER this loader so it runs
@@ -65,7 +66,7 @@ function injectHead(html) {
 }
 
 function injectBody(html) {
-  if (html.includes('/auth-ui.js" defer')) return html;
+  if (html.includes('/access-decision.js')) return html;
   if (!/\bclass="[^"]*\bapp\b/.test(html)) return html;
   if (html.includes('<script src="/auth-ui.js"></script>')) {
     return html.replace(/\n?<script src="\/auth-ui\.js"><\/script>/g, '');
