@@ -13,9 +13,9 @@
 
   if (!document.body.classList.contains('lp')) return;
 
-  // Post-paywall home is the redesigned client at /app/ (matches route-decision.js,
-  // login.js NEXT, and the funnel handoffUrl — NOT the old /exams/ shell).
-  var APP_HOME = '/app/';
+  // Post-paywall home = the redesigned client. Single source of truth is HSKAuth.APP_HOME
+  // (auth.js), so this can never drift back to the old /exams/ shell.
+  var APP_HOME = (window.HSKAuth && HSKAuth.APP_HOME) || '/app/';
   var FUNNEL = '/quiz/';
 
   // Every red funnel CTA on the landing is <a class="mkt-link" href="/quiz/">

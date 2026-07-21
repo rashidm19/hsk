@@ -9,6 +9,12 @@
   var PROFILE_CACHE_KEY = 'hsk_profile_cache';
   var PROFILE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
+  // SINGLE SOURCE OF TRUTH for the post-paywall home (the redesigned /app/ client).
+  // Any client code routing an authed user to "the app" must read HSKAuth.APP_HOME —
+  // never hardcode '/exams/' (the old shell) or '/app/' again. (route-decision.js /
+  // login.js keep their own '/app/' default; those are pure/tested and don't drift.)
+  var APP_HOME = '/app/';
+
   function cfg() {
     return global.HSK_AUTH_CONFIG || {};
   }
@@ -557,6 +563,7 @@
 
   global.HSKAuth = {
     isConfigured,
+    APP_HOME,
     configError,
     getClient,
     getSession,

@@ -6,7 +6,9 @@
 
   if (!document.body.classList.contains('app')) return;
 
-  var APP_HOME = '/exams/';
+  // Single source of truth (auth.js HSKAuth.APP_HOME) — was a stale hardcoded '/exams/'
+  // (the old shell) that never got flipped to /app/ with the rest of the routing.
+  var APP_HOME = (window.HSKAuth && HSKAuth.APP_HOME) || '/app/';
 
   function fixAppHomeLinks() {
     document.querySelectorAll('.app-sidebar-foot a[href="/"]').forEach(function (a) {
