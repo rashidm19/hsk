@@ -180,6 +180,7 @@
     } catch (e) {}
     if (v == null) v = '';
     if (App.state) App.state.wrText = v;
+    try { App.store.set('hsk4-writing-draft', v); } catch (e) {}   /* persist the draft (L10); key mirrors study.js WR_KEY */
     try {
       var live = document.getElementById('wr-live');
       if (live) live.innerHTML = wrLiveHtml(App.state || {});

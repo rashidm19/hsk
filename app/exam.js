@@ -316,11 +316,8 @@
 
   function onAudioEnded() {
     if (ex._mode === 'clip') {
-      var i = ex._clipQ;
       stopClip({ full: true });
-      var s = stateOf();
-      var plays = assign({}, s.audioPlays); plays[i] = (plays[i] || 0) + 1;
-      App.setState({ audioPlaying: false, audioProg: 0, audioPlays: plays });
+      App.setState({ audioPlaying: false, audioProg: 0 });   /* the play was already counted on start (L3) */
       persistLive();
     } else if (ex._mode === 'track') {
       App.setState({ audioPlaying: false });
@@ -678,7 +675,11 @@
       var p = el.play();
       if (p && typeof p.catch === 'function') p.catch(function () { clipFail(); });
     } catch (e) { clipFail(); return; }
-    App.setState({ audioPlaying: true, audioProg: 0, audioErr: false });
+    /* Debit a play on START (not on 'ended') so navigating away mid-clip can't
+       reset the exam-mode 2-play cap. */
+    var plays = assign({}, s.audioPlays); plays[i] = (plays[i] || 0) + 1;
+    App.setState({ audioPlaying: true, audioProg: 0, audioErr: false, audioPlays: plays });
+    persistLive();
   };
 
   App.actions.setReviewAll = function () { App.setState({ reviewFilter: 'all' }); };

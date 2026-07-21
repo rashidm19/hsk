@@ -140,7 +140,7 @@
     var n = TESTS().length;
     return [
       n ? 'All ' + n + ' HSK 4 mock exams' : 'All HSK 4 mock exams',
-      '1,200-word vocabulary trainer',
+      '1,000-word vocabulary trainer',
       'Character writing practice',
       'Grammar guide & exam strategies',
       'Detailed progress analytics'

@@ -295,11 +295,23 @@
   /* HanziWriter — ported verbatim from prototype initWriter (2006-2016), the ref-callback
      replaced by a post-render sync loop (element may not be in the DOM yet). */
   var hw = null; var hwTries = 0;
+  /* CDN fallback: if the HanziWriter script never loads, paint the character
+     statically so the stroke box isn't left empty (L4). */
+  function glyphFallback(el, ch) {
+    if (!el) return;
+    el.innerHTML = '<div style="width:100%;height:100%;display:grid;place-items:center"><span class="serif-cn" style="font-size:118px;line-height:1;color:var(--ink)">' + esc(ch || '') + '</span></div>';
+    el.setAttribute('data-hw-char', ch || '');
+  }
   function initWriter() {
     var s = S();
     var el = document.getElementById('hw-target');
     if (!el) { hwTries++; if (hwTries < 40) setTimeout(initWriter, 200); return; }
-    if (!window.HanziWriter) { hwTries++; if (hwTries < 40) setTimeout(initWriter, 200); return; }
+    if (!window.HanziWriter) {
+      hwTries++;
+      if (hwTries < 40) { setTimeout(initWriter, 200); return; }
+      glyphFallback(el, s.curChar);   /* retry budget exhausted → static glyph */
+      return;
+    }
     var dark = s.theme === 'dark';
     var col = dark
       ? { strokeColor: '#e8886a', outlineColor: '#4a443c', drawingColor: '#6bc497' }

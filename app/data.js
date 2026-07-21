@@ -33,12 +33,14 @@
 
   /* ---------- small utils ---------- */
 
-  /* Pinyin/latin normalizer: lowercase, strip tone diacritics, spaces, apostrophes.
-   * norm('Rènzhēn') === 'renzhen'; norm('cai jiu') === 'caijiu'. */
+  /* Pinyin/latin normalizer: lowercase, strip tone diacritics, spaces, apostrophes,
+   * and fold the IME ü-convention v→u so "lvxing"/"nv" match 旅行/女 (stored as ü,
+   * which NFD-strips to u). Applied symmetrically to the index and the query.
+   * norm('Rènzhēn') === 'renzhen'; norm('lǚxíng') === norm('lvxing') === 'luxing'. */
   D.norm = function (s) {
     var str = String(s == null ? '' : s).toLowerCase();
     try { str = str.normalize('NFD'); } catch (e) {}
-    return str.replace(/[̀-ͯ]/g, '').replace(/[\s'’ʼ`´]/g, '');
+    return str.replace(/[̀-ͯ]/g, '').replace(/[\s'’ʼ`´]/g, '').replace(/v/g, 'u');
   };
 
   /* Strip a leading exam numbering prefix: "66. …", "66-67. …", "5、…". */

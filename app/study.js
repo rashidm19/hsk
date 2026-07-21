@@ -77,6 +77,10 @@
     return { bg: bg, bd: bd };
   }
 
+  /* Writing-trainer draft persistence (L10): a device-local key (not synced) so
+     the essay survives leaving/returning to the Writing sub-view and a reload. */
+  var WR_KEY = 'hsk4-writing-draft';
+
   /* 字 counter for the writing trainer — counts CJK chars (honest 字 count). */
   function cjkCount(str) {
     var m = String(str || '').match(/[一-鿿]/g);
@@ -136,13 +140,17 @@
   App.actions.setStudySub = function (v) {
     if (v === 'practice') seedRound();
     var cats = SENTENCE_CATS();
-    App.setState({
+    var patch = {
       studySub: v, curGrammar: null, curPair: null, curTopic: null,
       tqChoice: null, gqChoice: null, gqIdx: 0,
       pIdx: 0, pChoice: null, pScore: 0,
       sRecall: true, sRevealed: {}, sCat: cats.length ? cats[0].slug : null,
-      trapChoice: {}, wrText: '', wrModel: false
-    });
+      trapChoice: {}, wrModel: false
+    };
+    /* Writing draft is preserved, not wiped, when switching sub-views; restore
+       it from storage when (re)entering Writing (survives a reload). */
+    if (v === 'writing') { try { patch.wrText = App.store.get(WR_KEY) || (App.state && App.state.wrText) || ''; } catch (e) {} }
+    App.setState(patch);
     scrollTop();
   };
 
@@ -263,6 +271,7 @@
     } catch (e) {}
     if (v == null) v = '';
     if (App.state) App.state.wrText = v;
+    try { App.store.set(WR_KEY, v); } catch (e) {}   /* persist the draft (L10) */
     try {
       var live = document.getElementById('wr-live');
       if (live) live.innerHTML = wrLiveHtml(App.state || {});
