@@ -8,6 +8,28 @@
 
   if (!window.HSKAuth || !HSKAuth.isConfigured()) return;
 
+  // B4: the Supabase client lib loads from a CDN (render-blocking, no SRI). If
+  // that load failed, every auth call returns null and this guard would silently
+  // bounce the user to /login/ — which ALSO needs Supabase, so the paid app reads
+  // as dead. Show a retry screen instead of the silent bounce (graceful CDN
+  // degradation). This runs in <head>, before <body> exists, so we attach to
+  // <html>; the overlay is fixed + top-z-index so it covers the page once painted.
+  if (typeof window.supabase === 'undefined') {
+    try {
+      var o = document.createElement('div');
+      o.id = 'hsk-sb-fail';
+      o.setAttribute('role', 'alert');
+      o.setAttribute('style', 'position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#faf6f0;color:#2c2825;font-family:system-ui,-apple-system,sans-serif');
+      o.innerHTML = '<div style="font-size:1.05rem;font-weight:700">Couldn\'t connect</div>' +
+        '<div style="font-size:.9rem;color:#8a817a;max-width:300px;line-height:1.5">A required component failed to load. Check your connection and try again.</div>' +
+        '<button type="button" style="border:0;background:#b84e2e;color:#fff8f1;border-radius:11px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer">Reload</button>';
+      o.querySelector('button').addEventListener('click', function () { try { location.reload(); } catch (e) {} });
+      (document.body || document.documentElement).appendChild(o);
+      document.documentElement.classList.remove('hsk-auth-pending'); // don't leave the blank veil under it
+    } catch (e) {}
+    return; // halt — no silent bounce to a page that also can't load Supabase
+  }
+
   var path = window.location.pathname.replace(/\/$/, '') || '/';
   if (path === '/404.html' || path.indexOf('/auth') === 0) return;
 
