@@ -412,6 +412,7 @@
     else { scr = App.screens[name]; el = document.getElementById(name); key = 'sub:' + name; }
     if (!scr || !el) return;
     var sel = captureSel();
+    var _fb = null; try { _fb = document.activeElement; } catch (e0) {}
     sigCache[key] = computeSig(scr, s);
     var html = '';
     try { html = scr.html(s) || ''; } catch (e) { warn(e); html = ''; }
@@ -420,6 +421,11 @@
     initRegion(el, scr, s);
     resScroll(el, sc);
     restoreFocus(sel);
+    /* a subregion swap that re-renders an open dialog's container (e.g. the exam
+       intro's r-sheet refresh when its paper finishes loading) destroys the
+       focused node; mirror setState/reloadProgress so focus stays inside the
+       dialog / returns to the trigger instead of dropping to <body>. */
+    try { if (App._syncModalFocus) App._syncModalFocus(_fb); } catch (e5) {}
   };
 
   App.setState = function (patch, cb) {

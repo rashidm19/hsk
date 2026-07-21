@@ -662,7 +662,7 @@
       '<div style="flex:1;min-width:0"><div style="font-weight:700;color:var(--ink);font-size:var(--fs-md)">' + k.name + ' <span class="chinese" style="color:var(--stone);font-weight:400;font-size:var(--fs-sm)">' + k.cn + '</span></div><div style="font-size:var(--fs-xs);color:var(--stone)">' + esc(k.sub) + '</div></div>' +
       '<div style="text-align:right"><div style="font-size:var(--fs-xl);font-weight:700;color:var(--ink);line-height:1">' + (k.selfCheck ? '<span style="font-size:var(--fs-sm);font-weight:600;color:var(--stone)">Self-check</span>' : esc(k.score)) + '</div><div style="font-size:var(--fs-xs);font-weight:700;color:' + k.tCol + '">' + (k.selfCheck ? '' : esc(k.trend)) + '</div></div>' +
       '</div>' +
-      '<div style="height:6px;border-radius:99px;background:var(--surface-sunken);overflow:hidden;margin-top:14px"><div style="height:100%;width:' + k.w + ';background:' + k.color + ';border-radius:99px"></div></div>' +
+      (k.selfCheck ? '' : '<div style="height:6px;border-radius:99px;background:var(--surface-sunken);overflow:hidden;margin-top:14px"><div style="height:100%;width:' + k.w + ';background:' + k.color + ';border-radius:99px"></div></div>') +
       '</div>';
   }
   function statsOverviewHtml(s, atts) {

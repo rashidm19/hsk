@@ -319,7 +319,7 @@
           + '<span class="chinese" style="width:34px;height:34px;flex:none;display:grid;place-items:center;background:' + sk.soft + ';color:' + sk.color + ';border-radius:10px;font-size:16px;font-weight:700">' + esc(sk.icon) + '</span>'
           + '<div style="flex:1;min-width:0">'
           + '<div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:5px"><span style="color:var(--ink);font-weight:600">' + esc(sk.name) + ' <span class="chinese" style="color:var(--stone);font-weight:400">' + esc(sk.cn) + '</span></span><span style="font-weight:700;color:var(--ink)">' + (sk.selfCheck ? '<span style="font-weight:600;color:var(--stone);font-size:.72rem">Self-check</span>' : sk.score) + '</span></div>'
-          + '<div style="height:6px;border-radius:99px;background:var(--surface-sunken);overflow:hidden"><div style="height:100%;width:' + sk.w + ';background:' + sk.color + ';border-radius:99px"></div></div>'
+          + (sk.selfCheck ? '' : '<div style="height:6px;border-radius:99px;background:var(--surface-sunken);overflow:hidden"><div style="height:100%;width:' + sk.w + ';background:' + sk.color + ';border-radius:99px"></div></div>')
           + '</div>'
           + '</div>';
       }).join('')
