@@ -1116,3 +1116,14 @@ html.hsk-auth-pending body.app::after {
   animation: hsk-spin 0.8s linear infinite;
 }
 @keyframes hsk-spin { to { transform: rotate(360deg); } }
+
+/* === iOS focus-zoom guard ===
+   Mobile Safari (iPhone, and iPad running the desktop client) auto-zooms the
+   viewport when a focused field's font-size is < 16px. Several inputs are styled
+   .9–.95rem, so floor form controls to 16px on touch devices only — the !important
+   beats their inline font-size, while pointer:fine (mouse) desktops keep the
+   designed sizes. No app input is intentionally larger than 16px, so this never
+   shrinks one. */
+@media (hover: none) and (pointer: coarse) {
+  input, textarea, select { font-size: 16px !important; }
+}

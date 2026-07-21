@@ -193,7 +193,26 @@
       var anyShared = qsRaw.some(function (q) { return q && String(q.type || '').indexOf('listening') === 0 && !q.audio; });
       if (anyShared) listeningAudio = '/test/' + (idx + 1) + '/listening.mp3';
     }
-    return { questions: qsRaw.map(function (q) { return normalizeQ(q, listeningAudio); }) };
+    /* Dialogue-pair 2nd question (non-official papers store the clip only on the
+       1st question of a consecutively-numbered listening pair, leaving the 2nd
+       with no audio control — can't replay, can't reach it out of order). Give it
+       the pair's clip when the immediately-preceding listening question carries
+       its own audio AND is numbered n-1; the consecutive-number guard means a
+       standalone question whose own clip is simply missing from the source never
+       inherits an unrelated dialogue (e.g. test-07 Q42-45, which anyway carry
+       their passage in the text and need no audio). */
+    var prevQ = null;
+    return {
+      questions: qsRaw.map(function (q) {
+        var nq = normalizeQ(q, listeningAudio);
+        if (nq.section === 'Listening' && !nq.audio && !nq.sharedTrack
+          && prevQ && prevQ.section === 'Listening' && prevQ.audio && nq.n === prevQ.n + 1) {
+          nq.audio = prevQ.audio;
+        }
+        prevQ = nq;
+        return nq;
+      })
+    };
   }
 
   function fetchRaw(idx) {
