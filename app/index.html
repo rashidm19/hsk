@@ -32,6 +32,10 @@
   }catch(e){}
   window.HSK_DESKTOP=d;
   document.write('<link rel="stylesheet" href="/app/'+(d?'desktop':'app')+'.css">');
+  /* Desktop bundle (~280KB) loads via document.write below, invisible to the
+     preload scanner. Preload it here (in <head>, before the shared modules) so
+     it fetches in PARALLEL — gated on d so mobile never pays for it. */
+  if(d){var _dm=['config','shell','exam','vocab','more','study'];for(var _i=0;_i<_dm.length;_i++){document.write('<link rel="preload" as="script" href="/app/desktop-'+_dm[_i]+'.js">');}}
 })();
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.7/dist/hanzi-writer.min.js"></script>
@@ -49,6 +53,14 @@ window.ymGoal=function(name,params){try{if(window.ym)ym(110455584,"reachGoal",na
 </head>
 <body class="app hsk-auth-pending">
 <div id="app-root"><div id="r-shell"></div><div id="r-player"></div><div id="r-results"></div><div id="r-sheet"></div><div id="r-overlay"></div></div>
+<!-- Global error boundary (registered before the modules so a load-time throw in
+     any of them is reported, not silently swallowed). Metrika-reports (capped) +
+     console; the boot wrapper below paints a reload screen if boot itself throws. -->
+<script>
+(function(){var n=0;function report(kind,msg){try{if(n<5){n++;if(window.ymGoal)ymGoal('app_error',{kind:kind,msg:String(msg==null?'':msg).slice(0,180)});}}catch(e){}try{if(window.console&&console.warn)console.warn('[app]',kind,msg);}catch(e){}}
+window.addEventListener('error',function(e){report('error',e&&(e.message||(e.error&&e.error.message)));});
+window.addEventListener('unhandledrejection',function(e){report('rejection',e&&e.reason&&(e.reason.message||e.reason));});})();
+</script>
 <script src="/app/core.js"></script>
 <script>if(window.HSK_DESKTOP)document.write('<script src="/app/desktop-config.js"><\/script>')</script>
 <script src="/app/data.js"></script>
@@ -59,7 +71,7 @@ window.ymGoal=function(name,params){try{if(window.ym)ym(110455584,"reachGoal",na
 <script src="/app/study.js"></script>
 <script>if(window.HSK_DESKTOP)document.write('<script src="/app/desktop-shell.js"><\/script><script src="/app/desktop-exam.js"><\/script><script src="/app/desktop-vocab.js"><\/script><script src="/app/desktop-more.js"><\/script><script src="/app/desktop-study.js"><\/script>')</script>
 <script src="/app/sync.js"></script>
-<script>App.boot()</script>
+<script>try{App.boot()}catch(e){try{if(window.ymGoal)ymGoal('app_error',{kind:'boot',msg:String(e&&e.message).slice(0,180)});}catch(x){}try{var r=document.getElementById('r-shell');if(r&&!r.innerHTML){r.innerHTML='<div style="display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;font-family:DM Sans,system-ui,sans-serif"><div style="font-size:1.05rem;font-weight:700;color:var(--ink,#2c2825)">Something went wrong</div><div style="font-size:.88rem;color:var(--stone,#8a817a);max-width:280px;line-height:1.5">The app hit an unexpected error. Please reload.</div><button onclick="location.reload()" style="border:0;background:var(--accent,#b84e2e);color:#fff8f1;border-radius:11px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer">Reload</button></div>';}}catch(x){}}</script>
 <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
 </body>
 </html>

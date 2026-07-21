@@ -570,8 +570,12 @@
        hsk4_result_{i}   = { pct, correct, total, ts }
        hsk4_progress_{i} = { answers, flags, currentQ, elapsed, ts }        */
 
-  var LEGACY_TEST_COUNT = 14;      /* real manifest length (data/index.json) */
-  var LEGACY_OFFICIAL_FROM = 12;   /* tests 13/14 are the official papers */
+  /* Scan generously (not the current manifest length) so a user migrating from a
+     larger/older /exams/ catalog never has a result dropped — only keys that
+     exist are folded. The official flag is a best-effort label here (index.json
+     isn't loaded at migrate-time). */
+  var LEGACY_SCAN_MAX = 60;
+  var LEGACY_OFFICIAL_FROM = 12;   /* tests 13/14 are the official papers today */
 
   function migrateLegacy() {
     try {
@@ -585,7 +589,7 @@
       if (!has(App.keys.guide) && has('hsk4-guide-path')) localStorage.setItem(App.keys.guide, localStorage.getItem('hsk4-guide-path'));
       if (!has(App.keys.attempts)) {
         var atts = [];
-        for (var i = 0; i < LEGACY_TEST_COUNT; i++) {
+        for (var i = 0; i < LEGACY_SCAN_MAX; i++) {
           var raw = localStorage.getItem('hsk4_result_' + i);
           if (!raw) continue;
           try {
@@ -603,7 +607,7 @@
       }
       if (!has(App.keys.progress)) {
         var prog = {}, found = false;
-        for (var j = 0; j < LEGACY_TEST_COUNT; j++) {
+        for (var j = 0; j < LEGACY_SCAN_MAX; j++) {
           var praw = localStorage.getItem('hsk4_progress_' + j);
           if (!praw) continue;
           try {

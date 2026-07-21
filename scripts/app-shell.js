@@ -125,7 +125,9 @@ function injectAppShell() {
     path.join(ROOT, 'index.html'),
     path.join(ROOT, '404.html'),
   ]);
-  const SKIP_DIRS = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle']);
+  // 'app' = the post-paywall SPA (its own shell); never wrap it in the dashboard
+  // shell. Guard by path, not by the accidental absence of a literal <main>.
+  const SKIP_DIRS = new Set(['.git', 'node_modules', 'data', 'scripts', 'ds-bundle', 'app']);
 
   function walk(dir, out) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
