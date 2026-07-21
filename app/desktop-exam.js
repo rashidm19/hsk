@@ -288,13 +288,14 @@
     var s = stateOf();
     var eng = App.exam || {};
     var el = eng.audioEl;
-    var icon, labelHtml, countHtml, btnBg, btnFg, cursor, w = 0, countLive = '';
+    var icon, labelHtml, countHtml, btnBg, btnFg, cursor, w = 0, countLive = '', btnAria = 'Play listening audio', ariaDis = 'false';
 
     if (q.sharedTrack) {
       var isTrack = eng._mode === 'track' && eng._trackTest === s.testIdx && el;
       var playing = !!s.audioPlaying;
       icon = playing ? '❚❚' : '▶';
       labelHtml = s.audioErr ? 'Audio unavailable' : (playing ? 'Playing…' : 'Section track · <span class="chinese">听力</span>');
+      btnAria = s.audioErr ? 'Audio unavailable' : (playing ? 'Pause listening audio' : 'Play listening section audio');
       countHtml = s.audioErr ? '—' : esc(fmtTime(isTrack ? Math.floor(el.currentTime || 0) : 0));
       btnBg = 'var(--accent)'; btnFg = 'var(--invert-fg)'; cursor = 'pointer';
       if (isTrack && el.duration > 0 && isFinite(el.duration)) w = Math.round(el.currentTime / el.duration * 100);
@@ -315,6 +316,11 @@
         ? (plays >= 2 ? 'Done ✓' : ((2 - plays) === 1 ? '1 play left' : '2 plays left'))
         : 'Replay anytime';
       if (s.audioErr) { label = 'Audio unavailable'; count = '—'; }
+      btnAria = s.audioErr ? 'Audio unavailable'
+        : locked ? 'Listening audio finished, no replays left'
+          : playingC ? 'Pause listening audio'
+            : (plays >= 1 ? 'Replay listening audio' : 'Play listening audio');
+      ariaDis = locked ? 'true' : 'false';
       labelHtml = esc(label);
       countHtml = esc(count);
       btnBg = locked ? 'var(--surface-sunken)' : 'var(--accent)';
@@ -326,9 +332,9 @@
     }
 
     return '<div style="display:flex;align-items:center;gap:14px;background:var(--surface-sunken);border-radius:14px;padding:14px 16px;margin-bottom:20px">' +
-      '<button type="button" data-a="playClip" aria-label="Play listening audio" style="width:46px;height:46px;flex:none;display:grid;place-items:center;background:' + btnBg + ';color:' + btnFg + ';border:0;border-radius:50%;cursor:' + cursor + ';font-size:15px">' + icon + '</button>' +
+      '<button type="button" data-a="playClip" aria-label="' + esc(btnAria) + '" aria-disabled="' + ariaDis + '" style="width:46px;height:46px;flex:none;display:grid;place-items:center;background:' + btnBg + ';color:' + btnFg + ';border:0;border-radius:50%;cursor:' + cursor + ';font-size:15px">' + icon + '</button>' +
       '<div style="flex:1;min-width:0">' +
-        '<div style="font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:7px">' + labelHtml + '</div>' +
+        '<div role="status" aria-live="polite" style="font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:7px">' + labelHtml + '</div>' +
         '<div style="height:7px;border-radius:99px;background:var(--mist);overflow:hidden"><div data-live="audioProg" style="height:100%;background:var(--accent);border-radius:99px;width:' + w + '%;transition:width .12s linear"></div></div>' +
       '</div>' +
       '<span' + countLive + ' style="font-size:var(--fs-xs);color:var(--stone);font-variant-numeric:tabular-nums">' + countHtml + '</span>' +
@@ -409,13 +415,13 @@
       optsHtml = '<div style="font-size:var(--fs-sm);color:var(--stone);background:var(--surface-sunken);border-radius:11px;padding:12px 15px;margin-bottom:14px;line-height:1.6">Write your sentence, then check it against the model. This section is self-assessed — it is not auto-scored.</div>' +
         (writeFn ? writeFn(cur) : '');
     } else if (isTF) {
-      optsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+      optsHtml = '<div role="radiogroup" aria-label="Answer options" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
         (cur.options || []).map(function (o, i) {
           var sel = curSel === i;
-          return '<button type="button" data-a="answerQ" data-argn="' + i + '" class="hv" style="display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid ' + (sel ? 'var(--accent)' : 'var(--border-subtle)') + ';background:' + (sel ? 'var(--accent-soft)' : 'var(--surface)') + ';border-radius:14px;padding:22px;cursor:pointer;transition:all .12s ease"><span class="chinese" style="font-size:var(--fs-2xl);font-weight:700;color:var(--ink)">' + esc(cleanOpt(o)) + '</span></button>';
+          return '<button type="button" role="radio" aria-checked="' + (sel ? 'true' : 'false') + '" data-a="answerQ" data-argn="' + i + '" class="hv" style="display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid ' + (sel ? 'var(--accent)' : 'var(--border-subtle)') + ';background:' + (sel ? 'var(--accent-soft)' : 'var(--surface)') + ';border-radius:14px;padding:22px;cursor:pointer;transition:all .12s ease"><span class="chinese" style="font-size:var(--fs-2xl);font-weight:700;color:var(--ink)">' + esc(cleanOpt(o)) + '</span>' + (sel ? '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' : '') + '</button>';
         }).join('') + '</div>';
     } else {
-      optsHtml = '<div style="display:flex;flex-direction:column;gap:10px">' +
+      optsHtml = '<div role="radiogroup" aria-label="Answer options" style="display:flex;flex-direction:column;gap:10px">' +
         (cur.options || []).map(function (o, i) {
           var sel = curSel === i;
           var border = sel ? 'var(--accent)' : 'var(--border-subtle)';
@@ -423,9 +429,10 @@
           var mBg = sel ? 'var(--accent)' : 'transparent';
           var mFg = sel ? 'var(--invert-fg)' : 'var(--stone)';
           var mBd = sel ? 'var(--accent)' : 'var(--mist)';
-          return '<button type="button" data-a="answerQ" data-argn="' + i + '" class="hv" style="display:flex;align-items:center;gap:14px;text-align:left;border:2px solid ' + border + ';background:' + bg + ';border-radius:13px;padding:14px 16px;cursor:pointer;transition:all .12s ease">' +
+          return '<button type="button" role="radio" aria-checked="' + (sel ? 'true' : 'false') + '" data-a="answerQ" data-argn="' + i + '" class="hv" style="display:flex;align-items:center;gap:14px;text-align:left;border:2px solid ' + border + ';background:' + bg + ';border-radius:13px;padding:14px 16px;cursor:pointer;transition:all .12s ease">' +
             '<span style="width:30px;height:30px;flex:none;display:grid;place-items:center;border:1.5px solid ' + mBd + ';background:' + mBg + ';color:' + mFg + ';border-radius:8px;font-weight:700;font-size:var(--fs-sm)">' + (LETTERS[i] || (i + 1)) + '</span>' +
-            '<span class="chinese" style="font-size:var(--fs-md);color:var(--ink);font-weight:500">' + esc(cleanOpt(o)) + '</span>' +
+            '<span class="chinese" style="flex:1;font-size:var(--fs-md);color:var(--ink);font-weight:500">' + esc(cleanOpt(o)) + '</span>' +
+            (sel ? '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
           '</button>';
         }).join('') + '</div>';
     }

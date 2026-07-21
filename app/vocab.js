@@ -564,11 +564,11 @@
       '</div>' +
       '<div style="position:relative;height:360px;touch-action:none">' +
         '<div style="position:absolute;inset:14px 6px -10px;background:var(--surface);border:1px solid var(--border-subtle);border-radius:22px;box-shadow:var(--shadow);opacity:.6"></div>' +
-        '<div data-gesture="fc" data-a="fcFlip" style="position:absolute;inset:0;background:var(--surface);border:1px solid var(--border-subtle);border-radius:22px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:26px;cursor:grab;user-select:none;will-change:transform">' +
-          '<span class="chinese" data-fc-nope style="position:absolute;top:18px;left:18px;border:2.5px solid var(--accent);color:var(--accent);font-weight:800;font-size:.82rem;letter-spacing:.05em;padding:4px 10px;border-radius:9px;transform:rotate(-12deg);opacity:0;pointer-events:none">还在学</span>' +
-          '<span class="chinese" data-fc-like style="position:absolute;top:18px;right:18px;border:2.5px solid var(--jade);color:var(--jade);font-weight:800;font-size:.82rem;letter-spacing:.05em;padding:4px 10px;border-radius:9px;transform:rotate(12deg);opacity:0;pointer-events:none">认识 ✓</span>' +
+        '<button type="button" data-gesture="fc" data-a="fcFlip" aria-label="Flip card to reveal the meaning" style="position:absolute;inset:0;background:var(--surface);border:1px solid var(--border-subtle);border-radius:22px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:26px;cursor:grab;user-select:none;will-change:transform;font:inherit;color:inherit;text-align:center;width:100%">' +
+          '<span class="chinese" data-fc-nope aria-hidden="true" style="position:absolute;top:18px;left:18px;border:2.5px solid var(--accent);color:var(--accent);font-weight:800;font-size:.82rem;letter-spacing:.05em;padding:4px 10px;border-radius:9px;transform:rotate(-12deg);opacity:0;pointer-events:none">还在学</span>' +
+          '<span class="chinese" data-fc-like aria-hidden="true" style="position:absolute;top:18px;right:18px;border:2.5px solid var(--jade);color:var(--jade);font-weight:800;font-size:.82rem;letter-spacing:.05em;padding:4px 10px;border-radius:9px;transform:rotate(12deg);opacity:0;pointer-events:none">认识 ✓</span>' +
           face +
-        '</div>' +
+        '</button>' +
       '</div>' +
       '<div style="display:flex;gap:12px;margin-top:22px">' +
         '<button type="button" class="pa" data-a="fcLearn" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--surface);border:1.5px solid var(--accent);color:var(--accent);border-radius:14px;padding:15px;font-weight:700;font-size:.9rem;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg> Still learning</button>' +

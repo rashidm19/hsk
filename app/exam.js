@@ -826,13 +826,14 @@
   function audioCardTpl(q) {
     var s = stateOf();
     var el = ex.audioEl;
-    var icon, labelHtml, countHtml, btnBg, btnFg, w = 0, countLive = '';
+    var icon, labelHtml, countHtml, btnBg, btnFg, w = 0, countLive = '', btnAria = 'Play listening audio', ariaDis = 'false';
 
     if (q.sharedTrack) {
       var isTrack = ex._mode === 'track' && ex._trackTest === s.testIdx && el;
       var playing = !!s.audioPlaying;
       icon = playing ? '❚❚' : '▶';
       labelHtml = s.audioErr ? 'Audio unavailable' : (playing ? 'Playing…' : 'Section track · <span class="chinese">听力</span>');
+      btnAria = s.audioErr ? 'Audio unavailable' : (playing ? 'Pause listening audio' : 'Play listening section audio');
       var cur = isTrack ? Math.floor(el.currentTime || 0) : 0;
       countHtml = s.audioErr ? '—' : esc(fmtTime(cur));
       btnBg = 'var(--accent)'; btnFg = '#fff8f1';
@@ -853,6 +854,11 @@
         ? (plays >= 2 ? 'Done ✓' : ((2 - plays) === 1 ? '1 play left' : '2 plays left'))
         : 'Replay anytime';
       if (s.audioErr) { label = 'Audio unavailable'; count = '—'; }
+      btnAria = s.audioErr ? 'Audio unavailable'
+        : locked ? 'Listening audio finished, no replays left'
+          : playingC ? 'Pause listening audio'
+            : (plays >= 1 ? 'Replay listening audio' : 'Play listening audio');
+      ariaDis = locked ? 'true' : 'false';
       labelHtml = esc(label);
       countHtml = esc(count);
       btnBg = locked ? 'var(--surface-sunken)' : 'var(--accent)';
@@ -863,9 +869,9 @@
     }
 
     return '<div style="display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:16px">' +
-      '<button type="button" data-a="playClip" aria-label="Play listening audio" class="pa" style="width:48px;height:48px;flex:none;display:grid;place-items:center;border:0;background:' + btnBg + ';color:' + btnFg + ';border-radius:99px;cursor:pointer;font-size:1rem">' + icon + '</button>' +
+      '<button type="button" data-a="playClip" aria-label="' + esc(btnAria) + '" aria-disabled="' + ariaDis + '" class="pa" style="width:48px;height:48px;flex:none;display:grid;place-items:center;border:0;background:' + btnBg + ';color:' + btnFg + ';border-radius:99px;cursor:pointer;font-size:1rem">' + icon + '</button>' +
       '<div style="flex:1;min-width:0">' +
-        '<div style="font-size:.82rem;font-weight:600;color:var(--ink)">' + labelHtml + '</div>' +
+        '<div role="status" aria-live="polite" style="font-size:.82rem;font-weight:600;color:var(--ink)">' + labelHtml + '</div>' +
         '<div style="height:6px;border-radius:99px;background:var(--surface-sunken);margin-top:7px;overflow:hidden"><div data-live="audioProg" style="height:100%;background:var(--accent);border-radius:99px;width:' + w + '%;transition:width .12s linear"></div></div>' +
       '</div>' +
       '<span' + countLive + ' style="font-size:.72rem;color:var(--stone);font-variant-numeric:tabular-nums">' + countHtml + '</span>' +
@@ -960,9 +966,10 @@
       var mBg = sel ? 'var(--accent)' : 'transparent';
       var mFg = sel ? '#fff8f1' : 'var(--stone)';
       var mBd = sel ? 'var(--accent)' : 'var(--mist)';
-      return '<button type="button" data-a="answerQ" data-argn="' + i + '" class="pa" style="display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:' + bg + ';border:2px solid ' + border + ';border-radius:15px;padding:15px 16px;cursor:pointer">' +
+      return '<button type="button" role="radio" aria-checked="' + (sel ? 'true' : 'false') + '" data-a="answerQ" data-argn="' + i + '" class="pa" style="display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:' + bg + ';border:2px solid ' + border + ';border-radius:15px;padding:15px 16px;cursor:pointer">' +
         '<span style="width:30px;height:30px;flex:none;display:grid;place-items:center;background:' + mBg + ';color:' + mFg + ';border:2px solid ' + mBd + ';border-radius:9px;font-weight:700;font-size:.82rem">' + (LETTERS[i] || (i + 1)) + '</span>' +
         '<span class="chinese" style="flex:1;font-size:1.05rem;color:var(--ink);font-weight:500">' + esc(cleanOpt(o)) + '</span>' +
+        (sel ? '<svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20 6 9 17l-5-5"/></svg>' : '') +
       '</button>';
     }).join('');
 
@@ -990,7 +997,7 @@
           blocks +
           (cur.selfCheck
             ? '<div style="font-size:.85rem;color:var(--stone);background:var(--surface-sunken);border-radius:11px;padding:11px 14px;margin-bottom:12px;line-height:1.55">Write your sentence, then check it against the model. This section is self-assessed — it is not auto-scored.</div>' + writeModelHtml(cur)
-            : '<div style="display:flex;flex-direction:column;gap:11px">' + optsHtml + '</div>') +
+            : '<div role="radiogroup" aria-label="Answer options" style="display:flex;flex-direction:column;gap:11px">' + optsHtml + '</div>') +
           '<div style="text-align:center;color:var(--mist);font-size:.72rem;margin-top:20px">‹ swipe to move between questions ›</div>' +
         '</div>' +
       '</div>' +

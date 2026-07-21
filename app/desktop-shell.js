@@ -143,7 +143,7 @@
       var bf = active ? 'var(--invert-fg)' : 'var(--stone)';
       badgeHtml = '<span style="margin-left:auto;font-size:var(--fs-xs);font-weight:600;background:' + bb + ';color:' + bf + ';padding:2px 8px;border-radius:99px">' + esc(badge) + '</span>';
     }
-    return '<button type="button" class="hv" data-a="dNav" data-arg="' + key + '" title="' + esc(label) + '" style="display:flex;align-items:center;gap:13px;width:100%;border:0;cursor:pointer;text-align:left;padding:11px 12px;border-radius:11px;font-size:var(--fs-base);background:' + bg + ';color:' + fg + ';font-weight:' + fw + '">'
+    return '<button type="button" class="hv" data-a="dNav" data-arg="' + key + '" aria-current="' + (active ? 'page' : 'false') + '" aria-label="' + esc(label) + '" title="' + esc(label) + '" style="display:flex;align-items:center;gap:13px;width:100%;border:0;cursor:pointer;text-align:left;padding:11px 12px;border-radius:11px;font-size:var(--fs-base);background:' + bg + ';color:' + fg + ';font-weight:' + fw + '">'
       + NAV_SVGS[key] + '<span>' + esc(label) + '</span>' + badgeHtml + '</button>';
   }
 
@@ -655,7 +655,7 @@
   var searchCacheKey = null;
   var searchCacheItems = null;
   App.d.searchItems = function (s) {
-    var key = String(s.gQuery || '') + ' ' + (s.dataReady ? '1' : '0');
+    var key = String(s.gQuery || '') + '\u0000' + (s.dataReady ? '1' : '0');
     if (searchCacheKey === key && searchCacheItems) return searchCacheItems;
     var q = String(s.gQuery || '').trim();
     if (!q || !App.data || typeof App.data.search !== 'function') return [];

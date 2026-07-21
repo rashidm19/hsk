@@ -272,19 +272,19 @@
     var fw = active ? '700' : '600';
     /* prototype binds the icon fill dynamically — active tab's icon is filled */
     var fill = active ? 'currentColor' : 'none';
-    return '<button type="button" class="pa" data-a="' + action + '" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:transparent;cursor:pointer;padding:6px 0;color:' + fg + '">'
+    return '<button type="button" class="pa" data-a="' + action + '" aria-current="' + (active ? 'page' : 'false') + '" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:transparent;cursor:pointer;padding:6px 0;color:' + fg + '">'
       + '<svg width="24" height="24" viewBox="0 0 24 24" fill="' + fill + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + NAV_ICONS[tab] + '</svg>'
       + '<span style="font-size:.66rem;font-weight:' + fw + '">' + label + '</span>'
       + '</button>';
   }
 
   function tabBar(s) {
-    return '<div style="flex:none;display:flex;align-items:stretch;background:color-mix(in srgb, var(--surface) 92%, transparent);backdrop-filter:blur(14px);border-top:1px solid var(--border-subtle);padding:8px 8px calc(8px + env(safe-area-inset-bottom))">'
+    return '<nav aria-label="Primary" style="flex:none;display:flex;align-items:stretch;background:color-mix(in srgb, var(--surface) 92%, transparent);backdrop-filter:blur(14px);border-top:1px solid var(--border-subtle);padding:8px 8px calc(8px + env(safe-area-inset-bottom))">'
       + navBtn('home', 'goHome', 'Dashboard', s.tab === 'home')
       + navBtn('exams', 'goExams', 'Exams', s.tab === 'exams')
       + navBtn('vocab', 'goVocab', 'Words', s.tab === 'vocab')
       + navBtn('more', 'goMore', 'More', s.tab === 'more')
-      + '</div>';
+      + '</nav>';
   }
 
   /* ---------- markup: HOME dashboard (prototype 54-146) ---------- */
