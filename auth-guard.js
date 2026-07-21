@@ -88,30 +88,54 @@
   if (!preCached) { document.documentElement.classList.add('hsk-auth-pending'); }
   function unveil() { document.documentElement.classList.remove('hsk-auth-pending'); }
 
+  // Fail-closed retry screen (reuses the B4 visual language) — shown only when we CANNOT
+  // confirm entitlement for an unconfirmed session (never for a known/just-paid subscriber).
+  function showAccessFail() {
+    try {
+      if (document.getElementById('hsk-access-fail')) return;
+      var o = document.createElement('div');
+      o.id = 'hsk-access-fail';
+      o.setAttribute('role', 'alert');
+      o.setAttribute('style', 'position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#faf6f0;color:#2c2825;font-family:system-ui,-apple-system,sans-serif');
+      o.innerHTML = '<div style="font-size:1.05rem;font-weight:700">Couldn\'t verify access</div>' +
+        '<div style="font-size:.9rem;color:#8a817a;max-width:300px;line-height:1.5">We couldn\'t confirm your subscription. Check your connection and try again.</div>' +
+        '<button type="button" style="border:0;background:#b84e2e;color:#fff8f1;border-radius:11px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer">Reload</button>';
+      o.querySelector('button').addEventListener('click', function () { try { location.reload(); } catch (e) {} });
+      (document.body || document.documentElement).appendChild(o);
+      document.documentElement.classList.remove('hsk-auth-pending');
+    } catch (e) {}
+  }
+
   (HSKAuth.waitForSession ? HSKAuth.waitForSession() : HSKAuth.getSession())
     .then(function (session) {
-      if (!session) {
-        unveil();
-        // No session on a gated page: send the user to the dedicated sign-in
-        // page, preserving the page they wanted so login can return them to it.
-        // (Was /quiz/?signin=1 — the funnel no longer owns returning-user login.)
-        var wanted = window.location.pathname + window.location.search;
-        window.location.replace('/login/?next=' + encodeURIComponent(wanted));
-        return;
-      }
-      var userId = session.user && session.user.id;
-      if (readSubCache(userId)) { unveil(); return; }
-      // No cached entitlement — verify against the server. Redirect only on a
-      // DEFINITE missing/inactive row; a failed read fails open (session-only
-      // gating) rather than ejecting a possibly-paying user on a network blip.
-      return (HSKAuth.getSubscriptionStatus ? HSKAuth.getSubscriptionStatus(userId) : Promise.resolve({ error: true, sub: null }))
-        .then(function (res) {
-          if (res.error) { unveil(); return; }                              // can't confirm -> fail open, show page
-          if (subActive(res.sub)) { writeSubCache(userId, res.sub); unveil(); return; }
-          window.location.replace('/quiz/?sub=required');                   // keep veiled — never paint the gated page
-        });
+      var userId = session && session.user && session.user.id;
+      var decide = (window.HSKAccess && HSKAccess.decideAccess) ? HSKAccess.decideAccess : null;
+      if (!decide) { unveil(); return; }   // safety: never harder than before if the module is missing
+      return decide({
+        session: !!session,
+        cacheFresh: userId ? ((readSubCache(userId) || {}).sub || null) : null,  // inner sub, NOT the {userId,sub,cachedAt} wrapper
+        confirmedActive: (userId && HSKAuth.readConfirmedActive) ? HSKAuth.readConfirmedActive(userId) : null,
+        payPending: (HSKAuth.isPayPending && HSKAuth.isPayPending()) || /[?&]pay=success/.test(window.location.search),
+        checkAccess: function () { return HSKAuth.checkAccess ? HSKAuth.checkAccess() : Promise.resolve({ reached: false }); },
+        getSub: function () { return HSKAuth.getSubscriptionStatus ? HSKAuth.getSubscriptionStatus(userId) : Promise.resolve({ error: true, sub: null }); }
+      }).then(function (d) {
+        if (d.action === 'show') {
+          if (userId) { writeSubCache(userId, d.sub); if (HSKAuth.recordAccessConfirmed) HSKAuth.recordAccessConfirmed(userId, d.sub); }
+          unveil(); return;
+        }
+        // pay-pending: hsk_pay_pending is durable localStorage (30-min TTL) so this covers a
+        // just-paid user even on a cold tab; the durable grace marker is armed on their first
+        // successful checkAccess 'show'. grace-show: known subscriber, server unreachable.
+        if (d.action === 'grace-show' || d.action === 'pay-pending') { unveil(); return; }
+        if (d.action === 'paywall') { window.location.replace('/quiz/?sub=required'); return; }
+        if (d.action === 'login') {
+          unveil();
+          var wanted = window.location.pathname + window.location.search;
+          window.location.replace('/login/?next=' + encodeURIComponent(wanted));
+          return;
+        }
+        showAccessFail(); // 'fail-closed'
+      });
     })
-    .catch(function () {
-      unveil();
-    });
+    .catch(function () { unveil(); });
 })();

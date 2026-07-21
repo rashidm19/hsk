@@ -30,9 +30,10 @@
   function decideRoute(o) {
     o = o || {};
     if (o.sub === 'none') return '/quiz/?sub=required';
-    // 'active' OR 'error' -> fail open into the app. A transient entitlement
-    // read must never strand a paying user at the paywall; the app guard
-    // re-checks server-side on arrival.
+    // 'active' OR 'error' -> lenient here on purpose. A transient entitlement read must never
+    // strand a paying user at the paywall; auth-guard.js is the AUTHORITATIVE gate and re-checks
+    // on arrival at /app/ (fail-closed for unconfirmed sessions). Do not duplicate that policy
+    // here, or the two can disagree.
     return safeNext(o.next);
   }
 
