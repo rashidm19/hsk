@@ -107,7 +107,7 @@
         'hsk4-attempts', 'hsk4-vocab-mastered', 'hsk4-guide-path', 'hsk4-goal',
         'hsk4-welcome', 'hsk4-firstrun', 'hsk4-exam-progress',
         'hsk4-progress-updatedAt', 'hsk4-progress-mastered-updatedAt',
-        'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner'
+        'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner', 'hsk_access_ok'
       ].forEach(function (k) { try { ls.removeItem(k); } catch (e) {} });
     } catch (e) {}
     try { global.sessionStorage.removeItem('hsk_sub_cache'); } catch (e) {}
@@ -272,6 +272,54 @@
       return { error: false, sub: (data && data.subscription) || null };
     } catch (e) {
       return { error: true, sub: null };
+    }
+  }
+
+  // Durable "entitlement last confirmed active" marker (localStorage) — the grace signal.
+  // Distinct from the 15-min sessionStorage fast-path cache: survives across tabs/sessions so
+  // a returning subscriber during a transient outage isn't ejected. userId-scoped (no A1 bleed).
+  var ACCESS_OK_KEY = 'hsk_access_ok';
+  var ACCESS_OK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+  var PAY_PENDING_KEY = 'hsk_pay_pending';       // written by onboarding.js at checkout
+  var PAY_PENDING_TTL_MS = 30 * 60 * 1000;       // must match onboarding.js PAY_PENDING_TTL_MS
+
+  function recordAccessConfirmed(userId, sub) {
+    if (!userId || !subActive(sub)) return;      // only persist a genuinely active entitlement
+    try {
+      global.localStorage.setItem(ACCESS_OK_KEY, JSON.stringify({ userId: userId, sub: sub, at: Date.now() }));
+    } catch (e) {}
+  }
+  function readConfirmedActive(userId) {
+    if (!userId) return null;
+    try {
+      var d = JSON.parse(global.localStorage.getItem(ACCESS_OK_KEY));
+      if (!d || d.userId !== userId) return null;
+      if (Date.now() - (d.at || 0) > ACCESS_OK_TTL_MS) return null;
+      return subActive(d.sub) ? d.sub : null;    // re-validate the sub's own expires_at (C12)
+    } catch (e) { return null; }
+  }
+  function isPayPending() {
+    try {
+      var t = parseInt(global.localStorage.getItem(PAY_PENDING_KEY) || '', 10);
+      return isFinite(t) && (Date.now() - t) < PAY_PENDING_TTL_MS;
+    } catch (e) { return false; }
+  }
+
+  // Authoritative entitlement check via the check-access edge function. functions.invoke attaches
+  // BOTH apikey and Authorization and builds the URL from cfg().url. Short budget (NOT the 8s RLS
+  // bound) so a stalled call doesn't hold the veil. Any non-2xx/timeout => {reached:false}.
+  async function checkAccess() {
+    var c = getClient();
+    if (!c) return { reached: false };
+    var session = await getSession();
+    if (!session) return { reached: false };
+    try {
+      var TIMED_OUT = { __t: true };
+      var res = await withTimeout(c.functions.invoke('check-access'), 4000, TIMED_OUT);
+      if (res === TIMED_OUT) return { reached: false };
+      return global.HSKAccess.classifyInvoke(res);
+    } catch (e) {
+      return { reached: false };
     }
   }
 
@@ -518,6 +566,10 @@
     getProfile,
     getSubscription,
     getSubscriptionStatus,
+    checkAccess,
+    recordAccessConfirmed,
+    readConfirmedActive,
+    isPayPending,
     routeAfterAuth,
     getOnboarding,
     readProfileCache,
