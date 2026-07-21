@@ -308,7 +308,7 @@
 
     var skillsHtml = !h.showSkills ? '' :
       '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-top:16px">'
-      + '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:15px">Skill estimate · /100</div>'
+      + '<div role="heading" aria-level="2" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:15px">Skill estimate · /100</div>'
       + '<div style="display:flex;flex-direction:column;gap:15px">'
       + h.skills.map(function (sk) {
         return '<div style="display:flex;align-items:center;gap:12px">'
@@ -323,7 +323,7 @@
       + '</div>';
 
     var weeklyHtml = '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-top:16px">'
-      + '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">This week · <span class="chinese">本周</span></div>'
+      + '<div role="heading" aria-level="2" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">This week · <span class="chinese">本周</span></div>'
       + '<div style="display:flex;align-items:flex-end;gap:8px;height:84px;margin-top:14px">'
       + h.weekly.map(function (d) {
         return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">'
@@ -336,7 +336,7 @@
 
     var recentHtml = !h.hasRecent ? '' :
       '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-top:16px">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">Recent tests</span><button type="button" data-a="goHistory" style="border:0;background:transparent;color:var(--accent);font-weight:600;font-size:.85rem;cursor:pointer">View all →</button></div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span role="heading" aria-level="2" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">Recent tests</span><button type="button" data-a="goHistory" style="border:0;background:transparent;color:var(--accent);font-weight:600;font-size:.85rem;cursor:pointer">View all →</button></div>'
       + h.recent.map(function (r) {
         return '<button type="button" class="pa" data-a="goHistory" style="display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;text-align:left;padding:12px 4px;cursor:pointer;border-top:1px solid var(--border-subtle)">'
           + '<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--ink);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.title) + '</div><div style="font-size:.74rem;color:var(--stone)">Taken ' + esc(r.date) + '</div></div>'
@@ -356,7 +356,7 @@
       + '<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:#fff8f1;border-radius:22px;padding:22px;box-shadow:var(--shadow-lg)">'
       + '<span class="serif-cn" aria-hidden="true" style="position:absolute;right:-18px;bottom:-56px;font-size:180px;line-height:1;opacity:.13;color:#fff">学</span>'
       + '<div style="position:relative;z-index:1">'
-      + '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Today\'s plan · <span class="chinese">今日计划</span></div>'
+      + '<div role="heading" aria-level="2" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Today\'s plan · <span class="chinese">今日计划</span></div>'
       + '<div style="font-size:1.5rem;font-weight:700;margin-top:8px">' + h.planDone + ' of ' + h.planTotal + ' tasks done</div>'
       + '<div style="opacity:.9;margin-top:3px;font-size:.9rem">' + esc(h.planSub) + '</div>'
       + '<div style="height:9px;border-radius:99px;background:rgba(255,248,241,.28);margin-top:16px;overflow:hidden"><div style="height:100%;width:' + h.planPct + ';background:#fff8f1;border-radius:99px"></div></div>'
@@ -374,7 +374,7 @@
       /* goal card */
       + '<div style="position:relative;background:var(--surface);border:1px solid var(--border-subtle);border-left:3px solid var(--jade);border-radius:20px;padding:20px;box-shadow:var(--shadow);margin-top:16px">'
       + '<div style="position:absolute;top:16px;right:16px;color:var(--jade)">' + SVG_TARGET + '</div>'
-      + '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--stone)">Your goal · <span class="chinese">目标</span></div>'
+      + '<div role="heading" aria-level="2" style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--stone)">Your goal · <span class="chinese">目标</span></div>'
       + '<div style="display:flex;align-items:baseline;gap:9px;margin-top:6px"><span style="font-size:2rem;font-weight:700;line-height:1;color:var(--ink)">' + esc(h.goal.level) + '</span><span style="color:var(--stone);font-size:.85rem">on your first try</span></div>'
       + '<div style="font-size:.85rem;color:var(--stone);margin-top:9px">Est. score <b style="color:var(--ink)">' + esc(h.goal.est) + '</b> / ' + h.goal.target + '</div>'
       + '<div style="height:8px;border-radius:99px;background:var(--surface-sunken);margin-top:7px;overflow:hidden"><div style="height:100%;width:' + h.goal.w + ';background:var(--jade);border-radius:99px"></div></div>'
@@ -444,7 +444,7 @@
       ? '<button type="button" class="pa" data-a="wBack" aria-label="Back" style="width:52px;height:52px;flex:none;display:grid;place-items:center;border:1.5px solid var(--border-subtle);background:var(--surface);border-radius:14px;cursor:pointer;color:var(--ink)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>'
       : '';
 
-    return '<div data-screen-label="Welcome" style="position:absolute;inset:0;z-index:90;background:var(--paper);display:flex;flex-direction:column;animation:hsk-fade .3s ease both">'
+    return '<div data-screen-label="Welcome" role="dialog" aria-modal="true" aria-label="Welcome to HSK Prep" style="position:absolute;inset:0;z-index:90;background:var(--paper);display:flex;flex-direction:column;animation:hsk-fade .3s ease both">'
       + '<div style="flex:none;display:flex;align-items:center;gap:8px;padding:calc(16px + env(safe-area-inset-top)) 18px 8px">'
       + dots
       + '<button type="button" data-a="wSkip" style="flex:none;border:0;background:transparent;color:var(--stone);font-weight:600;font-size:.82rem;cursor:pointer;padding:4px 6px;margin-left:6px">Skip</button>'
@@ -568,7 +568,7 @@
   }
 
   function searchHtml(s) {
-    return '<div data-screen-label="Search" style="position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;background:var(--paper);animation:hsk-fade .2s ease both">'
+    return '<div data-screen-label="Search" role="dialog" aria-modal="true" aria-label="Search" style="position:absolute;inset:0;z-index:90;display:flex;flex-direction:column;background:var(--paper);animation:hsk-fade .2s ease both">'
       + '<div style="flex:none;display:flex;align-items:center;gap:10px;padding:14px 14px 12px;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-subtle)">'
       + '<label style="flex:1;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border-subtle);border-radius:13px;padding:11px 14px;box-shadow:var(--shadow)">'
       + '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>'

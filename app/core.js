@@ -425,8 +425,10 @@
   App.setState = function (patch, cb) {
     if (typeof patch === 'function') { try { patch = patch(App.state) || {}; } catch (e) { warn(e); patch = {}; } }
     for (var k in patch) { if (Object.prototype.hasOwnProperty.call(patch, k)) App.state[k] = patch[k]; }
+    var _focusBefore = null; try { _focusBefore = document.activeElement; } catch (eb) {}
     App.render();
     try { if (App._syncHistory) App._syncHistory(); } catch (e3) {}
+    try { if (App._syncModalFocus) App._syncModalFocus(_focusBefore); } catch (e5) {}
     if (cb) { try { cb(); } catch (e2) { warn(e2); } }
   };
 
@@ -437,7 +439,7 @@
   var _histArmed = false;
   function _trappableOpen(s) {
     return !!(s.searchOpen || s.introOpen || s.navOpen || s.langSheet || s.planSheet
-      || s.profileSheet || s.examExitConfirm || s.examView === 'player');
+      || s.profileSheet || s.wordSheetId != null || s.examExitConfirm || s.examView === 'player');
   }
   App._syncHistory = function () {
     if (_trappableOpen(App.state) && !_histArmed) {
@@ -454,10 +456,92 @@
       else if (s.langSheet) handled = act('closeLang');
       else if (s.planSheet) handled = act('closePlans');
       else if (s.profileSheet) handled = act('closeEdit');
+      else if (s.wordSheetId != null) handled = act('closeWord');
       else if (s.examExitConfirm) handled = act('cancelExit');
       else if (s.examView === 'player') handled = act('askExit');
       if (handled) App._syncHistory(); /* re-arm if a layer is still open */
     });
+  } catch (e) {}
+
+  /* ---------- D2: modal focus management (trap + restore) ----------
+     Both clients render every modal (exam intro/navigator/exit, word / language
+     / plan / profile sheets, welcome + search overlays, desktop exit + palette)
+     as a [role="dialog"] inside #r-sheet or #r-overlay. On open we move focus
+     into the dialog container (a screen reader announces "<label>, dialog") and
+     remember the control that opened it; while it is open Tab / Shift+Tab wrap
+     within it (the capture-phase handler below) so focus can't slip to the
+     content behind; on close focus returns to that control. This runs AFTER
+     render()'s restoreFocus, so a search input focused via the _focus
+     convention is already inside the dialog and is never stolen. */
+  function _topDialog() {
+    var regs = [document.getElementById('r-overlay'), document.getElementById('r-sheet')];
+    for (var i = 0; i < regs.length; i++) {
+      var r = regs[i]; if (!r) continue;
+      var list = r.querySelectorAll('[role="dialog"]');
+      for (var j = list.length - 1; j >= 0; j--) { if (list[j].getClientRects().length) return list[j]; }
+    }
+    return null;
+  }
+  var _FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]';
+  function _focusablesIn(root) {
+    var out = [], list = root.querySelectorAll(_FOCUSABLE);
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (el.disabled) continue;
+      var ti = el.getAttribute('tabindex');
+      if (ti !== null && parseInt(ti, 10) < 0) continue;   /* the -1 container itself / offscreen helpers */
+      if (!el.getClientRects().length) continue;            /* not rendered */
+      out.push(el);
+    }
+    return out;
+  }
+  function _restorable(el) {
+    try {
+      return !!(el && el.nodeType === 1 && el !== document.body && el !== document.documentElement
+        && document.contains(el) && typeof el.focus === 'function' && el.getClientRects().length);
+    } catch (e) { return false; }
+  }
+  function _focusInto(dlg) {
+    try {
+      if (dlg.contains(document.activeElement)) return;     /* already inside (e.g. the search input) */
+      dlg.setAttribute('tabindex', '-1');
+      try { dlg.focus({ preventScroll: true }); } catch (e0) { dlg.focus(); }
+    } catch (e) {}
+  }
+  var _modalWasOpen = false, _modalReturnEl = null, _modalCurDlg = null;
+  App._syncModalFocus = function (focusBefore) {
+    var dlg = _topDialog();
+    var openNow = !!dlg;
+    if (openNow) {
+      if (!_modalWasOpen) {
+        /* opening: prefer the clicked trigger, else whatever had focus */
+        var cand = App._lastTrigger;
+        if (!_restorable(cand)) cand = focusBefore;
+        _modalReturnEl = _restorable(cand) ? cand : null;
+      }
+      _focusInto(dlg);
+      _modalCurDlg = dlg;
+    } else if (_modalWasOpen) {
+      /* closing: return focus to the opener if it's still on the page */
+      var el = _modalReturnEl; _modalReturnEl = null; _modalCurDlg = null;
+      if (_restorable(el)) { try { el.focus({ preventScroll: true }); } catch (e1) { try { el.focus(); } catch (e2) {} } }
+    }
+    _modalWasOpen = openNow;
+  };
+  /* focus trap — capture phase beats the client keydown handlers (which never
+     touch Tab), and only acts while a dialog is actually open */
+  try {
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab' && e.keyCode !== 9) return;
+      var dlg = _topDialog();
+      if (!dlg) return;
+      var f = _focusablesIn(dlg);
+      if (!f.length) { e.preventDefault(); _focusInto(dlg); return; }
+      var first = f[0], last = f[f.length - 1], ae = document.activeElement;
+      if (ae === dlg || !dlg.contains(ae)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+      if (e.shiftKey && ae === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && ae === last) { e.preventDefault(); first.focus(); }
+    }, true);
   } catch (e) {}
 
   /* Subregion embed helper: '<div id="name">…inner html…</div>' */
@@ -513,6 +597,9 @@
     if (!t) return;
     var fn = App.actions[t.getAttribute('data-a')];
     if (!fn) return;
+    /* remember the control that fired this action so, if it opens a modal,
+       focus can be returned to it when the modal closes (D2 focus-restore) */
+    App._lastTrigger = t;
     if (t.tagName === 'A') e.preventDefault();
     var arg = t.getAttribute('data-arg');
     var argn = t.getAttribute('data-argn');
@@ -568,9 +655,10 @@
               : s.langSheet ? 'closeLang'
                 : s.planSheet ? 'closePlans'
                   : s.profileSheet ? 'closeEdit'
-                    : s.examExitConfirm ? 'cancelExit'
-                      : s.examView === 'player' ? 'askExit'
-                        : null;
+                    : s.wordSheetId != null ? 'closeWord'
+                      : s.examExitConfirm ? 'cancelExit'
+                        : s.examView === 'player' ? 'askExit'
+                          : null;
         if (esc) { e.preventDefault(); act(esc); }
         return;
       }

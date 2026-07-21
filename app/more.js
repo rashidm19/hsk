@@ -745,7 +745,7 @@
     if (!s.profileSheet) return '';
     return '<div style="position:absolute;inset:0;z-index:80">' +
       '<div data-a="closeEdit" style="position:absolute;inset:0;background:rgba(26,22,20,.42);animation:hsk-scrim .25s ease both"></div>' +
-      '<div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:88%;overflow-y:auto" class="hsk-scroll">' +
+      '<div role="dialog" aria-modal="true" aria-label="Edit profile" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:88%;overflow-y:auto" class="hsk-scroll">' +
       '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 16px"></div>' +
       '<h3 style="margin:0 0 16px;font-size:1.2rem;font-weight:700;color:var(--ink)">Edit profile <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.68em">编辑</span></h3>' +
       '<label style="display:block;margin-bottom:14px"><span style="display:block;font-size:.78rem;font-weight:600;color:var(--ink);margin-bottom:7px">Name</span><input type="text" value="' + esc(draft.name) + '" data-in="onDraftName" style="width:100%;box-sizing:border-box;border:1px solid var(--border-subtle);background:var(--surface-sunken);border-radius:12px;padding:13px 14px;font-size:.95rem;color:var(--ink);outline:none"></label>' +
@@ -768,7 +768,7 @@
     }
     return '<div style="position:absolute;inset:0;z-index:80">' +
       '<div data-a="closeLang" style="position:absolute;inset:0;background:rgba(26,22,20,.42);animation:hsk-scrim .25s ease both"></div>' +
-      '<div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both">' +
+      '<div role="dialog" aria-modal="true" aria-label="Interface language" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both">' +
       '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 16px"></div>' +
       '<h3 style="margin:0 0 4px;font-size:1.2rem;font-weight:700;color:var(--ink)">Interface language <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.68em">语言</span></h3>' +
       '<p style="margin:0 0 16px;font-size:.85rem;color:var(--stone);line-height:1.5">Menus and labels only — Chinese study content always stays in Chinese.</p>' +
@@ -810,7 +810,7 @@
       : '<button type="button" disabled style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:var(--accent);color:#fff8f1;border:0;border-radius:14px;padding:15px 20px;font-weight:700;font-size:.95rem;opacity:.55;cursor:default"><span>Sign in to extend · ' + sel.name + '</span><span>' + sel.price + '</span></button>';
     return '<div style="position:absolute;inset:0;z-index:80">' +
       '<div data-a="closePlans" style="position:absolute;inset:0;background:rgba(26,22,20,.42);animation:hsk-scrim .25s ease both"></div>' +
-      '<div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 0 0;animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:90%;display:flex;flex-direction:column;overflow:hidden">' +
+      '<div role="dialog" aria-modal="true" aria-label="Extend subscription" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 0 0;animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:90%;display:flex;flex-direction:column;overflow:hidden">' +
       '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 0;flex:none"></div>' +
       '<div class="hsk-scroll" style="overflow-y:auto;padding:14px 18px 0">' +
       '<h3 style="margin:0 0 4px;font-size:1.2rem;font-weight:700;color:var(--ink)">Extend access <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.68em">延长</span></h3>' +

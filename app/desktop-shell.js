@@ -367,7 +367,7 @@
     return '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);' + (extra || 'padding:22px') + '">' + inner + '</div>';
   }
   function cardLabel(text) {
-    return '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">' + text + '</div>';
+    return '<div role="heading" aria-level="2" style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700">' + text + '</div>';
   }
 
   function goalCardHtml(s, h) {
@@ -389,7 +389,7 @@
       : '<div style="display:flex;justify-content:space-between;font-size:var(--fs-xs);color:var(--stone);margin-top:9px"><span>Pass 180 · Goal ' + h.goalScore + '</span><span>' + h.n + ' test' + (h.n === 1 ? '' : 's') + ' done</span></div>';
     return '<div style="position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border-subtle);color:var(--ink);border-radius:22px;padding:24px;box-shadow:var(--shadow)">'
       + '<div style="position:absolute;top:16px;right:18px;color:var(--gold)">' + SVG_STAR + '</div>'
-      + '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--stone)">Your goal · <span class="chinese">目标</span></div>'
+      + '<div role="heading" aria-level="2" style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--stone)">Your goal · <span class="chinese">目标</span></div>'
       + '<div style="display:flex;align-items:baseline;gap:10px;margin-top:6px"><span style="font-size:2.4rem;font-weight:700;line-height:1;color:var(--ink)">' + esc(h.goalLevel) + '</span><span style="color:var(--stone);font-size:var(--fs-sm)">' + (day0 ? 'on your first try' : '· target ' + h.goalScore) + '</span></div>'
       + '<div style="font-size:var(--fs-sm);color:var(--stone);margin-top:10px">' + estLine + '</div>'
       + track + foot
@@ -429,13 +429,13 @@
       + '<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:var(--invert-fg);border-radius:22px;padding:28px 30px;box-shadow:var(--shadow-lg)">'
       + '<span class="serif-cn" aria-hidden="true" style="position:absolute;right:-20px;bottom:-64px;font-size:220px;line-height:1;opacity:.13;color:var(--invert-fg)">始</span>'
       + '<div style="position:relative;z-index:1">'
-      + '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Start here · <span class="chinese">开始</span></div>'
+      + '<div role="heading" aria-level="2" style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Start here · <span class="chinese">开始</span></div>'
       + '<div style="font-size:var(--fs-2xl);font-weight:700;margin-top:8px">Take your first mock exam</div>'
       + '<div style="opacity:.92;margin-top:8px;font-size:var(--fs-md);max-width:54ch;line-height:1.55">Sit one full paper — auto-scored the moment you finish — so we can lock in your real score and shape your plan.</div>'
       + '<button type="button" class="hv-raise" data-a="startToday" data-plan-cta style="display:inline-flex;align-items:center;gap:9px;margin-top:20px;background:var(--invert-fg);color:var(--accent);border:0;border-radius:12px;padding:12px 22px;font-weight:700;font-size:var(--fs-md);cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.15)">' + SVG_PLAY + ' Take your first mock →</button>'
       + '</div>'
       + '</div>'
-      + card('<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:8px">Your first steps · <span class="chinese">第一步</span></div>'
+      + card('<div role="heading" aria-level="2" style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:8px">Your first steps · <span class="chinese">第一步</span></div>'
         + '<div style="display:flex;flex-direction:column">'
         + firstStepRow('startToday', null, '1', 'var(--accent)', 'var(--invert-fg)', 'Take a full mock exam', 'Calibrate your score · ~' + h.firstMockMin + ' min', false)
         + firstStepRow('goVocab', null, '2', 'var(--surface-sunken)', 'var(--stone)', 'Start your word bank', Math.min(h.dueCount, 20) + ' cards to begin · <span class="chinese">词汇</span>', true)
@@ -528,7 +528,7 @@
       + '<span class="serif-cn" aria-hidden="true" style="position:absolute;right:-24px;bottom:-70px;font-size:230px;line-height:1;opacity:.13;color:var(--invert-fg)">学</span>'
       + '<div style="position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">'
       + '<div style="min-width:0">'
-      + '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Today’s plan · <span class="chinese">今日计划</span></div>'
+      + '<div role="heading" aria-level="2" style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Today’s plan · <span class="chinese">今日计划</span></div>'
       + '<div style="font-size:var(--fs-2xl);font-weight:700;margin-top:8px">' + h.planDone + ' of ' + h.planTotal + ' tasks done</div>'
       + '<div style="opacity:.9;margin-top:4px;font-size:var(--fs-md)">' + esc(h.planSub) + '</div>'
       + '<button type="button" class="hv-raise" data-a="startToday" data-plan-cta style="display:inline-flex;align-items:center;gap:9px;margin-top:18px;background:var(--invert-fg);color:var(--accent);border:0;border-radius:12px;padding:12px 22px;font-weight:700;font-size:var(--fs-md);cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.15)">' + SVG_PLAY + ' ' + esc(h.planTitle) + '</button>'
@@ -627,7 +627,7 @@
       : '';
 
     return '<div style="position:fixed;inset:0;z-index:110;background:rgba(26,22,20,.55);display:grid;place-items:center;padding:24px;overflow-y:auto;animation:hsk-fade .25s ease both">'
-      + '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:24px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;overflow:hidden;animation:hsk-pop .22s ease both">'
+      + '<div role="dialog" aria-modal="true" aria-label="Welcome to HSK Prep" style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:24px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;overflow:hidden;animation:hsk-pop .22s ease both">'
       + '<div style="display:flex;align-items:center;gap:8px;padding:18px 22px 12px">'
       + dots
       + '<button type="button" class="hv-ink" data-a="wSkip" style="flex:none;border:0;background:transparent;color:var(--stone);font-weight:600;font-size:var(--fs-sm);cursor:pointer;padding:4px 6px;margin-left:6px">Skip</button>'
@@ -784,7 +784,7 @@
        ancestor = wrapper) cannot close the palette */
     return '<div style="position:fixed;inset:0;z-index:90;display:flex;align-items:flex-start;justify-content:center;padding:76px 20px 20px">'
       + '<div data-a="closeSearch" style="position:absolute;inset:0;background:rgba(26,22,20,.5);animation:hsk-fade .16s ease both"></div>'
-      + '<div data-a="noop" style="position:relative;width:100%;max-width:600px;max-height:72vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow-lg);overflow:hidden;animation:hsk-pop .16s ease both">'
+      + '<div data-a="noop" role="dialog" aria-modal="true" aria-label="Search" style="position:relative;width:100%;max-width:600px;max-height:72vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow-lg);overflow:hidden;animation:hsk-pop .16s ease both">'
       + '<label style="display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid var(--border-subtle);flex:none">'
       + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>'
       + '<input id="g-search" type="text" value="' + esc(s.gQuery || '') + '" data-in="onGQuery" placeholder="Search words, characters, grammar, exams…" style="flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:var(--fs-md);color:var(--ink)">'
@@ -953,10 +953,11 @@
     var s = App.state || {};
     var k = e.key;
 
-    /* ⌘/Ctrl-K toggles the palette (not under the welcome overlay, nor over
-       the exam exit-confirm modal — resolve the confirm first) */
+    /* ⌘/Ctrl-K toggles the palette (not under the welcome overlay, nor over a
+       centered modal — the exam exit-confirm or the language sheet — which the
+       palette would otherwise stack on top of; resolve those first) */
     if ((e.metaKey || e.ctrlKey) && (k === 'k' || k === 'K')) {
-      if (s.welcome || s.examExitConfirm) return;
+      if (s.welcome || s.examExitConfirm || s.langSheet) return;
       e.preventDefault();
       if (s.searchOpen) { if (A.closeSearch) A.closeSearch(); }
       else A.openPalette();

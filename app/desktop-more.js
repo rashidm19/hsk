@@ -975,7 +975,7 @@
       if (!s.langSheet) return '';
       return '<div style="position:fixed;inset:0;z-index:82;display:grid;place-items:center;padding:20px;animation:hsk-fade .2s ease both">' +
         '<div data-a="closeLang" style="position:absolute;inset:0;background:rgba(26,22,20,.5)"></div>' +
-        '<div style="position:relative;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-lg);padding:26px;max-width:420px;width:100%;animation:hsk-pop .2s ease both">' +
+        '<div role="dialog" aria-modal="true" aria-label="Interface language" style="position:relative;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-lg);padding:26px;max-width:420px;width:100%;animation:hsk-pop .2s ease both">' +
         '<h3 style="margin:0 0 5px;font-size:var(--fs-xl);font-weight:700;color:var(--ink)">Interface language <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.7em">语言</span></h3>' +
         '<p style="margin:0 0 18px;font-size:var(--fs-sm);color:var(--stone);line-height:1.6">Menus and labels only — Chinese study content always stays in Chinese.</p>' +
         '<div style="display:flex;flex-direction:column;gap:10px">' +

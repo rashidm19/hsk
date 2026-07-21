@@ -693,7 +693,7 @@
     return '' +
       '<div style="position:absolute;inset:0;z-index:80">' +
         '<div data-a="closeWord" style="position:absolute;inset:0;background:rgba(26,22,20,.42);animation:hsk-scrim .25s ease both"></div>' +
-        '<div style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:84%;overflow-y:auto" class="hsk-scroll">' +
+        '<div role="dialog" aria-modal="true" aria-label="' + esc(w.word) + ' — word details" style="position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;box-shadow:var(--shadow-lg);padding:8px 18px calc(18px + env(safe-area-inset-bottom));animation:hsk-sheet .32s cubic-bezier(.32,.72,0,1) both;max-height:84%;overflow-y:auto" class="hsk-scroll">' +
           '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 18px"></div>' +
           '<div style="display:flex;align-items:center;gap:14px">' +
             '<span class="chinese" style="font-size:3.4rem;font-weight:700;color:var(--ink);line-height:1">' + esc(w.word) + '</span>' +

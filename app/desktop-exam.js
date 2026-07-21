@@ -733,7 +733,7 @@
     html: function () {
       return '<div style="position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:20px">' +
         '<div data-a="cancelExit" style="position:absolute;inset:0;background:rgba(26,22,20,.5);animation:hsk-fade .18s ease both"></div>' +
-        '<div style="position:relative;z-index:1;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-lg);padding:28px;max-width:400px;width:100%;animation:hsk-pop .18s ease both">' +
+        '<div role="dialog" aria-modal="true" aria-label="Leave the test" style="position:relative;z-index:1;background:var(--surface);border-radius:20px;box-shadow:var(--shadow-lg);padding:28px;max-width:400px;width:100%;animation:hsk-pop .18s ease both">' +
           '<div style="font-size:2rem">↩</div>' +
           '<h3 style="margin:12px 0 6px;font-size:var(--fs-xl);font-weight:700;color:var(--ink)">Leave the test?</h3>' +
           '<p style="margin:0;font-size:var(--fs-md);color:var(--stone);line-height:1.6">Save your place and resume this paper later, or discard it and start over next time.</p>' +
