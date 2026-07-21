@@ -46,7 +46,10 @@ Deno.serve(async (req) => {
   const svc = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });
   const { data, error } = await svc
     .from("profiles").select("subscription").eq("id", userId).maybeSingle();
-  if (error) return json({ active: false }, 200, cors); // definite unknown -> client fails closed if uncached
+  // A read FAILURE is not a definitive "no subscription" — return non-2xx so the client's
+  // classifyInvoke sees {reached:false} and falls back to its RLS read + grace path, instead of
+  // treating it as active:false and bouncing a real subscriber to the paywall.
+  if (error) return json({ active: false, error: true }, 503, cors);
 
   const sub = (data &&
     (data as { subscription?: { status?: string; expires_at?: string | null; plan?: string } }).subscription) ||

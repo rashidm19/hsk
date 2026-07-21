@@ -1,6 +1,6 @@
 // Pure helpers for check-access. Kept out of index.ts so they unit-test without Deno.serve.
 
-// MUST match client auth.js `subActive` (auth.js:471): unparseable expires_at is treated ACTIVE.
+// MUST match client auth.js `subActive()`: unparseable expires_at is treated ACTIVE.
 export function computeActive(
   sub: { status?: string; expires_at?: string | null } | null,
   now: number,

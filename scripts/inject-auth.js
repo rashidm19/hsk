@@ -42,15 +42,21 @@ function injectHead(html) {
   const marker = '<script>(function(){try{var t=localStorage.getItem';
 
   if (html.includes('/auth-guard.js')) {
-    // Self-heal pages injected by the old code, which placed the auth scripts
-    // ABOVE the loader (marker preceded by HEAD_SNIPPET). Strip that block so
-    // it gets re-inserted below the loader; if it's already below, do nothing.
-    const wrongOrder = HEAD_SNIPPET + '\n' + marker;
-    if (html.includes(wrongOrder)) {
-      html = html.replace(wrongOrder, marker); // healed — fall through to re-insert below the loader
-    } else {
-      return html; // already correct — nothing to do
-    }
+    // Page carries a STALE auth block (missing /access-decision.js — guarded at the top).
+    // This includes older injections (block ABOVE the loader) AND any block predating a
+    // HEAD_SNIPPET change (e.g. the access-decision.js addition). Strip every existing auth
+    // <script> wherever it sits / whatever legacy variant, so the canonical HEAD_SNIPPET
+    // re-inserts cleanly below the loader. (The previous wrongOrder-only heal silently left
+    // these unrefreshed → the guard's new HSKAccess dependency was undefined → fail-open.)
+    [
+      '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>',
+      '<script src="/config/auth.js"></script>',
+      '<script src="/auth.js"></script>',
+      '<script src="/access-decision.js"></script>',
+      '<script src="/auth-guard.js"></script>',
+      '<script src="/auth-ui.js" defer></script>',
+      '<script src="/auth-ui.js"></script>',
+    ].forEach((t) => { html = html.split('\n' + t).join('').split(t).join(''); });
   }
 
   const idx = html.indexOf(marker);

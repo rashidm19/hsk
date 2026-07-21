@@ -32,6 +32,7 @@ const sessionClient = (over) => Object.assign({
     getSession: async () => ({ data: { session: { user: { id: 'u1' } } } }),
     getUser: async () => ({ data: { user: { id: 'u1' } } }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+    signOut: async () => ({ error: null }),
   },
   functions: { invoke: async () => ({ data: { active: true }, error: null }) },
   from() { return this; }, select() { return this; }, eq() { return this; },
@@ -91,4 +92,12 @@ test('isPayPending true within TTL, false when absent', () => {
   assert.equal(g.HSKAuth.isPayPending(), false);
   g.__ls.set('hsk_pay_pending', String(Date.now()));
   assert.equal(g.HSKAuth.isPayPending(), true);
+});
+test('signOut clears BOTH grace markers + study progress (no cross-account bleed)', async () => {
+  const g = loadAuth(sessionClient());
+  g.__ls.set('hsk_access_ok', 'x'); g.__ls.set('hsk_pay_pending', String(Date.now())); g.__ls.set('hsk4-attempts', '[]');
+  await g.HSKAuth.signOut();
+  assert.equal(g.__ls.get('hsk_access_ok'), undefined, 'grace marker cleared');
+  assert.equal(g.__ls.get('hsk_pay_pending'), undefined, 'pay-pending marker cleared (the HIGH fix)');
+  assert.equal(g.__ls.get('hsk4-attempts'), undefined, 'study progress cleared');
 });

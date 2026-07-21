@@ -7,7 +7,7 @@
 (function (root) {
   'use strict';
 
-  // MUST match server computeActive (check-access/lib.ts) + client subActive (auth.js:471):
+  // MUST match server computeActive (check-access/lib.ts) + client subActive() in auth.js:
   // an unparseable expires_at is treated ACTIVE.
   function subActiveOf(sub, now) {
     if (!sub || sub.status !== 'active') return false;

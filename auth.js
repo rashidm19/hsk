@@ -107,7 +107,7 @@
         'hsk4-attempts', 'hsk4-vocab-mastered', 'hsk4-guide-path', 'hsk4-goal',
         'hsk4-welcome', 'hsk4-firstrun', 'hsk4-exam-progress',
         'hsk4-progress-updatedAt', 'hsk4-progress-mastered-updatedAt',
-        'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner', 'hsk_access_ok'
+        'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner', 'hsk_access_ok', 'hsk_pay_pending'
       ].forEach(function (k) { try { ls.removeItem(k); } catch (e) {} });
     } catch (e) {}
     try { global.sessionStorage.removeItem('hsk_sub_cache'); } catch (e) {}

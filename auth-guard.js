@@ -110,7 +110,17 @@
     .then(function (session) {
       var userId = session && session.user && session.user.id;
       var decide = (window.HSKAccess && HSKAccess.decideAccess) ? HSKAccess.decideAccess : null;
-      if (!decide) { unveil(); return; }   // safety: never harder than before if the module is missing
+      if (!decide) {
+        // access-decision.js should be injected on every body.app page; if it's somehow missing,
+        // degrade to a minimal session gate (still redirect the unauthenticated) rather than
+        // fully ungating — an authenticated user is shown (fail-open on the sub check only).
+        if (!session) {
+          unveil();
+          window.location.replace('/login/?next=' + encodeURIComponent(window.location.pathname + window.location.search));
+          return;
+        }
+        unveil(); return;
+      }
       return decide({
         session: !!session,
         cacheFresh: userId ? ((readSubCache(userId) || {}).sub || null) : null,  // inner sub, NOT the {userId,sub,cachedAt} wrapper
