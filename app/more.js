@@ -1103,12 +1103,19 @@
       + '<span aria-hidden="true" style="width:22px;height:22px;border:3px solid var(--mist);border-top-color:var(--accent);border-radius:99px;animation:hsk-spin .8s linear infinite"></span>'
       + '<div style="color:var(--stone);font-size:.9rem;font-weight:600">Loading…</div></div>';
   }
+  /* B1: phase-2 catalog load failed — show a retry, not an empty "0 of N" grid. */
+  function moreLoadError() {
+    return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:64px 20px;text-align:center">'
+      + '<div style="font-size:1rem;font-weight:700;color:var(--ink)">Couldn\'t load this section</div>'
+      + '<div style="color:var(--stone);font-size:.88rem;max-width:260px;line-height:1.5">Check your connection and try again.</div>'
+      + '<button type="button" class="pa" data-a="retryFullLoad" style="border:0;background:var(--accent);color:#fff8f1;border-radius:12px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer">Try again</button></div>';
+  }
   function renderMore(s) {
     var v = s.moreView;
     var inner;
     if (!v) inner = menuHtml(s);
-    else if (v === 'characters') inner = s.dataReadyFull ? charsHtml(s) : moreLoading();
-    else if (v === 'study') inner = !s.dataReadyFull ? moreLoading() : (App.screens.studySection ? App.screens.studySection(s) : (App.screens.study ? App.screens.study(s) : ''));
+    else if (v === 'characters') inner = !s.dataReadyFull ? moreLoading() : (s.dataFullError ? moreLoadError() : charsHtml(s));
+    else if (v === 'study') inner = !s.dataReadyFull ? moreLoading() : (s.dataFullError ? moreLoadError() : (App.screens.studySection ? App.screens.studySection(s) : (App.screens.study ? App.screens.study(s) : '')));
     else if (v === 'stats') inner = statsHtml(s);
     else if (v === 'guide') inner = guideHtml(s);
     else if (v === 'profile') inner = profileHtml(s);

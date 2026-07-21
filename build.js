@@ -5541,4 +5541,9 @@ injectFavicon();
 const { injectAppShell } = require('./scripts/app-shell');
 injectAppShell();
 syncCounts();
+// B6: wire the Supabase auth block into every body.app page as the LAST step, so
+// `node build.js` alone never ships 551 subscription-gated pages with the client
+// guard stripped. Idempotent + must run after injectTheme (auth goes below that
+// loader). Still runnable standalone via `node scripts/inject-auth.js`.
+require('./scripts/inject-auth').run();
 console.log('\nDone! All static content pre-rendered.');

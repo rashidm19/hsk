@@ -127,7 +127,7 @@
     profileSheet: false, planSheet: false, langSheet: false, uiLang: 'en', notif: true,
     profile: { name: '', email: '', country: '' },
     profileDraft: { name: '', email: '', country: '' },
-    sub: null, dataReady: false, dataReadyFull: false,
+    sub: null, dataReady: false, dataReadyFull: false, dataFullError: false,
     examView: 'list', introOpen: false, testIdx: 0,
     curQ: 0, answers: {}, flags: {}, elapsed: 0, reviewFilter: 'all', reviewOpen: {},
     audioPlaying: false, audioProg: 0, audioPlays: {}, navOpen: false,
@@ -412,8 +412,39 @@
     if (typeof patch === 'function') { try { patch = patch(App.state) || {}; } catch (e) { warn(e); patch = {}; } }
     for (var k in patch) { if (Object.prototype.hasOwnProperty.call(patch, k)) App.state[k] = patch[k]; }
     App.render();
+    try { if (App._syncHistory) App._syncHistory(); } catch (e3) {}
     if (cb) { try { cb(); } catch (e2) { warn(e2); } }
   };
+
+  /* ---------- B5: hardware/browser Back closes overlays / prompts exam exit ----------
+     Without History integration, Back unloads the single-route SPA — reads as a
+     lost session mid-timed-exam. Keep ONE guard history entry armed whenever a
+     trappable layer is open; on Back, consume it, dismiss the top layer, re-arm. */
+  var _histArmed = false;
+  function _trappableOpen(s) {
+    return !!(s.searchOpen || s.introOpen || s.navOpen || s.langSheet || s.planSheet
+      || s.profileSheet || s.examExitConfirm || s.examView === 'player');
+  }
+  App._syncHistory = function () {
+    if (_trappableOpen(App.state) && !_histArmed) {
+      try { history.pushState({ hskGuard: 1 }, ''); _histArmed = true; } catch (e) {}
+    }
+  };
+  try {
+    window.addEventListener('popstate', function () {
+      _histArmed = false;
+      var s = App.state, handled = false;
+      if (s.searchOpen) handled = act('closeSearch');
+      else if (s.introOpen) handled = act('closeIntro');
+      else if (s.navOpen) handled = act('closeNav');
+      else if (s.langSheet) handled = act('closeLang');
+      else if (s.planSheet) handled = act('closePlans');
+      else if (s.profileSheet) handled = act('closeEdit');
+      else if (s.examExitConfirm) handled = act('cancelExit');
+      else if (s.examView === 'player') handled = act('askExit');
+      if (handled) App._syncHistory(); /* re-arm if a layer is still open */
+    });
+  } catch (e) {}
 
   /* Subregion embed helper: '<div id="name">…inner html…</div>' */
   App.sub = function (name, state, attrs) {
@@ -656,11 +687,15 @@
      those sections swap their spinner for content. Failure still flips it (empty
      state, not a permanent spinner). */
   function markFull() {
+    var done = function () {
+      var err = !!(App.data && App.data.fullErrors && App.data.fullErrors.length);
+      App.setState({ dataReadyFull: true, dataFullError: err });
+    };
     try {
       if (App.data && typeof App.data.loadFull === 'function') {
-        App.data.loadFull().then(function () { App.setState({ dataReadyFull: true }); }, function () { App.setState({ dataReadyFull: true }); });
-      } else { App.setState({ dataReadyFull: true }); }
-    } catch (e) { App.setState({ dataReadyFull: true }); }
+        App.data.loadFull().then(done, done);
+      } else { App.setState({ dataReadyFull: true, dataFullError: false }); }
+    } catch (e) { App.setState({ dataReadyFull: true, dataFullError: false }); }
   }
   function loadData() {
     if (!(App.data && typeof App.data.load === 'function')) { App.setState({ dataReady: true, dataReadyFull: true }); return; }
@@ -765,6 +800,13 @@
     /* data load (async) — screens show a minimal skeleton until dataReady, or an
        error+retry (dataError) if it fails, so a blip never leaves a dead spinner */
     App.actions.retryDataLoad = loadData;
+    /* Retry ONLY the phase-2 catalogs (Characters + Study) after a partial failure
+       — shows the spinner again, then content or the error card (B1). */
+    App.actions.retryFullLoad = function () {
+      if (!(App.data && typeof App.data.retryFull === 'function')) { markFull(); return; }
+      App.setState({ dataReadyFull: false, dataFullError: false });
+      try { App.data.retryFull().then(markFull, markFull); } catch (e) { markFull(); }
+    };
     loadData();
 
     /* first render */

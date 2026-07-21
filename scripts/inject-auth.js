@@ -79,16 +79,23 @@ function addAuthPending(html) {
   return html.replace(/<body class="app"/, '<body class="app hsk-auth-pending"');
 }
 
-let count = 0;
-walk(ROOT, []).forEach((file) => {
-  if (SKIP.has(file)) return;
-  let html = fs.readFileSync(file, 'utf8');
-  if (!/\bclass="[^"]*\bapp\b/.test(html)) return;
-  const next = injectHead(injectBody(addAuthPending(html)));
-  if (next !== html) {
-    fs.writeFileSync(file, next, 'utf8');
-    count++;
-  }
-});
+function run() {
+  let count = 0;
+  walk(ROOT, []).forEach((file) => {
+    if (SKIP.has(file)) return;
+    let html = fs.readFileSync(file, 'utf8');
+    if (!/\bclass="[^"]*\bapp\b/.test(html)) return;
+    const next = injectHead(injectBody(addAuthPending(html)));
+    if (next !== html) {
+      fs.writeFileSync(file, next, 'utf8');
+      count++;
+    }
+  });
+  console.log('[inject-auth] Updated ' + count + ' pages');
+  return count;
+}
 
-console.log('[inject-auth] Updated ' + count + ' pages');
+// Callable from build.js (so `node build.js` alone leaves the tree deployable),
+// and still runnable standalone: `node scripts/inject-auth.js`.
+if (require.main === module) run();
+module.exports = { run };

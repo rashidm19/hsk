@@ -71,7 +71,29 @@ window.addEventListener('unhandledrejection',function(e){report('rejection',e&&e
 <script src="/app/study.js"></script>
 <script>if(window.HSK_DESKTOP)document.write('<script src="/app/desktop-shell.js"><\/script><script src="/app/desktop-exam.js"><\/script><script src="/app/desktop-vocab.js"><\/script><script src="/app/desktop-more.js"><\/script><script src="/app/desktop-study.js"><\/script>')</script>
 <script src="/app/sync.js"></script>
-<script>try{App.boot()}catch(e){try{if(window.ymGoal)ymGoal('app_error',{kind:'boot',msg:String(e&&e.message).slice(0,180)});}catch(x){}try{var r=document.getElementById('r-shell');if(r&&!r.innerHTML){r.innerHTML='<div style="display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;font-family:DM Sans,system-ui,sans-serif"><div style="font-size:1.05rem;font-weight:700;color:var(--ink,#2c2825)">Something went wrong</div><div style="font-size:.88rem;color:var(--stone,#8a817a);max-width:280px;line-height:1.5">The app hit an unexpected error. Please reload.</div><button onclick="location.reload()" style="border:0;background:var(--accent,#b84e2e);color:#fff8f1;border-radius:11px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer">Reload</button></div>';}}catch(x){}}</script>
+<script>
+(function(){
+  /* Paint a reload screen only if the shell never rendered (empty #r-shell). */
+  function fallback(reason){
+    try{
+      var r=document.getElementById('r-shell');
+      if(r&&!r.innerHTML.trim()){
+        try{if(window.ymGoal)ymGoal('app_error',{kind:'boot',msg:String(reason==null?'':reason).slice(0,180)});}catch(x){}
+        r.innerHTML='<div style="display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;font-family:DM Sans,system-ui,sans-serif"><div style="font-size:1.05rem;font-weight:700;color:var(--ink,#2c2825)">Something went wrong</div><div style="font-size:.88rem;color:var(--stone,#8a817a);max-width:280px;line-height:1.5">The app hit an unexpected error. Please reload.</div><button onclick="location.reload()" style="border:0;background:var(--accent,#b84e2e);color:#fff8f1;border-radius:11px;padding:11px 22px;font-weight:700;font-size:.9rem;cursor:pointer">Reload</button></div>';
+      }
+    }catch(x){}
+  }
+  try{ App.boot(); }
+  catch(e){ fallback(e&&e.message); return; }
+  /* Boot didn't throw, but a module that silently failed to load (partial fetch,
+     404) can leave the seams missing / the shell empty — assert and, if so, paint
+     the reload card instead of a blank screen. */
+  try{
+    if(!(window.App&&App.screens&&App.screens.shell&&App.data&&typeof App.data.load==='function')){ fallback('missing seams'); return; }
+  }catch(e2){ fallback('seams check'); return; }
+  fallback('empty shell after boot');
+})();
+</script>
 <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode" onclick="(function(d){var k=d.getAttribute('data-theme')==='dark';if(k){d.removeAttribute('data-theme')}else{d.setAttribute('data-theme','dark')}try{localStorage.setItem('hsk4_theme',k?'light':'dark')}catch(e){}})(document.documentElement)"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
 </body>
 </html>

@@ -30,6 +30,7 @@
   D.TRAP_CATS = [];
   D.PRACTICE = [];
   D.TOTAL_QUESTIONS = 0;
+  D.fullErrors = [];   /* phase-2 catalog files that failed to load (B1) */
 
   /* ---------- small utils ---------- */
 
@@ -598,8 +599,19 @@
      Streams in the background after core so first paint isn't gated on them.
      Failure resolves (readyFull = true) so those sections show an empty state,
      not a permanent spinner. */
+  /* Phase-2 catalog files (Characters + Study), in the Promise.all order below.
+     Named so a failure can be surfaced (D.fullErrors) and retried (D.retryFull)
+     instead of silently rendering empty "0 of N" sections. */
+  var REST_FILES = [
+    '/data/hsk4-characters.json', '/data/hsk4-rendu-characters.json', '/data/character-data.json',
+    '/data/grammar-patterns.json', '/data/confusables.json', '/data/sentences.json',
+    '/data/topics.json', '/data/task-dialogues.json', '/data/traps.json'
+  ];
+  var restAppData = null;
+
   function loadRest(appData) {
     if (loadingFull) return loadingFull;
+    restAppData = appData || restAppData;
     loadingFull = Promise.all([
       fetchJson('/data/hsk4-characters.json', []),
       fetchJson('/data/hsk4-rendu-characters.json', []),
@@ -643,11 +655,22 @@
 
       D.PRACTICE = buildPracticePool(D.GRAMMAR, D.CONFUSABLES);
 
+      D.fullErrors = REST_FILES.filter(function (u) { return loadErrors.indexOf(u) >= 0; });
       D.readyFull = true;
       return D;
-    }).catch(function () { D.readyFull = true; return D; });
+    }).catch(function () { D.fullErrors = REST_FILES.slice(); D.readyFull = true; return D; });
     return loadingFull;
   }
+
+  /* Retry phase 2 after a failure: clear the failed marks + cached promise so the
+     files are re-fetched, then re-run loadRest with the stashed appData. */
+  D.retryFull = function () {
+    loadingFull = null;
+    D.readyFull = false;
+    D.fullErrors = [];
+    loadErrors = loadErrors.filter(function (u) { return REST_FILES.indexOf(u) < 0; });
+    return loadRest(restAppData);
+  };
 
   D.load = function () {
     if (loading) return loading;
