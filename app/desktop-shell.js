@@ -622,12 +622,15 @@
     }
 
     var cta = step === 0 ? 'Get started' : step === 1 ? 'Continue' : 'Enter HSK Prep';
+    /* dialog name tracks the visible step heading (else the SR announces a stale
+       "Welcome to HSK Prep" on the goal / all-set steps) */
+    var dlgTitle = step === 0 ? 'Welcome to HSK Prep' : step === 1 ? 'Confirm your goal' : "You're all set";
     var backBtn = step > 0
       ? '<button type="button" class="hv" data-a="wBack" aria-label="Back" style="width:48px;height:48px;flex:none;display:grid;place-items:center;border:1px solid var(--border-subtle);background:var(--surface);border-radius:13px;cursor:pointer;color:var(--ink)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>'
       : '';
 
     return '<div style="position:fixed;inset:0;z-index:110;background:rgba(26,22,20,.55);display:grid;place-items:center;padding:24px;overflow-y:auto;animation:hsk-fade .25s ease both">'
-      + '<div role="dialog" aria-modal="true" aria-label="Welcome to HSK Prep" style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:24px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;overflow:hidden;animation:hsk-pop .22s ease both">'
+      + '<div role="dialog" aria-modal="true" aria-label="' + esc(dlgTitle) + '" style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:24px;box-shadow:var(--shadow-lg);width:100%;max-width:480px;overflow:hidden;animation:hsk-pop .22s ease both">'
       + '<div style="display:flex;align-items:center;gap:8px;padding:18px 22px 12px">'
       + dots
       + '<button type="button" class="hv-ink" data-a="wSkip" style="flex:none;border:0;background:transparent;color:var(--stone);font-weight:600;font-size:var(--fs-sm);cursor:pointer;padding:4px 6px;margin-left:6px">Skip</button>'
@@ -950,6 +953,7 @@
    * ================================================================ */
 
   document.addEventListener('keydown', function (e) {
+    App._lastTrigger = null; /* a keyboard action is not a click-open; drop any pending click trigger */
     var s = App.state || {};
     var k = e.key;
 

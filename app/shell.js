@@ -440,11 +440,14 @@
     }
 
     var cta = step === 0 ? 'Get started' : step === 1 ? 'Continue' : 'Enter HSK Prep';
+    /* dialog name tracks the visible step heading (else the SR announces a stale
+       "Welcome to HSK Prep" on the goal / all-set steps) */
+    var dlgTitle = step === 0 ? 'Welcome to HSK Prep' : step === 1 ? 'Set your goal' : "You're all set";
     var backBtn = step > 0
       ? '<button type="button" class="pa" data-a="wBack" aria-label="Back" style="width:52px;height:52px;flex:none;display:grid;place-items:center;border:1.5px solid var(--border-subtle);background:var(--surface);border-radius:14px;cursor:pointer;color:var(--ink)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>'
       : '';
 
-    return '<div data-screen-label="Welcome" role="dialog" aria-modal="true" aria-label="Welcome to HSK Prep" style="position:absolute;inset:0;z-index:90;background:var(--paper);display:flex;flex-direction:column;animation:hsk-fade .3s ease both">'
+    return '<div data-screen-label="Welcome" role="dialog" aria-modal="true" aria-label="' + esc(dlgTitle) + '" style="position:absolute;inset:0;z-index:90;background:var(--paper);display:flex;flex-direction:column;animation:hsk-fade .3s ease both">'
       + '<div style="flex:none;display:flex;align-items:center;gap:8px;padding:calc(16px + env(safe-area-inset-top)) 18px 8px">'
       + dots
       + '<button type="button" data-a="wSkip" style="flex:none;border:0;background:transparent;color:var(--stone);font-weight:600;font-size:.82rem;cursor:pointer;padding:4px 6px;margin-left:6px">Skip</button>'

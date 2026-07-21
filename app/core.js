@@ -508,25 +508,52 @@
       try { dlg.focus({ preventScroll: true }); } catch (e0) { dlg.focus(); }
     } catch (e) {}
   }
-  var _modalWasOpen = false, _modalReturnEl = null, _modalCurDlg = null;
+  /* Remember the trigger BOTH as a live node and as a stable selector rebuilt
+     from its data-a/-arg/-argn: an in-modal action can re-render (detach) the
+     original node while the modal stays open (e.g. the word sheet's "Mark as
+     mastered" re-renders the vocab list), so on close we re-resolve the selector
+     to focus the recreated control instead of dropping focus to <body>. */
+  function _selectorFor(el) {
+    try {
+      var a = el.getAttribute && el.getAttribute('data-a');
+      if (!a) return null;
+      var s = '[data-a="' + a + '"]';
+      var arg = el.getAttribute('data-arg');
+      if (arg != null) s += '[data-arg="' + (window.CSS && CSS.escape ? CSS.escape(arg) : arg) + '"]';
+      var argn = el.getAttribute('data-argn');
+      if (argn != null) s += '[data-argn="' + argn + '"]';
+      return s;
+    } catch (e) { return null; }
+  }
+  function _resolveReturn(el, sel) {
+    if (_restorable(el)) return el;
+    if (sel) { try { var r = document.querySelector(sel); if (_restorable(r)) return r; } catch (e) {} }
+    return null;
+  }
+  var _modalWasOpen = false, _modalReturnEl = null, _modalReturnSel = null, _modalCurDlg = null;
   App._syncModalFocus = function (focusBefore) {
     var dlg = _topDialog();
     var openNow = !!dlg;
     if (openNow) {
       if (!_modalWasOpen) {
-        /* opening: prefer the clicked trigger, else whatever had focus */
+        /* opening: prefer the clicked trigger, else whatever had focus. _lastTrigger
+           is cleared by the keyboard handlers + consumed below, so it is non-null
+           ONLY for a click-open (never a stale earlier click on a keyboard open). */
         var cand = App._lastTrigger;
         if (!_restorable(cand)) cand = focusBefore;
         _modalReturnEl = _restorable(cand) ? cand : null;
+        _modalReturnSel = _modalReturnEl ? _selectorFor(_modalReturnEl) : null;
       }
       _focusInto(dlg);
       _modalCurDlg = dlg;
     } else if (_modalWasOpen) {
-      /* closing: return focus to the opener if it's still on the page */
-      var el = _modalReturnEl; _modalReturnEl = null; _modalCurDlg = null;
-      if (_restorable(el)) { try { el.focus({ preventScroll: true }); } catch (e1) { try { el.focus(); } catch (e2) {} } }
+      /* closing: return focus to the opener, re-resolved if it was re-rendered */
+      var el = _resolveReturn(_modalReturnEl, _modalReturnSel);
+      _modalReturnEl = null; _modalReturnSel = null; _modalCurDlg = null;
+      if (el) { try { el.focus({ preventScroll: true }); } catch (e1) { try { el.focus(); } catch (e2) {} } }
     }
     _modalWasOpen = openNow;
+    App._lastTrigger = null; /* consume: a click trigger is valid only for the setState it triggered */
   };
   /* focus trap — capture phase beats the client keydown handlers (which never
      touch Tab), and only acts while a dialog is actually open */
@@ -632,6 +659,7 @@
   }
   function act(name, arg) { var fn = App.actions[name]; if (typeof fn === 'function') { try { fn(arg); } catch (e) { warn(e); } return true; } return false; }
   if (!window.HSK_DESKTOP) document.addEventListener('keydown', function (e) {
+    App._lastTrigger = null; /* a keyboard action is not a click-open; drop any pending click trigger */
     try {
       var s = App.state;
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
@@ -894,7 +922,14 @@
   App.reloadProgress = function () {
     App._hydrating = true;
     try { loadPersisted(); applyThemeAttr(App.state.theme); } finally { App._hydrating = false; }
+    /* a background sync can re-render an open dialog (e.g. the word sheet, whose
+       deps include vMastered); mirror setState's post-render hooks so focus stays
+       inside/returns correctly instead of dropping to <body> (this path renders
+       directly, not via setState). */
+    var _fb = null; try { _fb = document.activeElement; } catch (eb) {}
     try { App.render(); } catch (e) { warn(e); }
+    try { if (App._syncHistory) App._syncHistory(); } catch (e2) {}
+    try { if (App._syncModalFocus) App._syncModalFocus(_fb); } catch (e3) {}
   };
 
   /* ---------- boot ---------- */
