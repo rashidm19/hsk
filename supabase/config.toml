@@ -1,0 +1,9 @@
+# Function JWT verification, pinned so a redeploy can't silently un-gate check-access.
+[functions.check-access]
+verify_jwt = true
+
+[functions.grant-entitlement]
+verify_jwt = false
+
+[functions.admin-provision]
+verify_jwt = false
