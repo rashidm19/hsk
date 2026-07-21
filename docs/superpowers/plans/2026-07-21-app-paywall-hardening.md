@@ -49,7 +49,7 @@
 
 Create `supabase/functions/check-access/lib.test.ts`:
 ```ts
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals } from "jsr:@std/assert@1";  // repo convention (grant-entitlement/lib.test.ts)
 import { computeActive, corsHeaders } from "./lib.ts";
 
 const NOW = Date.parse("2026-07-21T00:00:00Z");
@@ -186,7 +186,11 @@ Deno.serve(async (req) => {
   });
   let userId: string | null = null;
   try {
-    const { data } = await asUser.auth.getUser();
+    // Pass the bearer token EXPLICITLY. A no-arg getUser() on a persistSession:false client
+    // reads a non-existent stored session and 401s every caller (per Supabase docs); the
+    // token from the caller's Authorization header is what identifies the principal.
+    const bearer = authz.replace(/^Bearer\s+/i, "");
+    const { data } = await asUser.auth.getUser(bearer);
     userId = data?.user?.id ?? null;
   } catch (_e) {
     userId = null;
@@ -272,9 +276,9 @@ test('subActiveOf: active/future=true, past=false, unparseable=true, null=false'
   assert.equal(subActiveOf(null, NOW), false);
 });
 
-test('classifyInvoke: 2xx data -> reached; error -> not reached', () => {
-  assert.deepEqual(classifyInvoke({ data: { active: true }, error: null }), { reached: true, active: true, sub: { active: true } });
-  assert.deepEqual(classifyInvoke({ data: { active: false }, error: null }), { reached: true, active: false, sub: { active: false } });
+test('classifyInvoke: 2xx data -> reached (status-bearing sub); error -> not reached', () => {
+  assert.deepEqual(classifyInvoke({ data: { active: true }, error: null }), { reached: true, active: true, sub: { status: 'active', expires_at: null, plan: null } });
+  assert.deepEqual(classifyInvoke({ data: { active: false }, error: null }), { reached: true, active: false, sub: { status: 'inactive', expires_at: null, plan: null } });
   assert.deepEqual(classifyInvoke({ data: null, error: { message: 'http 500' } }), { reached: false });
   assert.deepEqual(classifyInvoke({ data: null, error: null }), { reached: false });
 });
@@ -347,9 +351,17 @@ Create `access-decision.js`:
 
   // Map a supabase-js functions.invoke() result. 2xx => {data, error:null}; non-2xx/network
   // => error set (data null). Anything but a clean data object is "not reached" (fail closed).
+  // NORMALIZE to a status-bearing sub: check-access returns {active,expires_at,plan} with NO
+  // `status`, but subActive()/readSubCache()/recordAccessConfirmed() all gate on
+  // sub.status==='active' — without this the grace marker never arms and the cache is poisoned.
   function classifyInvoke(res) {
     if (!res || res.error || !res.data) return { reached: false };
-    return { reached: true, active: !!res.data.active, sub: res.data };
+    var d = res.data;
+    return {
+      reached: true,
+      active: !!d.active,
+      sub: { status: d.active ? 'active' : 'inactive', expires_at: d.expires_at != null ? d.expires_at : null, plan: d.plan != null ? d.plan : null }
+    };
   }
 
   // Inputs are all pre-computed by the shell; checkAccess/getSub are injected async fns.
@@ -397,7 +409,7 @@ git commit -m "feat(app): access-decision.js — pure fail-closed decision logic
 ## Task 4: `auth.js` — `checkAccess()`, durable marker, `isPayPending`
 
 **Files:**
-- Modify: `auth.js` (add fns near `getSubscriptionStatus` ~auth.js:263; extend `clearStudyProgress` auth.js:~113; extend the exports object ~auth.js:509)
+- Modify: `auth.js` (add fns AFTER `getSubscriptionStatus`'s closing `}` at **auth.js:276** — before the `getOnboarding` comment at 278; append one key to `clearStudyProgress`'s wiped-keys array at **auth.js:110**; add four keys to the `global.HSKAuth = { … }` exports object at **auth.js:510-541**)
 - Test: `scripts/access-authjs.test.js` (loads `auth.js` in a mock env, like `scripts/sync-merge.test.js`)
 
 **Interfaces:**
@@ -424,7 +436,8 @@ function loadAuth(clientStub) {
     location: { pathname: '/app/', search: '', hash: '', href: 'https://x/app/', origin: 'https://x', replace() {} },
     history: { replaceState() {} },
     matchMedia: () => ({ matches: false }),
-    setTimeout: (fn, ms) => setTimeout(fn, ms), clearTimeout,
+    // unref so checkAccess's 4s withTimeout timer doesn't keep `node --test` alive ~4s
+    setTimeout: (fn, ms) => { const id = setTimeout(fn, ms); if (id && id.unref) id.unref(); return id; }, clearTimeout,
     addEventListener() {}, document: { addEventListener() {} },
     __ls: ls, __ss: ss,
   };
@@ -447,13 +460,25 @@ const sessionClient = (over) => Object.assign({
   maybeSingle: async () => ({ data: null, error: null }),
 }, over || {});
 
-test('checkAccess: invoke 200 active -> reached+active', async () => {
+test('checkAccess: invoke 200 active -> reached+active (status-bearing sub)', async () => {
   const g = loadAuth(sessionClient());
-  assert.deepEqual(await g.HSKAuth.checkAccess(), { reached: true, active: true, sub: { active: true } });
+  assert.deepEqual(await g.HSKAuth.checkAccess(), { reached: true, active: true, sub: { status: 'active', expires_at: null, plan: null } });
+});
+test('checkAccess: invoke 200 inactive -> reached+inactive', async () => { // Testing §2
+  const g = loadAuth(sessionClient({ functions: { invoke: async () => ({ data: { active: false }, error: null }) } }));
+  assert.deepEqual(await g.HSKAuth.checkAccess(), { reached: true, active: false, sub: { status: 'inactive', expires_at: null, plan: null } });
 });
 test('checkAccess: invoke error -> not reached', async () => {
   const g = loadAuth(sessionClient({ functions: { invoke: async () => ({ data: null, error: { message: '500' } }) } }));
   assert.deepEqual(await g.HSKAuth.checkAccess(), { reached: false });
+});
+test('checkAccess: invoke throws -> not reached', async () => { // Testing §2
+  const g = loadAuth(sessionClient({ functions: { invoke: async () => { throw new Error('network'); } } }));
+  assert.deepEqual(await g.HSKAuth.checkAccess(), { reached: false });
+});
+test('checkAccess: invoke never resolves -> timeout -> not reached', async () => { // Testing §2 (TIMED_OUT branch)
+  const g = loadAuth(sessionClient({ functions: { invoke: () => new Promise(() => {}) } })); // never settles
+  assert.deepEqual(await g.HSKAuth.checkAccess(), { reached: false }); // resolves via withTimeout's 4s fallback
 });
 test('checkAccess: no session -> not reached', async () => {
   const g = loadAuth(sessionClient({ auth: { getSession: async () => ({ data: { session: null } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) } }));
@@ -465,10 +490,23 @@ test('recordAccessConfirmed + readConfirmedActive round-trip (userId scoped)', (
   assert.deepEqual(g.HSKAuth.readConfirmedActive('u1'), ACTIVE);
   assert.equal(g.HSKAuth.readConfirmedActive('u2'), null); // different account
 });
-test('readConfirmedActive rejects a lapsed sub even if marker present', () => {
+test('readConfirmedActive re-validates the sub expires_at (C12) — seed marker directly', () => {
+  const g = loadAuth(sessionClient());
+  // Seed a marker whose sub was active-at-write but is now lapsed, BYPASSING the write guard,
+  // so the READ-side subActive(d.sub) re-check (not the write guard) is what rejects it.
+  g.__ls.set('hsk_access_ok', JSON.stringify({ userId: 'u1', sub: { status: 'active', expires_at: '2000-01-01' }, at: Date.now() }));
+  assert.equal(g.HSKAuth.readConfirmedActive('u1'), null);
+});
+test('recordAccessConfirmed refuses to persist an already-lapsed sub', () => {
   const g = loadAuth(sessionClient());
   g.HSKAuth.recordAccessConfirmed('u1', { status: 'active', expires_at: '2000-01-01' });
-  assert.equal(g.HSKAuth.readConfirmedActive('u1'), null);
+  assert.equal(g.__ls.get('hsk_access_ok'), undefined);
+});
+test('A1 regression: a checkAccess-confirmed sub arms the durable grace marker', async () => {
+  const g = loadAuth(sessionClient());
+  const r = await g.HSKAuth.checkAccess();            // reached+active, status-bearing sub (A1 fix)
+  g.HSKAuth.recordAccessConfirmed('u1', r.sub);        // what the shell does on the 'show' action
+  assert.notEqual(g.HSKAuth.readConfirmedActive('u1'), null); // must arm, else cold-tab -> fail-closed
 });
 test('isPayPending true within TTL, false when absent', () => {
   const g = loadAuth(sessionClient());
@@ -485,7 +523,7 @@ Expected: FAIL — `g.HSKAuth.checkAccess is not a function`.
 
 - [ ] **Step 3: Add the functions to `auth.js`**
 
-Insert AFTER `getSubscriptionStatus` (immediately after its closing `}`, ~auth.js:281):
+Insert AFTER `getSubscriptionStatus`'s closing `}` at **auth.js:276** (before the `getOnboarding` comment at line 278):
 ```js
   // Durable "entitlement last confirmed active" marker (localStorage) — the grace signal.
   // Distinct from the 15-min sessionStorage fast-path cache: survives across tabs/sessions so
@@ -536,13 +574,12 @@ Insert AFTER `getSubscriptionStatus` (immediately after its closing `}`, ~auth.j
   }
 ```
 
-Then extend `clearStudyProgress` (auth.js:~104) — add `ACCESS_OK_KEY` to the wiped localStorage keys (sign-out clears the grace marker). Change the array literal to include:
+Then extend `clearStudyProgress` — the wiped-keys array ends at **auth.js:110** (`'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner'`); append `'hsk_access_ok'` so sign-out clears the grace marker:
 ```js
         'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner', 'hsk_access_ok'
 ```
-(append `'hsk_access_ok'` to the existing list).
 
-Then add to the returned `HSKAuth` object (the `return { … }` near auth.js:509) — insert these keys:
+Then add to the `global.HSKAuth = { … }` exports object (an ES6-shorthand assignment at **auth.js:510-541**, NOT a `return`) — insert these keys:
 ```js
     checkAccess,
     recordAccessConfirmed,
@@ -553,7 +590,7 @@ Then add to the returned `HSKAuth` object (the `return { … }` near auth.js:509
 - [ ] **Step 4: Run to confirm it passes**
 
 Run: `node --test scripts/access-authjs.test.js`
-Expected: PASS (6 tests). If auth.js throws at load, add the missing stub to `loadAuth`'s `g` (the error names the missing `global.X`).
+Expected: PASS (all tests; the unref'd timer lets the process exit promptly). If auth.js throws at load, add the missing stub to `loadAuth`'s `g` (the error names the missing `global.X`).
 
 - [ ] **Step 5: Byte-safety + syntax + commit**
 
@@ -569,7 +606,7 @@ git commit -m "feat(app): auth.js checkAccess + durable grace marker + isPayPend
 
 **Files:**
 - Modify: `scripts/inject-auth.js:16-21` (`HEAD_SNIPPET`)
-- Modify: `app/index.html:6` (hand-maintained page — add the tag manually)
+- Modify: `app/index.html:7` (hand-maintained page — add the tag after the `/auth.js` line)
 
 **Interfaces:**
 - Consumes: `access-decision.js` (Task 3). Produces: `window.HSKAccess` present on every `body.app` page, loaded BEFORE `/auth-guard.js`.
@@ -586,7 +623,7 @@ const HEAD_SNIPPET = `
 <script src="/auth-guard.js"></script>
 <script src="/auth-ui.js" defer></script>`;
 ```
-Also update the skip guard so pages with the OLD block get refreshed: change line 36 `if (html.includes('/auth-ui.js" defer')) return html;` to `if (html.includes('/access-decision.js')) return html;` in BOTH `injectHead` and `injectBody` and `addAuthPending`'s siblings — actually only `injectHead` (line 36) and `injectBody` (line 68) gate on `'/auth-ui.js" defer'`; change BOTH to gate on `'/access-decision.js'` so a rebuild re-injects the new block. (Generated pages are rebuilt fresh by `build.js` regardless; this only matters for idempotency of a standalone `inject-auth` run.)
+Also change the skip guard from `'/auth-ui.js" defer'` to `'/access-decision.js'` in `injectHead` (line 36) and `injectBody` (line 68) — so a page counts as "already injected" only once it has the NEW block. **Caveat (do not rely on this to retrofit):** a standalone `node scripts/inject-auth.js` will NOT add the tag to an already-injected tree — the self-heal at lines 43-52 sees `/auth-guard.js` present + the new `wrongOrder` absent and early-returns the page unchanged. The tag reaches all body.app pages ONLY via `node build.js` (Step 3), which regenerates every page with NO auth block first, then injects the current snippet.
 
 - [ ] **Step 2: Add the tag to the hand-maintained `app/index.html`**
 
@@ -620,15 +657,15 @@ git commit -m "build(app): load access-decision.js on all body.app pages (regene
 ## Task 6: `auth-guard.js` shell — decideAccess wiring + fail-closed overlay
 
 **Files:**
-- Modify: `auth-guard.js:65-94` (replace the session→getSubscriptionStatus fail-open block)
-- Modify: `route-decision.js:29` (clarifying comment)
+- Modify: `auth-guard.js:87-116` (replace the session→getSubscriptionStatus fail-open block; **PRESERVE lines 1-86** — the B4 CDN-fail overlay at 11-31 and the `subActive`/`readSubCache`/`writeSubCache`/`storedUserId` helpers at 41-79, which the new block calls)
+- Modify: `route-decision.js:36` (extend the existing fail-open comment)
 
 **Interfaces:**
-- Consumes: `HSKAuth.checkAccess/getSubscriptionStatus/readConfirmedActive/recordAccessConfirmed/isPayPending`, `HSKAccess.decideAccess`, existing `readSubCache/writeSubCache/storedUserId/subActive/unveil`.
+- Consumes: `HSKAuth.checkAccess/getSubscriptionStatus/readConfirmedActive/recordAccessConfirmed/isPayPending`, `HSKAccess.decideAccess`, existing `readSubCache/writeSubCache/storedUserId/unveil`.
 
 - [ ] **Step 1: Replace the decision block**
 
-In `auth-guard.js`, replace from `var preCached = (function () {` (line ~65) through the closing `.catch(function () { unveil(); });` (line ~94) with:
+In `auth-guard.js`, replace the block from `var preCached = (function () {` (line **87**) through the 3-line closing `.catch(function () {` / `unveil();` / `});` (lines **114-116**), stopping **before** line 117 `})();`. Anchor on the text, not the numbers, and **preserve everything above line 87**. Replacement:
 ```js
   var preCached = (function () { var u = storedUserId(); return u ? readSubCache(u) : null; })();
   if (!preCached) { document.documentElement.classList.add('hsk-auth-pending'); }
@@ -657,7 +694,7 @@ In `auth-guard.js`, replace from `var preCached = (function () {` (line ~65) thr
       if (!decide) { unveil(); return; }   // safety: never harder than today if the module is missing
       return decide({
         session: !!session,
-        cacheFresh: userId ? readSubCache(userId) : null,
+        cacheFresh: userId ? ((readSubCache(userId) || {}).sub || null) : null,  // inner sub, NOT the {userId,sub,cachedAt} wrapper
         confirmedActive: (userId && HSKAuth.readConfirmedActive) ? HSKAuth.readConfirmedActive(userId) : null,
         payPending: (HSKAuth.isPayPending && HSKAuth.isPayPending()) || /[?&]pay=success/.test(location.search),
         checkAccess: function () { return HSKAuth.checkAccess ? HSKAuth.checkAccess() : Promise.resolve({ reached: false }); },
@@ -667,6 +704,10 @@ In `auth-guard.js`, replace from `var preCached = (function () {` (line ~65) thr
           if (userId) { writeSubCache(userId, d.sub); if (HSKAuth.recordAccessConfirmed) HSKAuth.recordAccessConfirmed(userId, d.sub); }
           unveil(); return;
         }
+        // pay-pending: hsk_pay_pending is durable localStorage (30-min TTL), so this covers a
+        // just-paid user even on a COLD tab; the durable grace marker (hsk_access_ok) is then
+        // armed on their first successful checkAccess 'show'. Residual C7 gap: only if >30min
+        // elapse with no successful checkAccess — accepted (see spec Risks).
         if (d.action === 'grace-show' || d.action === 'pay-pending') { unveil(); return; }
         if (d.action === 'paywall') { window.location.replace('/quiz/?sub=required'); return; }
         if (d.action === 'login') {
@@ -681,13 +722,14 @@ In `auth-guard.js`, replace from `var preCached = (function () {` (line ~65) thr
     .catch(function () { unveil(); });
 ```
 
-- [ ] **Step 2: Add the route-decision clarifying comment**
+- [ ] **Step 2: Extend the route-decision comment**
 
-In `route-decision.js`, above `return safeNext(o.next);` (~line 28), add:
+In `route-decision.js`, REPLACE the existing 3-line comment above `return safeNext(o.next);` (the `// 'active' OR 'error' -> fail open into the app…` comment at lines **33-35**) with an augmented version — do NOT add a duplicate:
 ```js
-    // NOTE: 'error' stays lenient here on purpose — auth-guard.js is the authoritative gate and
-    // re-checks on arrival at /app/ (fail-closed for unconfirmed sessions). Do not duplicate that
-    // policy here, or the two can disagree.
+    // 'active' OR 'error' -> lenient here on purpose. A transient entitlement read must never
+    // strand a paying user at the paywall; auth-guard.js is the AUTHORITATIVE gate and re-checks
+    // on arrival at /app/ (fail-closed for unconfirmed sessions). Do not duplicate that policy
+    // here, or the two can disagree.
 ```
 
 - [ ] **Step 3: Syntax + byte-safety + regression tests**
@@ -733,7 +775,7 @@ From a browser on `https://www.hskprep.cc` (or localhost with an allowlisted ori
 
 - [ ] **Step 4: E2E — active/inactive/anon matrix (throwaway account, C8)**
 
-With a throwaway OTP account (`delivered@resend.dev`; OTP code is in the email SUBJECT via `resend-hskprep list-emails`): (a) BEFORE provisioning → `check-access` returns `{active:false}`; (b) provision its subscription (invoke `grant-entitlement` with a signed test payload, or `admin-provision`) → `{active:true}`; (c) call with `Authorization: Bearer <anonKey>` → `{active:false}`/401; (d) no Authorization → gateway 401. Then delete the throwaway account + its rows (restore `profiles` count).
+With a throwaway OTP account (`delivered@resend.dev`; OTP code is in the email SUBJECT via `resend-hskprep list-emails`): (a) BEFORE provisioning → `check-access` returns `{active:false}`; (b) provision its subscription (invoke `grant-entitlement` with a signed test payload, or `admin-provision`) → **assert `{active:true}`** — this specifically exercises the `getUser(bearer)` principal extraction; a regression to no-arg `getUser()` would 401 → `{active:false}` here (it degrades silently otherwise, since the client just falls back to RLS); (c) call with `Authorization: Bearer <anonKey>` → `{active:false}`/401; (d) no Authorization → gateway 401. Then delete the throwaway account + its rows (restore `profiles` count).
 
 - [ ] **Step 5: Browser E2E of the gate + record outcome**
 
