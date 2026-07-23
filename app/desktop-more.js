@@ -388,7 +388,7 @@
       '<div style="display:flex;flex-direction:column;gap:16px;min-width:0">' +
       '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">' +
       '<span style="width:64px;height:64px;flex:none;display:grid;place-items:center;background:#2f6349;color:var(--invert-fg);border-radius:16px;font-weight:700;font-size:var(--fs-2xl)">' + esc(pv.initial) + '</span>' +
-      '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:var(--fs-lg);color:var(--ink)">' + esc(pv.name) + '</div><div style="font-size:var(--fs-sm);color:var(--stone)">' + esc(pv.email) + '</div><div style="font-size:var(--fs-sm);color:var(--stone);margin-top:2px">📍 ' + esc(pv.country || '—') + '</div></div>' +
+      '<div style="flex:1;min-width:0"><div class="ym-hide-content" style="font-weight:700;font-size:var(--fs-lg);color:var(--ink)">' + esc(pv.name) + '</div><div class="ym-hide-content" style="font-size:var(--fs-sm);color:var(--stone)">' + esc(pv.email) + '</div><div class="ym-hide-content" style="font-size:var(--fs-sm);color:var(--stone);margin-top:2px">📍 ' + esc(pv.country || '—') + '</div></div>' +
       '<button type="button" class="hv" data-a="openEdit" style="border:1px solid var(--border-subtle);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 16px;font-weight:600;font-size:var(--fs-sm);cursor:pointer">Edit</button>' +
       '</div>' +
 
@@ -474,12 +474,12 @@
       '<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--ink);font-size:var(--fs-md)">Profile avatar</div><div style="font-size:var(--fs-sm);color:var(--stone);margin-top:2px">Generated from your name&#39;s first letter.</div></div>' +
       '</div>' +
       '<label style="display:block;margin-top:20px"><span style="display:block;font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:7px">Full name</span>' +
-      '<input type="text" id="pe-name" class="field" value="' + esc(d.name || '') + '" data-in="onDraftName" placeholder="Your name" style="' + fieldCss + '"></label>' +
+      '<input type="text" id="pe-name" class="field ym-disable-keys ym-hide-content" value="' + esc(d.name || '') + '" data-in="onDraftName" placeholder="Your name" style="' + fieldCss + '"></label>' +
       '<label style="display:block;margin-top:16px"><span style="display:block;font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:7px">Email address</span>' +
-      '<input type="email" value="' + esc(p.email || '') + '" disabled style="' + fieldCss + ';color:var(--stone);opacity:.7">' +
+      '<input type="email" class="ym-hide-content" value="' + esc(p.email || '') + '" disabled style="' + fieldCss + ';color:var(--stone);opacity:.7">' +
       '<span style="display:block;font-size:var(--fs-xs);color:var(--stone);margin-top:5px">Contact support to change email</span></label>' +
       '<label style="display:block;margin-top:16px"><span style="display:block;font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:7px">Country / Region</span>' +
-      '<input type="text" id="pe-country" class="field" value="' + esc(d.country || '') + '" data-in="onDraftCountry" placeholder="Country" style="' + fieldCss + '"></label>' +
+      '<input type="text" id="pe-country" class="field ym-disable-keys ym-hide-content" value="' + esc(d.country || '') + '" data-in="onDraftCountry" placeholder="Country" style="' + fieldCss + '"></label>' +
       '</div>' +
       '<div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">' +
       '<button type="button" id="pe-save" class="hv" data-a="saveProfile" style="flex:1;min-width:160px;border:0;border-radius:13px;padding:14px;font-weight:700;font-size:var(--fs-md);' + saveLookCss(d.name) + '">Save changes</button>' +
