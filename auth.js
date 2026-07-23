@@ -310,6 +310,12 @@
       return isFinite(t) && (Date.now() - t) < PAY_PENDING_TTL_MS;
     } catch (e) { return false; }
   }
+  // Arm the durable pay-window marker (mirrors onboarding.js handlePaySuccess) so an
+  // in-app renewal returning to /app/?pay=success gets grace via isPayPending() —
+  // lets auth-guard drop the forgeable ?pay=success URL check.
+  function armPayPending() {
+    try { global.localStorage.setItem(PAY_PENDING_KEY, String(Date.now())); } catch (e) {}
+  }
 
   // Authoritative entitlement check via the check-access edge function. functions.invoke attaches
   // BOTH apikey and Authorization and builds the URL from cfg().url. Short budget (NOT the 8s RLS
@@ -577,6 +583,7 @@
     recordAccessConfirmed,
     readConfirmedActive,
     isPayPending,
+    armPayPending,
     routeAfterAuth,
     getOnboarding,
     readProfileCache,

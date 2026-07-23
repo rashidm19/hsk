@@ -101,3 +101,10 @@ test('signOut clears BOTH grace markers + study progress (no cross-account bleed
   assert.equal(g.__ls.get('hsk_pay_pending'), undefined, 'pay-pending marker cleared (the HIGH fix)');
   assert.equal(g.__ls.get('hsk4-attempts'), undefined, 'study progress cleared');
 });
+
+test('O3: armPayPending writes the durable marker so isPayPending() is true', () => {
+  const g = loadAuth(sessionClient());
+  assert.equal(g.HSKAuth.isPayPending(), false, 'no marker initially');
+  g.HSKAuth.armPayPending();
+  assert.equal(g.HSKAuth.isPayPending(), true, 'armed -> pending within TTL');
+});

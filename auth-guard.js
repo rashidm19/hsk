@@ -125,7 +125,7 @@
         session: !!session,
         cacheFresh: userId ? ((readSubCache(userId) || {}).sub || null) : null,  // inner sub, NOT the {userId,sub,cachedAt} wrapper
         confirmedActive: (userId && HSKAuth.readConfirmedActive) ? HSKAuth.readConfirmedActive(userId) : null,
-        payPending: (HSKAuth.isPayPending && HSKAuth.isPayPending()) || /[?&]pay=success/.test(window.location.search),
+        payPending: (HSKAuth.isPayPending && HSKAuth.isPayPending()),
         checkAccess: function () { return HSKAuth.checkAccess ? HSKAuth.checkAccess() : Promise.resolve({ reached: false }); },
         getSub: function () { return HSKAuth.getSubscriptionStatus ? HSKAuth.getSubscriptionStatus(userId) : Promise.resolve({ error: true, sub: null }); }
       }).then(function (d) {
