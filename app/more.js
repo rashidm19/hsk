@@ -394,6 +394,9 @@
       return { icon: d.icon, name: d.name, cn: d.cn, color: d.color, soft: d.soft, score: score, w: Math.max(0, Math.min(100, score)) + '%', selfCheck: selfCheck };
     });
   }
+  /* pure; exposed for regression tests (E Writing self-check). Not read in prod. */
+  App.util = App.util || {};
+  if (!App.util.skillRows) App.util.skillRows = skillRows;
   function trendVals(s, atts) {
     var RANGES = { '1mo': 30, '3mo': 91, '6mo': 182, '1y': 365 };
     var now = Date.now();

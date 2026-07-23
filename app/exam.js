@@ -1436,6 +1436,7 @@
   ex.beginSection = beginSection;
   ex.updateTimerDom = updateTimerDom;
   ex.writeModelHtml = writeModelHtml;
+  ex.normalizeTest = normalizeTest; /* pure; exposed for regression tests (F2 pair-audio) */
   App.exam = ex;
 
 })();
