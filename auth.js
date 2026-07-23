@@ -286,7 +286,7 @@
   // a returning subscriber during a transient outage isn't ejected. userId-scoped (no A1 bleed).
   var ACCESS_OK_KEY = 'hsk_access_ok';
   var ACCESS_OK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-  var PAY_PENDING_KEY = 'hsk_pay_pending';       // written by onboarding.js at checkout
+  var PAY_PENDING_KEY = 'hsk_pay_pending';       // written by onboarding.js at checkout + armPayPending() (in-app renewal)
   var PAY_PENDING_TTL_MS = 30 * 60 * 1000;       // must match onboarding.js PAY_PENDING_TTL_MS
 
   function recordAccessConfirmed(userId, sub) {

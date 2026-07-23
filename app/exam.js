@@ -1128,7 +1128,8 @@
     }).join('');
 
     var focusHtml = '';
-    if (weakR < 0.8) {
+    if (sectioned) { /* single-section drill: no full-exam readiness verdict (O1b) */ }
+    else if (weakR < 0.8) {
       focusHtml = '<div style="display:flex;align-items:center;gap:13px;background:var(--accent-soft);border:1px solid var(--border-subtle);border-radius:16px;padding:16px;margin-top:16px">' +
         '<span class="chinese" style="width:44px;height:44px;flex:none;display:grid;place-items:center;background:var(--accent);color:#fff8f1;border-radius:12px;font-weight:700">' + esc(weak.cn) + '</span>' +
         '<div style="flex:1;min-width:0"><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700">Focus next</div><div style="font-weight:700;color:var(--ink);font-size:.98rem">Start with ' + esc(weak.name) + ' basics</div></div>' +
