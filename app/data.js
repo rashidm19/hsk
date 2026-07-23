@@ -619,10 +619,28 @@
   function loadRest(appData) {
     if (loadingFull) return loadingFull;
     restAppData = appData || restAppData;
-    loadingFull = Promise.all([
+
+    /* L2: Characters and Study normalize on INDEPENDENT chains, each with its own
+       catch. A throw in one section's normalizer (a fetch OK but unexpected-shape
+       catalog — e.g. a null grammar/confusable slug hitting `slug.length`) sets
+       only that section's error flag, so the healthy other section still renders;
+       it also can't leave the app permanently stuck (retryFull re-runs both, so a
+       fixed section recovers while a genuinely-bad one stays errored). Both fetch
+       batches fire synchronously here, so the network behaviour is unchanged from
+       the old single Promise.all. */
+    var charsChain = Promise.all([
       fetchJson('/data/hsk4-characters.json', []),
       fetchJson('/data/hsk4-rendu-characters.json', []),
       fetchJson('/data/character-data.json', {}),
+    ]).then(function (r) {
+      var charFreq = (appData && appData.charFreq) || {};
+      D.CHARS = normalizeChars(r[0], r[1], r[2], charFreq);
+      charByCharMap = {};
+      D.CHARS.forEach(function (c) { charByCharMap[c.char] = c; });
+      D.charsError = anyFailed(CHAR_FILES);
+    }).catch(function () { D.charsError = true; });
+
+    var studyChain = Promise.all([
       fetchJson('/data/grammar-patterns.json', []),
       fetchJson('/data/confusables.json', []),
       fetchJson('/data/sentences.json', []),
@@ -630,13 +648,7 @@
       fetchJson('/data/task-dialogues.json', {}),
       fetchJson('/data/traps.json', []),
     ]).then(function (r) {
-      var writeChars = r[0], recogChars = r[1], charData = r[2], grammar = r[3],
-          confusables = r[4], sentences = r[5], topics = r[6], dialogues = r[7], rawTraps = r[8];
-      var charFreq = (appData && appData.charFreq) || {};
-
-      D.CHARS = normalizeChars(writeChars, recogChars, charData, charFreq);
-      charByCharMap = {};
-      D.CHARS.forEach(function (c) { charByCharMap[c.char] = c; });
+      var grammar = r[0], confusables = r[1], sentences = r[2], topics = r[3], dialogues = r[4], rawTraps = r[5];
 
       D.GRAMMAR = normalizeGrammar(grammar);
       D.CONFUSABLES = normalizeConfusables(confusables);
@@ -661,13 +673,14 @@
       D.TRAP_CATS = tr.cats;
 
       D.PRACTICE = buildPracticePool(D.GRAMMAR, D.CONFUSABLES);
-
-      D.fullErrors = REST_FILES.filter(function (u) { return loadErrors.indexOf(u) >= 0; });
-      D.charsError = anyFailed(CHAR_FILES);
       D.studyError = anyFailed(STUDY_FILES);
+    }).catch(function () { D.studyError = true; });
+
+    loadingFull = Promise.all([charsChain, studyChain]).then(function () {
+      D.fullErrors = REST_FILES.filter(function (u) { return loadErrors.indexOf(u) >= 0; });
       D.readyFull = true;
       return D;
-    }).catch(function () { D.fullErrors = REST_FILES.slice(); D.charsError = true; D.studyError = true; D.readyFull = true; return D; });
+    });
     return loadingFull;
   }
 
