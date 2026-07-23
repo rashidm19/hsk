@@ -112,14 +112,15 @@
       var decide = (window.HSKAccess && HSKAccess.decideAccess) ? HSKAccess.decideAccess : null;
       if (!decide) {
         // access-decision.js should be injected on every body.app page; if it's somehow missing,
-        // degrade to a minimal session gate (still redirect the unauthenticated) rather than
-        // fully ungating — an authenticated user is shown (fail-open on the sub check only).
+        // fail CLOSED rather than ungating (L3). The unauthenticated visitor still gets the
+        // /login/ redirect; an authenticated session we cannot evaluate for a subscription gets
+        // the retry overlay — never a silent show of the gated app without a sub check.
         if (!session) {
           unveil();
           window.location.replace('/login/?next=' + encodeURIComponent(window.location.pathname + window.location.search));
           return;
         }
-        unveil(); return;
+        showAccessFail(); return;
       }
       return decide({
         session: !!session,
