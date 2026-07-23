@@ -24,7 +24,7 @@ deno test supabase/functions/*/lib.test.ts   # Run the Deno edge-function tests 
 
 There is **no linter** (no ESLint/Prettier config, no `package.json`). There **is** a small
 unit-test suite with zero npm deps — Node's built-in `node:test` for the pure client logic
-(`scripts/*.test.js`: auth/routing/sync/exam-audio/skills) plus Deno for the edge functions
+(`scripts/*.test.js`: auth-guard/access/routing/sync/exam-audio/exam-resume/data-phase2/band-score/grade-sections/skills — 11 files, 76 tests) plus Deno for the edge functions
 (`supabase/functions/*/lib.test.ts`); run both via the test commands above. Note: the `test/`
 directory is **generated exam pages**, not that suite.
 
@@ -38,13 +38,15 @@ Generated HTML is **committed to the repo** (only `.DS_Store`, `node_modules/`, 
    `train/`, `writing/` — they are overwritten by `build.js`. Edit the **data** (`data/*.json`)
    or the **generator** (`build.js` / `scripts/app-shell.js`) instead.
 2. After changing `data/*.json` or `build.js`, run `node build.js` and commit the regenerated
-   output (~599 `index.html` pages + `sitemap.xml`).
+   output (~599 `index.html` pages + `sitemap.xml`). Note: since **O5**, `buildSitemap()` emits
+   **only the public landing `/`** (owner: no freemium) — the ~597 gated `body.app` pages stay
+   generated + indexable but are intentionally NOT sitemap-listed; don't re-add them.
 3. After creating a new platform page (one with `<body class="app">`), run
    `node scripts/inject-auth.js` so the auth scripts get injected.
 
 ## Architecture
 
-**`build.js` (~5550 lines) is the heart of the project.** It reads JSON from `data/` and
+**`build.js` (~5480 lines) is the heart of the project.** It reads JSON from `data/` and
 pre-renders static HTML so search engines can index content that would otherwise need JS.
 It is organized as a sequence of `buildX()` generators (`buildVocabulary`, `buildTestPages`,
 `buildTranscriptPages`, `buildHomepage`, `buildTopics`, `buildCharacterPages`,
