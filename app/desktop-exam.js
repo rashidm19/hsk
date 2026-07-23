@@ -545,6 +545,8 @@
     var bandMax = 300;
     var band = _g.band, pass = _g.pass, passed = _g.passed, r = _g.ratio;
     var wrong = total - correct - skipped;
+    var sectioned = s.examSection && s.examSection !== 'all';
+    var pct = total ? Math.round(correct / total * 100) : 0;
 
     /* writing self-check card (model answers to compare against) */
     var writeReviewHtml = '';
@@ -652,24 +654,31 @@
     return '<div data-screen-label="Exam results" style="min-height:100vh;background:var(--paper);padding:26px 20px 60px;animation:hsk-fade .3s ease both">' +
       '<div style="max-width:820px;margin:0 auto">' +
         back +
-        '<div style="position:relative;overflow:hidden;background:' + tier.bg + ';color:var(--invert-fg);border-radius:22px;box-shadow:var(--shadow-lg);padding:30px 32px;display:flex;align-items:center;gap:28px;flex-wrap:wrap">' +
-          '<div style="width:130px;height:130px;flex:none;border-radius:50%;background:var(--invert-fg);display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.18)">' +
-            '<div style="text-align:center"><div style="font-size:2.3rem;font-weight:800;line-height:1;color:' + tier.ring + '">' + band + '</div><div style="font-size:var(--fs-xs);color:#574f49;font-weight:600;margin-top:2px">/ ' + bandMax + '</div></div>' +
-          '</div>' +
-          '<div style="flex:1;min-width:200px">' +
-            '<div class="serif-cn" style="font-size:var(--fs-2xl);font-weight:700">' + esc(tier.cn) + '</div>' +
-            '<div style="opacity:.92;font-size:var(--fs-md);margin-top:2px">' + esc(tier.en) + '</div>' +
-            '<div style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:rgba(255,248,241,.22);border-radius:99px;padding:6px 14px;font-size:var(--fs-sm);font-weight:600">' + SVG_TARGET + esc(tier.gap) + '</div>' +
-            '<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">' +
-              '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)"><b>' + correct + '</b> correct</span>' +
-              '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)"><b>' + wrong + '</b> wrong</span>' +
-              '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)"><b>' + skipped + '</b> skipped</span>' +
-              '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)">⏱ ' + esc(fmtTime(s.elapsed || 0)) + '</span>' +
-            '</div>' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:var(--fs-sm);opacity:.95">' + SVG_ARROW + '<span><b>Next:</b> ' + esc(tier.next) + '</span></div>' +
-            '<div style="margin-top:12px;font-size:var(--fs-xs);opacity:.82;line-height:1.5">' + total + ' auto-scored · projected to /' + bandMax + (writeQs.length ? ' · writing self-checked below' : '') + '</div>' +
-          '</div>' +
-        '</div>' +
+        (sectioned
+          ? '<div style="background:linear-gradient(150deg,var(--accent),var(--accent-hover));color:var(--invert-fg);border-radius:22px;box-shadow:var(--shadow-lg);padding:30px 32px;text-align:center">' +
+              '<div style="font-size:2.6rem;font-weight:800;line-height:1">' + pct + '%</div>' +
+              '<div style="opacity:.92;font-size:var(--fs-md);margin-top:4px">' + correct + ' / ' + total + ' correct</div>' +
+              '<div class="serif-cn" style="font-size:var(--fs-2xl);font-weight:700;margin-top:14px">' + esc((sections[0] && sections[0].cn) || '') + ' · ' + esc(s.examSection) + ' — practice</div>' +
+              '<div style="opacity:.9;font-size:var(--fs-sm);margin-top:2px">Section practice — not a full-exam score · ⏱ ' + esc(fmtTime(s.elapsed || 0)) + '</div>' +
+            '</div>'
+          : '<div style="position:relative;overflow:hidden;background:' + tier.bg + ';color:var(--invert-fg);border-radius:22px;box-shadow:var(--shadow-lg);padding:30px 32px;display:flex;align-items:center;gap:28px;flex-wrap:wrap">' +
+              '<div style="width:130px;height:130px;flex:none;border-radius:50%;background:var(--invert-fg);display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.18)">' +
+                '<div style="text-align:center"><div style="font-size:2.3rem;font-weight:800;line-height:1;color:' + tier.ring + '">' + band + '</div><div style="font-size:var(--fs-xs);color:#574f49;font-weight:600;margin-top:2px">/ ' + bandMax + '</div></div>' +
+              '</div>' +
+              '<div style="flex:1;min-width:200px">' +
+                '<div class="serif-cn" style="font-size:var(--fs-2xl);font-weight:700">' + esc(tier.cn) + '</div>' +
+                '<div style="opacity:.92;font-size:var(--fs-md);margin-top:2px">' + esc(tier.en) + '</div>' +
+                '<div style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:rgba(255,248,241,.22);border-radius:99px;padding:6px 14px;font-size:var(--fs-sm);font-weight:600">' + SVG_TARGET + esc(tier.gap) + '</div>' +
+                '<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">' +
+                  '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)"><b>' + correct + '</b> correct</span>' +
+                  '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)"><b>' + wrong + '</b> wrong</span>' +
+                  '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)"><b>' + skipped + '</b> skipped</span>' +
+                  '<span style="background:rgba(255,248,241,.18);border-radius:10px;padding:8px 14px;font-size:var(--fs-sm)">⏱ ' + esc(fmtTime(s.elapsed || 0)) + '</span>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:var(--fs-sm);opacity:.95">' + SVG_ARROW + '<span><b>Next:</b> ' + esc(tier.next) + '</span></div>' +
+                '<div style="margin-top:12px;font-size:var(--fs-xs);opacity:.82;line-height:1.5">' + total + ' auto-scored · projected to /' + bandMax + (writeQs.length ? ' · writing self-checked below' : '') + '</div>' +
+              '</div>' +
+            '</div>') +
         '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:24px;margin-top:20px">' +
           '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:16px">Score by section · each /100</div>' +
           '<div style="display:flex;flex-direction:column;gap:16px">' + sectionsHtml + '</div>' +

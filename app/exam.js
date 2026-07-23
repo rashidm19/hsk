@@ -1034,6 +1034,7 @@
 
   function resultsTpl() {
     var s = stateOf();
+    var sectioned = s.examSection && s.examSection !== 'all';
     var qs = activeQuestions();
     var qCount = qs.length;
     var answers = s.answers || {};
@@ -1200,20 +1201,27 @@
     return '<div data-screen-label="Exam results" style="display:flex;flex-direction:column;height:100%;min-height:0;background:var(--paper);animation:hsk-fade .25s ease both">' +
       head +
       '<div class="hsk-scroll" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:16px 16px 24px">' +
-        '<div style="position:relative;overflow:hidden;background:' + heroBg + ';color:#fff8f1;border-radius:22px;padding:24px;box-shadow:var(--shadow-lg);text-align:center">' +
-          '<div style="position:relative;width:120px;height:120px;margin:0 auto">' +
-            '<svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="11"/><circle cx="60" cy="60" r="54" fill="none" stroke="#fff8f1" stroke-width="11" stroke-linecap="round" stroke-dasharray="339" stroke-dashoffset="' + ringOffset + '" style="transition:stroke-dashoffset 1s ease"/></svg>' +
-            '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:2.1rem;font-weight:700;line-height:1">' + band + '</span><span style="font-size:.72rem;opacity:.9">/ 300</span></div>' +
-          '</div>' +
-          '<div class="serif-cn" style="font-size:1.5rem;font-weight:700;margin-top:14px">' + esc(verdict) + '</div>' +
-          '<div style="opacity:.9;font-size:.88rem;margin-top:2px">' + esc(verdictEn) + ' · ' + esc(fmtTime(s.elapsed || 0)) + '</div>' +
-        '</div>' +
+        (sectioned
+          ? '<div style="background:linear-gradient(150deg,var(--accent),var(--accent-hover));color:#fff8f1;border-radius:22px;padding:24px;box-shadow:var(--shadow-lg);text-align:center">' +
+              '<div style="font-size:2.6rem;font-weight:800;line-height:1">' + pct + '%</div>' +
+              '<div style="font-size:.8rem;opacity:.92;margin-top:4px">' + correct + ' / ' + total + ' correct</div>' +
+              '<div class="serif-cn" style="font-size:1.25rem;font-weight:700;margin-top:14px">' + esc((secList[0] && secList[0].cn) || '') + ' · ' + esc(s.examSection) + ' — practice</div>' +
+              '<div style="opacity:.9;font-size:.85rem;margin-top:2px">Section practice — not a full-exam score · ' + esc(fmtTime(s.elapsed || 0)) + '</div>' +
+            '</div>'
+          : '<div style="position:relative;overflow:hidden;background:' + heroBg + ';color:#fff8f1;border-radius:22px;padding:24px;box-shadow:var(--shadow-lg);text-align:center">' +
+              '<div style="position:relative;width:120px;height:120px;margin:0 auto">' +
+                '<svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg)"><circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="11"/><circle cx="60" cy="60" r="54" fill="none" stroke="#fff8f1" stroke-width="11" stroke-linecap="round" stroke-dasharray="339" stroke-dashoffset="' + ringOffset + '" style="transition:stroke-dashoffset 1s ease"/></svg>' +
+                '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:2.1rem;font-weight:700;line-height:1">' + band + '</span><span style="font-size:.72rem;opacity:.9">/ 300</span></div>' +
+              '</div>' +
+              '<div class="serif-cn" style="font-size:1.5rem;font-weight:700;margin-top:14px">' + esc(verdict) + '</div>' +
+              '<div style="opacity:.9;font-size:.88rem;margin-top:2px">' + esc(verdictEn) + ' · ' + esc(fmtTime(s.elapsed || 0)) + '</div>' +
+            '</div>') +
         '<div style="display:flex;gap:10px;margin-top:16px">' +
           '<div style="flex:1;text-align:center;background:var(--ok-bg);border-radius:14px;padding:14px 8px"><div style="font-size:1.4rem;font-weight:700;color:var(--ok-ink)">' + correct + '</div><div style="font-size:.72rem;color:var(--stone);font-weight:600">Correct</div></div>' +
           '<div style="flex:1;text-align:center;background:var(--bad-bg);border-radius:14px;padding:14px 8px"><div style="font-size:1.4rem;font-weight:700;color:var(--bad-ink)">' + wrong + '</div><div style="font-size:.72rem;color:var(--stone);font-weight:600">Wrong</div></div>' +
           '<div style="flex:1;text-align:center;background:var(--surface-sunken);border-radius:14px;padding:14px 8px"><div style="font-size:1.4rem;font-weight:700;color:var(--stone)">' + skipped + '</div><div style="font-size:.72rem;color:var(--stone);font-weight:600">Skipped</div></div>' +
         '</div>' +
-        '<div style="text-align:center;font-size:.74rem;color:var(--stone);margin-top:12px">' + total + ' auto-scored · projected to /300' + (writeQs.length ? ' · writing self-checked below' : '') + '</div>' +
+        '<div style="text-align:center;font-size:.74rem;color:var(--stone);margin-top:12px">' + (sectioned ? (total + ' questions · section practice') : (total + ' auto-scored · projected to /300' + (writeQs.length ? ' · writing self-checked below' : ''))) + '</div>' +
         '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-top:16px">' +
           '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:15px">By section</div>' +
           '<div style="display:flex;flex-direction:column;gap:14px">' + sectionsHtml + '</div>' +
