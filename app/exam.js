@@ -462,7 +462,13 @@
     stopClip({ full: true });
     var s = stateOf();
     var p = (resume === true) && s.progress && s.progress[s.testIdx];
-    var qCount = activeQuestions().length; /* clamp a corrupted stored curQ (0 = not loaded yet — skip clamp) */
+    /* Clamp a corrupted stored curQ against the FULL paper (0 = not loaded yet → skip clamp).
+       Must NOT use activeQuestions() here: examSection is still the outgoing value (e.g. a
+       leftover 'Listening' section drill) and is only reset to 'all' in the setState below, so
+       activeQuestions() would return the section-filtered subset and clamp a full-paper curQ down
+       to the section length — reopening the resumed paper at the wrong, earlier question. */
+    var qc = QCACHE[s.testIdx];
+    var qCount = qc ? qc.questions.length : 0;
     App.setState({
       examView: 'player', introOpen: false, examSection: 'all',
       examMode: (p && p.examMode) ? p.examMode : s.examMode,
