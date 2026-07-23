@@ -1115,90 +1115,17 @@ ${testLinks}
 
 function buildSitemap(taskSlugs, confusableSlugs, grammarPatternSlugs, characterList, extraPages) {
   console.log('[sitemap] Updating sitemap.xml...');
-  const index = readJSON('index.json');
   const today = new Date().toISOString().split('T')[0];
 
-  const existingPages = [
-    { loc: '/', priority: '1.0' },
-    { loc: '/exams/', priority: '0.95' },
-    { loc: '/vocabulary/', priority: '0.9' },
-    { loc: '/characters/', priority: '0.9' },
-    { loc: '/grammar/', priority: '0.8' },
-    { loc: '/topics/', priority: '0.9' },
-    { loc: '/guide/', priority: '0.8' },
-    { loc: '/sentences/', priority: '0.9' },
-    { loc: '/strategies/', priority: '0.9' },
-    { loc: '/traps/', priority: '0.9' },
-    { loc: '/strategies/listening-judgment/', priority: '0.8' },
-    { loc: '/strategies/listening-dialog/', priority: '0.8' },
-    { loc: '/strategies/listening-passage/', priority: '0.8' },
-    { loc: '/strategies/listening-keywords/', priority: '0.8' },
-    { loc: '/strategies/reading-fill/', priority: '0.8' },
-    { loc: '/strategies/reading-ordering/', priority: '0.8' },
-    { loc: '/strategies/reading-comprehension/', priority: '0.8' },
-    { loc: '/strategies/writing-construction/', priority: '0.8' },
-    { loc: '/strategies/picture-templates/', priority: '0.8' },
-    { loc: '/grammar/ba-sentence/', priority: '0.8' },
-    { loc: '/grammar/passive/', priority: '0.8' },
-    { loc: '/grammar/comparison/', priority: '0.8' },
-    { loc: '/grammar/complement/', priority: '0.8' },
-    { loc: '/grammar/complex-sentences/', priority: '0.8' },
-    { loc: '/grammar/rhetorical/', priority: '0.8' },
-    { loc: '/grammar/adverbs/', priority: '0.8' },
-    { loc: '/grammar/function-words/', priority: '0.8' },
-    { loc: '/grammar/pivotal-sentences/', priority: '0.8' },
-    { loc: '/grammar/fixed-patterns/', priority: '0.8' },
-    { loc: '/grammar/measure-words/', priority: '0.8' },
-    { loc: '/grammar/patterns/', priority: '0.7' },
-    { loc: '/compare/', priority: '0.8' },
-    { loc: '/compare/hsk4-vs-hsk3/', priority: '0.8' },
-    { loc: '/compare/hsk4-vs-hsk5/', priority: '0.8' },
-    { loc: '/compare/new-vs-old-hsk4/', priority: '0.9' },
-    { loc: '/writing/', priority: '0.9' },
-    { loc: '/writing/sentence-order/', priority: '0.8' },
-    { loc: '/writing/paragraph/', priority: '0.8' },
-    { loc: '/words/', priority: '0.7' },
-  ];
-
-  // Add test pages
-  const testPages = index.map((_, i) => ({
-    loc: `/test/${String(i + 1).padStart(2, '0')}/`,
-    priority: '0.8',
-  }));
-
-  // Add task topic pages
-  const taskPages = (taskSlugs || []).map(slug => ({
-    loc: `/topics/${slug}/`,
-    priority: '0.7',
-  }));
-
-  // Add confusable word pages
-  const confusablePages = (confusableSlugs || []).map(slug => ({
-    loc: `/words/${slug}/`,
-    priority: '0.7',
-  }));
-
-  // Add grammar pattern pages
-  const grammarPatternPages = (grammarPatternSlugs || []).map(slug => ({
-    loc: `/grammar/patterns/${slug}/`,
-    priority: '0.7',
-  }));
-
-  // Add character writing pages — top-30 enhanced pages get higher priority
-  // than the 120 basic pages to signal Google which pages to crawl deeper.
-  const enhancedSet = new Set((characterList && characterList.enhanced) || []);
-  const allChars = (characterList && characterList.all) || characterList || [];
-  const characterPages = allChars.map(ch => ({
-    loc: `/characters/${encodeURIComponent(ch)}/`,
-    priority: enhancedSet.has(ch) ? '0.8' : '0.6',
-  }));
-  // Recognition-character pages: lower priority than the writing set
-  const recognitionPages = ((characterList && characterList.recognition) || []).map(ch => ({
-    loc: `/characters/${encodeURIComponent(ch)}/`,
-    priority: '0.5',
-  }));
-
-  const allPages = [...existingPages, ...testPages, ...taskPages, ...confusablePages, ...grammarPatternPages, ...characterPages, ...recognitionPages, ...(extraPages || [])];
+  // O5: the sitemap advertises ONLY genuinely-public, indexable pages. The single such
+  // page is the landing (/). Every former entry — /exams/, /vocabulary/, /characters/…,
+  // /grammar/, /topics/, /guide/, /sentences/, /strategies/, /traps/, /compare/, /writing/,
+  // /words/, /practice/, /train/, /test/NN/, and all slug pages — is a subscription-gated
+  // body.app page (soft-404 for crawlers) and must not be advertised. The gate and those
+  // pages are unchanged; they stay indexable, just not sitemap-listed. The buildSitemap()
+  // args (taskSlugs/confusableSlugs/grammarPatternSlugs/characterList/extraPages) are kept
+  // for the call site but no longer feed the sitemap.
+  const allPages = [{ loc: '/', priority: '1.0' }];
 
   const urls = allPages.map(p => `  <url>
     <loc>https://www.hskprep.cc${p.loc}</loc>
@@ -1214,7 +1141,7 @@ ${urls}
 `;
 
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), sitemap, 'utf8');
-  console.log(`[sitemap] Updated with ${allPages.length} URLs (added ${testPages.length} test pages)`);
+  console.log(`[sitemap] Updated with ${allPages.length} public URL(s) — gated pages intentionally excluded`);
 }
 
 // ============================================================
