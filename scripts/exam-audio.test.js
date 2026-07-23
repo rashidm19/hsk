@@ -76,3 +76,30 @@ test('normalizeTest passes already-normalized questions through untouched', () =
   assert.equal(out[0].audio, 'z', 'pre-normalized blob is returned as-is');
   assert.equal(out[0].prompt, 'x');
 });
+
+/* M6: writing_construction is self-checked, not auto-scored — normalizeQ must
+   flag selfCheck, move the model sentences to modelAnswers, and CLEAR options
+   so every downstream scorer skips it. */
+function W(number, options, image) {
+  return { type: 'writing_construction', number: number, options: options, image: image || '', text: number + '. 看图造句' };
+}
+
+test('M6: 看图造句 (with image, many model sentences) -> selfCheck, options cleared, modelAnswers kept', () => {
+  const App = loadExam([{ official: false }]);
+  const models = ['他在打篮球。', '男孩正在打球。', '他们在运动。'];
+  const out = App.exam.normalizeTest(0, { questions: [W(51, models, 'pic.png')] }).questions;
+  assert.equal(out[0].selfCheck, true, 'flagged self-check');
+  assert.deepEqual(out[0].options, [], 'options cleared so grading skips it');
+  assert.deepEqual(out[0].modelAnswers, models, 'model sentences preserved for the reveal');
+  assert.equal(out[0].typeLabel, '看图造句', 'image -> 看图造句 label');
+});
+
+test('M6: 完成句子 (colon prompt, single model) -> selfCheck, options cleared', () => {
+  const App = loadExam([{ official: false }]);
+  const q = { type: 'writing_construction', number: 61, options: ['他把作业写完了。'], image: '', text: '61. 完成句子：他把作业……' };
+  const out = App.exam.normalizeTest(0, { questions: [q] }).questions;
+  assert.equal(out[0].selfCheck, true);
+  assert.deepEqual(out[0].options, []);
+  assert.deepEqual(out[0].modelAnswers, ['他把作业写完了。']);
+  assert.equal(out[0].typeLabel, '完成句子', 'no image -> 完成句子 label');
+});
