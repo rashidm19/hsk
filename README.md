@@ -7,7 +7,7 @@
 
 **14 complete HSK 4 mock exams** with listening, reading, and writing sections — structured JSON data, ready to use in your app, flashcard tool, or study workflow.
 
-12 套完整的 HSK 4 模拟试题，涵盖听力、阅读、书写三大部分，JSON 格式，可直接用于 App 开发、刷题工具或学习系统。
+14 套完整的 HSK 4 模拟试题，涵盖听力、阅读、书写三大部分，JSON 格式，可直接用于 App 开发、刷题工具或学习系统。
 
 > Created by [**HSK Prep**](https://www.hskprep.cc) — Free HSK 4 mock exams and study tools.
 
@@ -15,7 +15,7 @@
 
 ## Why This Dataset?
 
-- **Complete exam simulation**: Each test has 100 questions following the real HSK 4 exam format
+- **Complete exam simulation**: Most tests have 100 questions following the real HSK 4 exam format (test-04 has 99; test-07 is a 76-question partial)
 - **Structured data**: Clean JSON format, easy to parse in any programming language
 - **Audio references**: Listening questions include URLs to audio files
 - **Answer key included**: Every question has the correct answer marked
@@ -47,7 +47,7 @@ for q in test['questions']:
 | [`test-01.json`](data/test-01.json) | HSK 4 Sample Quiz | 100 |
 | [`test-02.json`](data/test-02.json) | HSK 4 Mock Test Series 2 | 100 |
 | [`test-03.json`](data/test-03.json) | HSK 4 Mock Exam H41002 | 100 |
-| [`test-04.json`](data/test-04.json) | HSK 4 Mock Exam Series 4 | 100 |
+| [`test-04.json`](data/test-04.json) | HSK 4 Mock Exam Series 4 | 99 |
 | [`test-05.json`](data/test-05.json) | HSK 4 Mock Exam Series 5 | 100 |
 | [`test-06.json`](data/test-06.json) | HSK 4 Mock Exam Series 6 | 100 |
 | [`test-07.json`](data/test-07.json) | HSK 4 Mock Test Series 7 | 76 |
@@ -56,6 +56,8 @@ for q in test['questions']:
 | [`test-10.json`](data/test-10.json) | HSK 4 Mock Test Series 10 | 100 |
 | [`test-11.json`](data/test-11.json) | HSK 4 Mock Test Series 11 | 100 |
 | [`test-12.json`](data/test-12.json) | HSK 4 Mock Test Series 12 | 100 |
+| [`test-13.json`](data/test-13.json) | HSK 4 Official Exam 13 (H41220) | 100 |
+| [`test-14.json`](data/test-14.json) | HSK 4 Official Exam 14 (H41221) | 100 |
 
 ## Question Types
 

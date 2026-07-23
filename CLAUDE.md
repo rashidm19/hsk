@@ -18,10 +18,15 @@ node build.js                 # Regenerate all static HTML from data/*.json (the
 node scripts/inject-auth.js   # Wire Supabase auth <script> tags into platform pages (body.app)
 python3 -m http.server 8080   # Local preview — serve the repo root statically (README assumes :8080)
 python3 scripts/classify_topics.py   # Reclassify vocabulary.json into topics.json (data prep)
+node --test scripts/*.test.js        # Run the Node unit tests (auth/routing/sync/exam/skills; zero npm deps)
+deno test supabase/functions/*/lib.test.ts   # Run the Deno edge-function tests (check-access, grant-entitlement)
 ```
 
-There is **no test runner and no linter.** Note: the `test/` directory is **generated exam
-pages**, not a test suite.
+There is **no linter** (no ESLint/Prettier config, no `package.json`). There **is** a small
+unit-test suite with zero npm deps — Node's built-in `node:test` for the pure client logic
+(`scripts/*.test.js`: auth/routing/sync/exam-audio/skills) plus Deno for the edge functions
+(`supabase/functions/*/lib.test.ts`); run both via the test commands above. Note: the `test/`
+directory is **generated exam pages**, not that suite.
 
 ## Critical workflow
 
@@ -39,7 +44,7 @@ Generated HTML is **committed to the repo** (only `.DS_Store`, `node_modules/`, 
 
 ## Architecture
 
-**`build.js` (~5300 lines) is the heart of the project.** It reads JSON from `data/` and
+**`build.js` (~5550 lines) is the heart of the project.** It reads JSON from `data/` and
 pre-renders static HTML so search engines can index content that would otherwise need JS.
 It is organized as a sequence of `buildX()` generators (`buildVocabulary`, `buildTestPages`,
 `buildTranscriptPages`, `buildHomepage`, `buildTopics`, `buildCharacterPages`,

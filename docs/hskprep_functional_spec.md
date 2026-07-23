@@ -20,7 +20,7 @@ HSK Prep — B2C-платформа подготовки к экзамену HSK
 
 - `build.js` (5 520 строк) — генератор: читает `data/*.json` и пре-рендерит ~601 HTML-страницу + sitemap.xml (модуль scripts/app-shell.js require'ится из него);
 - `scripts/inject-auth.js` — постпроцессор, вшивающий auth-скрипты в платформенные страницы;
-- вспомогательные: scripts/route-decision.test.js (тесты), scripts/fix-profile-placeholder.js (одноразовая чистка демо-плейсхолдеров профиля «Alex Chen» из сгенерированных страниц).
+- вспомогательные: 6 файлов node-тестов scripts/*.test.js (access-authjs, access-decision, exam-audio, route-decision, skills-selfcheck, sync-merge; `node --test scripts/*.test.js`), scripts/fix-profile-placeholder.js (одноразовая чистка демо-плейсхолдеров профиля «Alex Chen» из сгенерированных страниц).
 
 Backend — Supabase (auth + Postgres + 2 edge-функции), целиком клиентская интеграция через supabase-js v2 с CDN. Платёжный шлюз — внешний сервис StudyBox (`pay.studybox.kz`, отдельный репозиторий), связанный с платформой вебхуком. Аналитика — Яндекс Метрика (счётчик 110455584).
 
@@ -268,7 +268,7 @@ State в localStorage `hsk_onboarding_v1` `{idx, answers}`. Порядок enfor
 
 ### 8.1 Модель
 
-Полностью клиентская, Supabase (PKCE, persistSession, detectSessionInUrl:false). Глобал `window.HSKAuth` (auth.js, 543 строки) + гейт auth-guard.js + маршрутизатор route-decision.js (чистая функция, покрыта 6 тестами node --test) + страница /login/ + приёмник /auth/callback.html.
+Полностью клиентская, Supabase (PKCE, persistSession, detectSessionInUrl:false). Глобал `window.HSKAuth` (auth.js, 543 строки) + гейт auth-guard.js + маршрутизатор route-decision.js (чистая функция, покрыта 8 тестами node --test) + страница /login/ + приёмник /auth/callback.html.
 
 Методы входа: **email OTP** (основной; письмо содержит и код, и magic-link), **Google OAuth** (PKCE; redirectTo всегда /auth/callback.html?next=; подстраховка finishOAuthFromUrl обменивает ?code= на любой странице), **пароль** (скрытый путь на /login/ для тестовых аккаунтов с недоставляемыми email). `signUp` (классическая регистрация) существует в API, но не имеет call sites.
 
@@ -427,7 +427,7 @@ SEO-поверхность (598 URL sitemap, из них 585 со schema.org) и
 - **Классификация тем**: scripts/classify_topics.py пишет topics.json, но текущий файл правился руками — процесс требует решения (§16.В).
 - **Выдача comp-доступа**: /admin/ → create → отправка «готового сообщения» автору; отзыв — revoke.
 - **Рефанды/двойные списания**: очередь review_status='double_charge' в payments; runbook в PAYMENTS_SETUP.md.
-- **Тесты**: scripts/route-decision.test.js (node --test, 6 кейсов маршрутизации/open-redirect) и supabase/functions/grant-entitlement/lib.test.ts (5 Deno-тестов платёжной криптографии и валидации: verify/reject HMAC, derivePlan, timingSafeEqual, freshTs с окном ±300 с и clock skew); математика apply_hsk_entitlement (включая клэмп конца месяца) верифицирована rollback-обёрнутым SQL-батчем на живом проекте (PAYMENTS_SETUP.md:88-90). Паттерн index.ts/lib.ts в edge-функциях — вынос чистых функций ради тестируемости.
+- **Тесты**: 6 файлов node-тестов scripts/*.test.js (53 кейса, запуск `node --test scripts/*.test.js` или пофайлово `node scripts/<x>.test.js`): route-decision (8, маршрутизация/open-redirect), access-decision (11, fail-closed логика гейта доступа), access-authjs (12, auth.js checkAccess + durable grace-marker + isPayPending), sync-merge (8, union/LWW-мёрж прогресса), skills-selfcheck (8, Writing = self-check в skill-плитках), exam-audio (6, наследование клипа второй репликой listening-пары); и 2 Deno-теста edge-функций (`deno test supabase/functions/*/lib.test.ts`): check-access/lib.test.ts (7, computeActive + corsHeaders) и grant-entitlement/lib.test.ts (5 Deno-тестов платёжной криптографии и валидации: verify/reject HMAC, derivePlan, timingSafeEqual, freshTs с окном ±300 с и clock skew); математика apply_hsk_entitlement (включая клэмп конца месяца) верифицирована rollback-обёрнутым SQL-батчем на живом проекте (PAYMENTS_SETUP.md:88-90). Паттерн index.ts/lib.ts в edge-функциях — вынос чистых функций ради тестируемости.
 - **Файлы-сироты**: scripts/all_words.txt (981-строчный pipe-словарь, вероятный исходник vocabulary.json) и data/official-characters.json не читаются никаким кодом (§16.В).
 
 ## 15. Сводный реестр ключей хранилищ
