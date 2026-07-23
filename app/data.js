@@ -31,6 +31,8 @@
   D.PRACTICE = [];
   D.TOTAL_QUESTIONS = 0;
   D.fullErrors = [];   /* phase-2 catalog files that failed to load (B1) */
+  D.charsError = false; /* G1: Characters catalog failed (decoupled from Study) */
+  D.studyError = false; /* G1: Study catalog (grammar/confusables/…) failed */
 
   /* ---------- small utils ---------- */
 
@@ -607,6 +609,11 @@
     '/data/grammar-patterns.json', '/data/confusables.json', '/data/sentences.json',
     '/data/topics.json', '/data/task-dialogues.json', '/data/traps.json'
   ];
+  /* G1: which phase-2 files back each section, so one section's failure doesn't
+     blank out the other (Characters and Study fail independently). */
+  var CHAR_FILES = REST_FILES.slice(0, 3);
+  var STUDY_FILES = REST_FILES.slice(3);
+  function anyFailed(files) { return files.some(function (u) { return loadErrors.indexOf(u) >= 0; }); }
   var restAppData = null;
 
   function loadRest(appData) {
@@ -656,9 +663,11 @@
       D.PRACTICE = buildPracticePool(D.GRAMMAR, D.CONFUSABLES);
 
       D.fullErrors = REST_FILES.filter(function (u) { return loadErrors.indexOf(u) >= 0; });
+      D.charsError = anyFailed(CHAR_FILES);
+      D.studyError = anyFailed(STUDY_FILES);
       D.readyFull = true;
       return D;
-    }).catch(function () { D.fullErrors = REST_FILES.slice(); D.readyFull = true; return D; });
+    }).catch(function () { D.fullErrors = REST_FILES.slice(); D.charsError = true; D.studyError = true; D.readyFull = true; return D; });
     return loadingFull;
   }
 
@@ -668,6 +677,8 @@
     loadingFull = null;
     D.readyFull = false;
     D.fullErrors = [];
+    D.charsError = false;
+    D.studyError = false;
     loadErrors = loadErrors.filter(function (u) { return REST_FILES.indexOf(u) < 0; });
     return loadRest(restAppData);
   };

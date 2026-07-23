@@ -1117,8 +1117,8 @@
     var v = s.moreView;
     var inner;
     if (!v) inner = menuHtml(s);
-    else if (v === 'characters') inner = !s.dataReadyFull ? moreLoading() : (s.dataFullError ? moreLoadError() : charsHtml(s));
-    else if (v === 'study') inner = !s.dataReadyFull ? moreLoading() : (s.dataFullError ? moreLoadError() : (App.screens.studySection ? App.screens.studySection(s) : (App.screens.study ? App.screens.study(s) : '')));
+    else if (v === 'characters') inner = !s.dataReadyFull ? moreLoading() : (s.dataCharsError ? moreLoadError() : charsHtml(s));
+    else if (v === 'study') inner = !s.dataReadyFull ? moreLoading() : (s.dataStudyError ? moreLoadError() : (App.screens.studySection ? App.screens.studySection(s) : (App.screens.study ? App.screens.study(s) : '')));
     else if (v === 'stats') inner = statsHtml(s);
     else if (v === 'guide') inner = guideHtml(s);
     else if (v === 'profile') inner = profileHtml(s);

@@ -127,7 +127,7 @@
     profileSheet: false, planSheet: false, langSheet: false, uiLang: 'en', notif: true,
     profile: { name: '', email: '', country: '' },
     profileDraft: { name: '', email: '', country: '' },
-    sub: null, dataReady: false, dataReadyFull: false, dataFullError: false,
+    sub: null, dataReady: false, dataReadyFull: false, dataFullError: false, dataCharsError: false, dataStudyError: false,
     examView: 'list', introOpen: false, testIdx: 0,
     curQ: 0, answers: {}, flags: {}, elapsed: 0, reviewFilter: 'all', reviewOpen: {},
     audioPlaying: false, audioProg: 0, audioPlays: {}, navOpen: false,
@@ -442,18 +442,28 @@
      Without History integration, Back unloads the single-route SPA — reads as a
      lost session mid-timed-exam. Keep ONE guard history entry armed whenever a
      trappable layer is open; on Back, consume it, dismiss the top layer, re-arm. */
-  var _histArmed = false;
+  var _histArmed = false, _selfPop = false;
   function _trappableOpen(s) {
     return !!(s.searchOpen || s.introOpen || s.navOpen || s.langSheet || s.planSheet
       || s.profileSheet || s.wordSheetId != null || s.examExitConfirm || s.examView === 'player');
   }
   App._syncHistory = function () {
-    if (_trappableOpen(App.state) && !_histArmed) {
+    var open = _trappableOpen(App.state);
+    if (open && !_histArmed) {
       try { history.pushState({ hskGuard: 1 }, ''); _histArmed = true; } catch (e) {}
+    } else if (!open && _histArmed) {
+      /* the layer was dismissed via the UI (a close button / scrim), not Back, so
+         our guard entry is still on the stack. Remove it now, else the user's next
+         Back is swallowed consuming a stale entry (closes nothing) and they have to
+         press Back twice to leave. The resulting popstate is flagged self-initiated
+         so it doesn't try to close an already-closed layer. */
+      _histArmed = false; _selfPop = true;
+      try { history.back(); } catch (e) { _selfPop = false; }
     }
   };
   try {
     window.addEventListener('popstate', function () {
+      if (_selfPop) { _selfPop = false; return; } /* our own guard-removal back() */
       _histArmed = false;
       var s = App.state, handled = false;
       if (s.searchOpen) handled = act('closeSearch');
@@ -838,7 +848,13 @@
   function markFull() {
     var done = function () {
       var err = !!(App.data && App.data.fullErrors && App.data.fullErrors.length);
-      App.setState({ dataReadyFull: true, dataFullError: err });
+      /* G1: per-section error so a Study-catalog failure doesn't blank a working
+         Characters section (and vice versa); retry still refetches all phase-2. */
+      App.setState({
+        dataReadyFull: true, dataFullError: err,
+        dataCharsError: !!(App.data && App.data.charsError),
+        dataStudyError: !!(App.data && App.data.studyError)
+      });
     };
     try {
       if (App.data && typeof App.data.loadFull === 'function') {
@@ -960,7 +976,7 @@
        — shows the spinner again, then content or the error card (B1). */
     App.actions.retryFullLoad = function () {
       if (!(App.data && typeof App.data.retryFull === 'function')) { markFull(); return; }
-      App.setState({ dataReadyFull: false, dataFullError: false });
+      App.setState({ dataReadyFull: false, dataFullError: false, dataCharsError: false, dataStudyError: false });
       try { App.data.retryFull().then(markFull, markFull); } catch (e) { markFull(); }
     };
     loadData();
