@@ -1064,12 +1064,8 @@
        scaling App.util.bandScore uses for <3-section attempts, so the results
        verdict and the dashboard estimate stay in agreement. */
     var secList = Object.keys(secMap).map(function (k) { return secMap[k]; });
-    var secScores = secList.map(function (x) { return x.tot ? Math.round(x.ok / x.tot * 100) : 0; });
-    var meanSec = secScores.length ? secScores.reduce(function (a, b) { return a + b; }, 0) / secScores.length : 0;
-    var band = Math.round(meanSec * 3);
-    var pass = 180;
-    var passed = band >= pass;
-    var rBand = pass ? band / pass : 0;
+    var _g = App.exam.gradeSections(secList);
+    var band = _g.band, pass = _g.pass, passed = _g.passed, rBand = _g.ratio;
 
     /* Writing self-check card — model answer(s) for the learner to compare against.
        Rendered for any paper that carries 书写 items (full papers and the Writing
@@ -1425,6 +1421,19 @@
     init: focusDialog
   };
 
+  /* shared band+verdict grader (contract §Stats formulas) — Writing already
+     excluded from secList; pass 180; band = round(mean section % × 3).
+     Exposed so BOTH the mobile resultsTpl and desktop results use ONE source. */
+  function gradeSections(secList) {
+    var scores = (secList || []).map(function (x) { return x.tot ? Math.round(x.ok / x.tot * 100) : 0; });
+    var meanSec = scores.length ? scores.reduce(function (a, b) { return a + b; }, 0) / scores.length : 0;
+    var band = Math.round(meanSec * 3);
+    var pass = 180;
+    var ratio = pass ? band / pass : 0;
+    var tierKey = band >= pass ? 'pass' : ratio >= 0.85 ? 'close' : ratio >= 0.55 ? 'building' : 'early';
+    return { band: band, pass: pass, passed: band >= pass, ratio: ratio, tierKey: tierKey };
+  }
+
   /* public surface (CONTRACT names App.exam.audioEl) */
   ex.stopTimer = stopTimer;
   ex.stopClip = stopClip;
@@ -1437,6 +1446,7 @@
   ex.updateTimerDom = updateTimerDom;
   ex.writeModelHtml = writeModelHtml;
   ex.normalizeTest = normalizeTest; /* pure; exposed for regression tests (F2 pair-audio) */
+  ex.gradeSections = gradeSections; /* pure; shared grader (M5) + exposed for tests */
   App.exam = ex;
 
 })();

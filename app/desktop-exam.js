@@ -541,13 +541,10 @@
       var sc = x.tot ? Math.round(x.ok / x.tot * 100) : 0;
       return { name: x.name, cn: x.cn, ok: x.ok, tot: x.tot, score: sc, color: n === 'Listening' ? 'var(--gold)' : n === 'Reading' ? 'var(--jade)' : 'var(--accent)' };
     });
+    var _g = App.exam.gradeSections(sections);
     var bandMax = 300;
-    var pass = 180;
-    var meanSec = sections.length ? sections.reduce(function (a, x) { return a + x.score; }, 0) / sections.length : 0;
-    var band = Math.round(meanSec * 3);
-    var passed = band >= pass;
+    var band = _g.band, pass = _g.pass, passed = _g.passed, r = _g.ratio;
     var wrong = total - correct - skipped;
-    var r = pass ? band / pass : 0;
 
     /* writing self-check card (model answers to compare against) */
     var writeReviewHtml = '';
