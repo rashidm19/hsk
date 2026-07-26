@@ -24,7 +24,15 @@ follows the spec as written.
 - **ES5-compatible browser syntax** in every shipped file (`var`, `function`, no arrow functions, no `const`/`let`, no template literals, no optional chaining). Test files under `scripts/` may use modern syntax — they run in Node.
 - **Every storage access is wrapped in `try/catch`.** Safari Private mode throws on `localStorage.setItem`.
 - **No generated HTML is touched**, so `node build.js` is not required by any task. Run it once before merge to confirm zero drift.
-- **Byte-check every edited file** for stray control characters (`< 0x20`): a prior cycle had the Edit tool decode a `\uXXXX` escape into a real NUL byte. Check with `LC_ALL=C grep -n '[^[:print:][:space:]]' <file>`.
+- **⚠️ Every line number in this plan was computed against the files at `24eb18d8`, and earlier tasks shift later ones.** Task 1 inserts ~60 lines into `auth.js`; **Task 2 grows `onboarding.js` by +10 lines below `:85`, so every `onboarding.js` number in Task 3 is stale by +10 by the time Task 3 runs.** Always anchor on the **quoted text** or on `grep -n 'function <name>' <file>` — never on a bare line number.
+- **Byte-check every edited file** for stray control characters: a prior cycle had the Edit tool decode a `\uXXXX` escape into a real NUL byte. Use `perl`, **not `grep`** — this environment's `grep` resolves to `ugrep -I`, which skips binary content and therefore returns a silent all-clear on the exact NUL byte this check exists to catch (verified: `printf 'ok\x00bad\n' | grep -c '[^[:print:][:space:]]'` → 0, exit 1):
+
+```bash
+perl -ne 'print "$ARGV:$.\n" if /[\x00-\x08\x0b\x0c\x0e-\x1f]/; close ARGV if eof;' \
+  auth.js auth-guard.js onboarding.js app/core.js app/more.js app/desktop-more.js app/exam.js
+```
+
+  Verified: prints nothing on a clean tree, and prints the file:line for both a `\x00` and a `\x01` byte. (`close ARGV if eof` is required — without it `$.` accumulates across files and reports wrong line numbers.)
 - **`node --check <file>`** every edited `.js` file before committing.
 - **Full suite green before each commit:** `node --test scripts/*.test.js` (76 tests at the start of this plan) and `deno test supabase/functions/*/lib.test.ts` (12 tests).
 - **Support address is exactly `info@hskprep.cc`.** Do not invent `support@`.
@@ -136,7 +144,15 @@ Expected: FAIL — several cases error with `g.HSKAuth.readPayPending is not a f
 
 - [ ] **Step 3: Replace the marker block in `auth.js`**
 
-Replace `auth.js:289` (the `PAY_PENDING_KEY` line) and the whole `isPayPending` + `armPayPending` block at `auth.js:307-318` with:
+Two hunks. **Apply the second one first** (or match on text) — editing the constants first shifts the
+second range by +2 so that it would straddle `readConfirmedActive`'s tail.
+
+Hunk A replaces **`auth.js:289-290`** — the `PAY_PENDING_KEY` line **and** the `PAY_PENDING_TTL_MS` line
+below it. Both are reproduced in the block below, so replacing only `:289` would leave
+`var PAY_PENDING_TTL_MS` declared twice (legal, but this is the one constant that must stay in lockstep
+with `onboarding.js`). Hunk B replaces the whole `isPayPending` + `armPayPending` block at
+`auth.js:307-318`. Leave `ACCESS_OK_KEY`, `ACCESS_OK_TTL_MS`, `recordAccessConfirmed` and
+`readConfirmedActive` untouched.
 
 ```js
   var PAY_PENDING_KEY = 'hsk_pay_pending';       // {uid,ts,src}: onboarding.js handlePaySuccess (src 'return') + armPayPending() (in-app renewal departure, src 'start')
@@ -144,7 +160,7 @@ Replace `auth.js:289` (the `PAY_PENDING_KEY` line) and the whole `isPayPending` 
   var CHECKOUT_STARTED_KEY = 'hsk_checkout_started';
 ```
 
-(keep the existing `ACCESS_OK_KEY` / `ACCESS_OK_TTL_MS` lines and the `recordAccessConfirmed` / `readConfirmedActive` functions untouched), then:
+then, for hunk B:
 
 ```js
   /* THE single parse for the pay-window marker. onboarding.js payPendingFresh()
@@ -278,9 +294,16 @@ git commit -m "feat(auth): uid-scoped pay-window marker + checkout-start marker 
 
 ---
 
-### Task 2: Migrate the funnel's second reader (C1 — the critical one)
+### Task 2: Migrate the funnel's second reader (C1, part 1 of 2)
 
 `onboarding.js` parses the same key with `parseInt`. Without this task, Task 1 has already broken the **live** funnel's first duplicate-charge guard.
+
+⚠️ **This task migrates the READER only.** The funnel's own writer (`onboarding.js:1255`,
+`lsSet(LS_PAY_PENDING, String(Date.now()))`) stays a legacy bare timestamp until **Task 3 Step 3**, and
+`readPayPending` rejects a bare number by design — so guard 1 remains inoperative for funnel-armed markers
+between this commit and Task 3's. **Tasks 1, 2 and 3 must land together; do not merge to `main` between
+them.** The exposure is bounded to intra-plan commits on the unpushed `claude/dev` (prod deploys from
+`main`), and guard 2 plus the server-side ledger fold still stand throughout.
 
 **Files:**
 - Modify: `onboarding.js:82-85` (`payPendingFresh`)
@@ -312,10 +335,13 @@ test('C1/I1: a uid-less marker still suppresses a charge while granting no acces
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [ ] **Step 2: Run the test — it should PASS (regression lock, not red-green)**
 
 Run: `node --test scripts/access-authjs.test.js`
-Expected: FAIL — `armPayPending(null, 'return')` currently stores `uid: null` and `readPayPending` returns a parsed object, so this test actually **passes** on Task 1's code. **If it passes, that is correct** — it is a regression lock, not a red-green cycle. Confirm it passes and move to Step 3; the real red-green for this task is in Step 4.
+Expected: **PASS.** Task 1 already makes all three assertions true — `armPayPending(null, 'return')` stores
+`uid: null`, `readPayPending` returns a parsed object for it, and `isPayPending('u1')` refuses it. This case
+exists to lock the C1/I1 decoupling against future regression, not to drive this task. The red-green proof
+for Task 2 is Step 3 (red) → Step 5 (green).
 
 - [ ] **Step 3: Verify the funnel guard is currently broken**
 
@@ -357,7 +383,7 @@ Expected: PASS, 83 tests, 0 fail.
 
 ```bash
 git add onboarding.js scripts/access-authjs.test.js
-git commit -m "fix(quiz): funnel duplicate-charge guard reads the shared marker parser (C1)"
+git commit -m "fix(quiz): funnel duplicate-charge guard reads the shared marker parser (C1, 1 of 2)"
 ```
 
 ---
@@ -365,7 +391,10 @@ git commit -m "fix(quiz): funnel duplicate-charge guard reads the shared marker 
 ### Task 3: Gate the grace on a real checkout start (P2)
 
 **Files:**
-- Modify: `onboarding.js:33` (constants), `onboarding.js:1119-1133` (`proceed`), `onboarding.js:1242-1249` (`handlePayCancel`), `onboarding.js:1251-1259` (`handlePaySuccess`)
+- Modify: `onboarding.js:33` (constants — unaffected by Task 2's shift), `onboarding.js:1119-1133` (`proceed`), `onboarding.js:1242-1250` (`handlePayCancel`), `onboarding.js:1251-1260` (`handlePaySuccess`)
+
+⚠️ **These ranges include each function's closing brace, and all four are stale by +10 after Task 2.**
+Locate every target with `grep -n 'function handlePaySuccess' onboarding.js` (etc.), not by line number.
 
 **Interfaces:**
 - Consumes: `HSKAuth.armCheckoutStarted(userId)`, `HSKAuth.consumeCheckoutStarted()`, `HSKAuth.armPayPending(userId, src)` from Task 1.
@@ -390,7 +419,10 @@ In `proceed()`, insert directly above the existing `closeOverlay();` / `clearTim
 
 - [ ] **Step 3: Gate and consume it on the success return**
 
-Replace the body of `handlePaySuccess` (`onboarding.js:1251-1259`) with:
+Replace **the whole of `function handlePaySuccess() { … }`, including its closing `}`** — locate it with
+`grep -n 'function handlePaySuccess' onboarding.js` (pristine `:1251-1260`; `+10` after Task 2). The block
+below supplies both the `function` line and the closing brace, so leaving the old `}` in place would close
+the module IIFE early and `node --check` would report `SyntaxError: Unexpected token 'function'`.
 
 ```js
   function handlePaySuccess() {
@@ -413,7 +445,8 @@ Replace the body of `handlePaySuccess` (`onboarding.js:1251-1259`) with:
 
 - [ ] **Step 4: Clear it on cancel**
 
-In `handlePayCancel` (`onboarding.js:1242`), directly below the existing `lsDel(LS_PAY_PENDING);` line add:
+In `handlePayCancel` (locate with `grep -n 'function handlePayCancel' onboarding.js`; pristine `:1242-1250`),
+directly below the existing `lsDel(LS_PAY_PENDING);` line add:
 
 ```js
     lsDel(LS_CHECKOUT_STARTED); // …and the start marker, so a later crafted ?pay=success finds nothing
@@ -608,13 +641,22 @@ Expected: PASS, 6 tests.
 Replace the whole of `A.confirmPlan` with the two functions below. The existing redirect body moves verbatim into `doCharge`.
 
 ```js
+  /* Monotonic token for the plan sheet. A bare `!!S().planSheet` is NOT enough: openPlans
+     sets it true again (app/more.js:941), so a dismiss-then-reopen inside the async window
+     would still redirect — carrying the plan selected BEFORE the dismissal. The funnel gets
+     this for free by comparing overlay identity (onboarding.js:1109-1110); the SPA has no
+     such object, so we count instead. Also doubles as the in-flight latch. */
+  var planSeq = 0;
+  var payInFlight = false;
+
   A.confirmPlan = function () {
-    if (!canPay()) return;
+    if (!canPay() || payInFlight) return;   /* no double-tap: the async read takes 100-500 ms */
     var s = S();
     var sel = PLANS.filter(function (p) { return p.id === (s.selPlan || '3mo'); })[0] || PLANS[1];
-    /* Guard 2 is async, so a sheet the user has since dismissed must never redirect
-       them to the acquirer behind their back (mirrors onboarding.js live(), :1110). */
-    function live() { return !!S().planSheet; }
+    var seq = ++planSeq;
+    /* Guard 2 is async, so a sheet the user has since dismissed — or dismissed and reopened —
+       must never redirect them to the acquirer behind their back. */
+    function live() { return seq === planSeq && !!S().planSheet; }
 
     var reported = false;
     try { reported = !!(window.HSKAuth && HSKAuth.isPayReported && HSKAuth.isPayReported(authUid)); } catch (e0) {}
@@ -623,7 +665,9 @@ Replace the whole of `A.confirmPlan` with the two functions below. The existing 
       ? HSKAuth.getSubscriptionStatus(authUid).catch(function () { return { error: true, sub: null }; })
       : Promise.resolve(null);
 
+    payInFlight = true;
     read.then(function (subRead) {
+      payInFlight = false;
       if (!live()) return;
       var d = planChargeDecision(reported, subRead, Date.now());
       if (d === 'skip-pending') {
@@ -824,7 +868,11 @@ test('P7 guard: an out-of-range key keeps all options', () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `node --test scripts/writing-models.test.js`
-Expected: FAIL with `App.exam.isScrambleItem is not a function`.
+Expected: `tests 8 / pass 2 / fail 6`. The six failures all error with
+`TypeError: App.exam.isScrambleItem is not a function`. The two `P7 guard:` cases **pass already** — they
+assert today's `options.slice()` fall-through, and exist to catch a Step 4 implementation that reads
+`normalizeQ`'s local `correct` (which `app/exam.js:118` coerces an absent index to `0`) instead of the raw
+`q.correct_answer_index`.
 
 - [ ] **Step 3: Add the classifier**
 
@@ -923,20 +971,22 @@ Four sites, one address.
 
 **Files:**
 - Modify: `app/more.js` (support row in the More menu; the dead string at `:758`)
-- Modify: `app/desktop-more.js` (support row on the Profile screen; the dead string at `:480`)
+- Modify: `app/desktop-more.js` — the dead string at `:480` (inside `App.d.profileEdit`) **and** a support row in `App.d.profile` at `:426` (a *different* function; see Step 4)
 
 **Interfaces:** none — pure markup.
 
 - [ ] **Step 1: Add the shared constant**
 
-In `app/more.js`, directly below the `MORE_ITEMS` array (currently ends `:89`), add:
+In `app/more.js`, directly below the `MORE_ITEMS` array (its `];` is at `:88`), add:
 
 ```js
   /* The only inbound support channel for a paying customer. Subject is fixed and
      carries NO personal data — putting a user's email/uid in a URL is exactly what
-     the M3 privacy pass removed elsewhere. */
+     the M3 privacy pass removed elsewhere. Both are published on App.util because
+     desktop-more.js renders its own support row and must not re-hard-code the address. */
   var SUPPORT_EMAIL = 'info@hskprep.cc';
   var SUPPORT_HREF = 'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('HSK Prep support');
+  App.util.supportEmail = SUPPORT_EMAIL;
   App.util.supportHref = SUPPORT_HREF;
 ```
 
@@ -983,14 +1033,32 @@ In `app/desktop-more.js:480`, apply the same replacement, using the shared const
       '<span style="display:block;font-size:var(--fs-xs);color:var(--stone);margin-top:5px"><a href="' + App.util.supportHref + '" style="color:var(--accent);text-decoration:underline">Contact support</a> to change email</span></label>' +
 ```
 
-Then, in the same profile-screen template, directly above the closing `'</div>';` of the settings card (`app/desktop-more.js:488`), add a support row:
+Then add the support row to the **Profile** screen — `App.d.profile`, a *different* function from the
+Edit-profile one you just edited. Locate it with `grep -n 'App.d.profile = function' app/desktop-more.js`
+(`:372`, ending `:430`). This is the screen the desktop More tab actually opens: `app/desktop-shell.js:237`
+routes `s.tab === 'more'` to `callD('profile')`, while `:227` routes `s.profileSheet` to `profileEdit`.
+
+Insert the row inside the `Preferences · 设置` card, **directly above** the sign-out block. Anchor on the
+start of the sign-out line (`app/desktop-more.js:426`), whose style prefix is unique in the file:
+
+```
+'<div style="border-top:1px solid var(--border-subtle);margin-top:auto;padding-top:16px"><button type="button" class="hv" data-a="signOut"
+```
+
+Insert immediately before it:
 
 ```js
-      '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-subtle)">' +
+      '<div style="border-top:1px solid var(--border-subtle);padding-top:14px;margin-top:14px">' +
       '<a href="' + App.util.supportHref + '" style="display:inline-flex;align-items:center;gap:8px;color:var(--accent);text-decoration:none;font-size:var(--fs-md);font-weight:600">' +
-      '<span class="chinese">帮</span><span>Help &amp; support — ' + 'info@hskprep.cc' + '</span></a>' +
+      '<span class="chinese">帮</span><span>Help &amp; support — ' + App.util.supportEmail + '</span></a>' +
       '</div>' +
 ```
+
+⚠️ **Do not anchor on `'</div>';`** — it occurs **21 times** in this file and **zero times inside
+`App.d.profile`** (which ends `'</div></div>';` at `:429`), so that anchor cannot resolve to the Profile
+screen at all. An earlier draft of this step pointed at `:488`, which is inside `App.d.profileEdit`, below
+its Save/Cancel row — that would bury the support link one screen deeper than the spec requires and leave
+the desktop More tab with no support affordance.
 
 - [ ] **Step 5: Verify**
 
@@ -1049,7 +1117,9 @@ The in-app browser caches `app/*.js` — fetch each changed module with `{cache:
 Check, on **both** the mobile and desktop clients:
 - open `test-08` Q86 → the reveal shows **one** sentence under "Model answer" (`你的笔记本电脑质量怎么样？`)
 - open `test-01` Q96 → the reveal still lists **all 11** sentences under "Sample answers"
-- the More/Profile support row renders and its `href` is `mailto:info@hskprep.cc?subject=HSK%20Prep%20support`
+- **mobile:** the "Help & support" row renders at the bottom of the More list
+- **desktop:** the support row renders on the **Profile** screen (the More tab), *not* on Edit profile — if you see it only after clicking "Edit profile", Step 4b went into the wrong function
+- in both cases the `href` is `mailto:info@hskprep.cc?subject=HSK%20Prep%20support`
 - both former "Contact support to change email" strings are now links
 - zero console errors
 
@@ -1066,7 +1136,7 @@ git status --short config/auth.js   # must print nothing
 
 In `docs/hskprep_functional_spec.md`:
 - `:443` — change the `hsk_pay_pending` description from a bare timestamp to `{uid, ts, src}`, and add a `hsk_checkout_started` row (`{uid, ts}`, 30-min TTL, proof a checkout began)
-- `:246` — state that `?reset=1` also clears `hsk_checkout_started`
+- `:246` — extend the existing parenthetical to «ключи `hsk_pay_pending` и `hsk_checkout_started` не трогаются». **Do not** claim `?reset=1` clears them and **do not** add an `lsDel` to the reset branch (`onboarding.js:1297-1300`) — no task in this plan changes that handler, so the current text is accurate and must stay accurate
 - `:430` — update the test inventory: 13 node files / 97 tests (was 11 / 76)
 
 - [ ] **Step 5: Full mechanical check**
