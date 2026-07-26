@@ -966,7 +966,7 @@
     /* arm the durable pay-pending marker so the /app/?pay=success return gets grace
        via HSKAuth.isPayPending() — mirrors onboarding.js handlePaySuccess; lets
        auth-guard drop the forgeable ?pay=success param (O3) */
-    try { if (window.HSKAuth && HSKAuth.armPayPending) HSKAuth.armPayPending(); } catch (e2) {}
+    try { if (window.HSKAuth && HSKAuth.armPayPending) HSKAuth.armPayPending(authUid, 'start'); } catch (e2) {}
     try { location.href = url; } catch (e) {}
   };
 

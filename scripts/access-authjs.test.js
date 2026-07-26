@@ -87,12 +87,6 @@ test('A1 regression: a checkAccess-confirmed sub arms the durable grace marker',
   g.HSKAuth.recordAccessConfirmed('u1', r.sub);        // what the shell does on the 'show' action
   assert.notEqual(g.HSKAuth.readConfirmedActive('u1'), null); // must arm, else cold-tab -> fail-closed
 });
-test('isPayPending true within TTL, false when absent', () => {
-  const g = loadAuth(sessionClient());
-  assert.equal(g.HSKAuth.isPayPending(), false);
-  g.__ls.set('hsk_pay_pending', String(Date.now()));
-  assert.equal(g.HSKAuth.isPayPending(), true);
-});
 test('signOut clears BOTH grace markers + study progress (no cross-account bleed)', async () => {
   const g = loadAuth(sessionClient());
   g.__ls.set('hsk_access_ok', 'x'); g.__ls.set('hsk_pay_pending', String(Date.now())); g.__ls.set('hsk4-attempts', '[]');
@@ -102,9 +96,74 @@ test('signOut clears BOTH grace markers + study progress (no cross-account bleed
   assert.equal(g.__ls.get('hsk4-attempts'), undefined, 'study progress cleared');
 });
 
-test('O3: armPayPending writes the durable marker so isPayPending() is true', () => {
+
+/* ---- P2/G4: uid-scoped pay-window marker + checkout-start marker ---- */
+const PP = 'hsk_pay_pending';
+const CS = 'hsk_checkout_started';
+
+test('P2: isPayPending requires a uid that matches the live session', () => {
   const g = loadAuth(sessionClient());
-  assert.equal(g.HSKAuth.isPayPending(), false, 'no marker initially');
-  g.HSKAuth.armPayPending();
-  assert.equal(g.HSKAuth.isPayPending(), true, 'armed -> pending within TTL');
+  g.HSKAuth.armPayPending('u1', 'return');
+  assert.equal(g.HSKAuth.isPayPending('u1'), true, 'matching uid -> grace');
+  assert.equal(g.HSKAuth.isPayPending('u2'), false, 'another account gets nothing');
+});
+
+test('P2: a marker with uid:null never grants grace (the no-checkout-marker case)', () => {
+  const g = loadAuth(sessionClient());
+  g.HSKAuth.armPayPending(null, 'return');
+  assert.equal(g.HSKAuth.isPayPending('u1'), false, 'null uid must not match a real session');
+  assert.equal(g.HSKAuth.isPayPending(null), false, 'null must not match null');
+  assert.equal(g.HSKAuth.isPayPending(undefined), false, 'undefined must not match either');
+});
+
+test('P2: a legacy bare-number marker is not honoured', () => {
+  const g = loadAuth(sessionClient());
+  g.__ls.set(PP, String(Date.now()));
+  assert.equal(g.HSKAuth.isPayPending('u1'), false);
+  assert.equal(g.HSKAuth.readPayPending(String(Date.now()), Date.now()), null);
+});
+
+test('P2: the marker expires at the 30-minute TTL', () => {
+  const now = 1000000000000;
+  const fresh = JSON.stringify({ uid: 'u1', ts: now - 29 * 60 * 1000, src: 'return' });
+  const stale = JSON.stringify({ uid: 'u1', ts: now - 31 * 60 * 1000, src: 'return' });
+  const g = loadAuth(sessionClient());
+  assert.ok(g.HSKAuth.readPayPending(fresh, now), '29 min -> fresh');
+  assert.equal(g.HSKAuth.readPayPending(stale, now), null, '31 min -> expired');
+});
+
+test('P2/I2: isPayReported is return-leg only; isPayPending accepts either leg', () => {
+  const g = loadAuth(sessionClient());
+  g.HSKAuth.armPayPending('u1', 'start');            // departure leg (in-app renewal)
+  assert.equal(g.HSKAuth.isPayPending('u1'), true, 'grace works on the departure leg (O3)');
+  assert.equal(g.HSKAuth.isPayReported('u1'), false, 'a started checkout is NOT a reported payment');
+  g.HSKAuth.armPayPending('u1', 'return');
+  assert.equal(g.HSKAuth.isPayReported('u1'), true, 'return leg -> reported');
+});
+
+test('P2: consumeCheckoutStarted returns the uid once, then nothing', () => {
+  const g = loadAuth(sessionClient());
+  g.HSKAuth.armCheckoutStarted('u1');
+  assert.equal(g.HSKAuth.consumeCheckoutStarted(), 'u1', 'first read inherits the uid');
+  assert.equal(g.HSKAuth.consumeCheckoutStarted(), null, 'consumed -> one window per checkout');
+  assert.equal(g.__ls.get(CS), undefined, 'marker removed from storage');
+});
+
+test('P2: an expired or malformed checkout marker inherits nothing', () => {
+  const g = loadAuth(sessionClient());
+  g.__ls.set(CS, JSON.stringify({ uid: 'u1', ts: Date.now() - 31 * 60 * 1000 }));
+  assert.equal(g.HSKAuth.consumeCheckoutStarted(), null, 'expired');
+  g.__ls.set(CS, 'not json');
+  assert.equal(g.HSKAuth.consumeCheckoutStarted(), null, 'malformed');
+  g.__ls.set(CS, JSON.stringify({ ts: Date.now() }));
+  assert.equal(g.HSKAuth.consumeCheckoutStarted(), null, 'no uid');
+});
+
+test('P2: sign-out clears the checkout-start marker too', async () => {
+  const g = loadAuth(sessionClient());
+  g.HSKAuth.armCheckoutStarted('u1');
+  g.HSKAuth.armPayPending('u1', 'return');
+  await g.HSKAuth.signOut();
+  assert.equal(g.__ls.get(CS), undefined, 'checkout marker cleared');
+  assert.equal(g.__ls.get(PP), undefined, 'pay marker cleared');
 });

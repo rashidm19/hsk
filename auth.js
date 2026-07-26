@@ -113,7 +113,8 @@
         'hsk4-attempts', 'hsk4-vocab-mastered', 'hsk4-guide-path', 'hsk4-goal',
         'hsk4-welcome', 'hsk4-firstrun', 'hsk4-exam-progress',
         'hsk4-progress-updatedAt', 'hsk4-progress-mastered-updatedAt',
-        'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner', 'hsk_access_ok', 'hsk_pay_pending'
+        'hsk4-progress-guide-updatedAt', 'hsk4-progress-owner', 'hsk_access_ok', 'hsk_pay_pending',
+        'hsk_checkout_started'
       ].forEach(function (k) { try { ls.removeItem(k); } catch (e) {} });
     } catch (e) {}
     try { global.sessionStorage.removeItem('hsk_sub_cache'); } catch (e) {}
@@ -286,8 +287,9 @@
   // a returning subscriber during a transient outage isn't ejected. userId-scoped (no A1 bleed).
   var ACCESS_OK_KEY = 'hsk_access_ok';
   var ACCESS_OK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-  var PAY_PENDING_KEY = 'hsk_pay_pending';       // written by onboarding.js at checkout + armPayPending() (in-app renewal)
+  var PAY_PENDING_KEY = 'hsk_pay_pending';       // {uid,ts,src}: onboarding.js handlePaySuccess (src 'return') + armPayPending() (in-app renewal departure, src 'start')
   var PAY_PENDING_TTL_MS = 30 * 60 * 1000;       // must match onboarding.js PAY_PENDING_TTL_MS
+  var CHECKOUT_STARTED_KEY = 'hsk_checkout_started';
 
   function recordAccessConfirmed(userId, sub) {
     if (!userId || !subActive(sub)) return;      // only persist a genuinely active entitlement
@@ -304,17 +306,77 @@
       return subActive(d.sub) ? d.sub : null;    // re-validate the sub's own expires_at (C12)
     } catch (e) { return null; }
   }
-  function isPayPending() {
+  /* THE single parse for the pay-window marker. onboarding.js payPendingFresh()
+     delegates here too — auth.js is a blocking script on /quiz/ (quiz/index.html:16)
+     and onboarding.js is deferred (:32), so HSKAuth is always defined first. Keeping
+     one parser is what stops the funnel's duplicate-charge guard from silently
+     dying on a format change (C1). A legacy bare timestamp returns null: nothing
+     live predates this format and "no match" is the safe direction. */
+  function readPayPending(raw, now) {
     try {
-      var t = parseInt(global.localStorage.getItem(PAY_PENDING_KEY) || '', 10);
-      return isFinite(t) && (Date.now() - t) < PAY_PENDING_TTL_MS;
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== 'object') return null;
+      var ts = +d.ts;
+      if (!isFinite(ts) || (now - ts) >= PAY_PENDING_TTL_MS) return null;
+      return {
+        uid: d.uid == null ? null : String(d.uid),
+        ts: ts,
+        src: d.src === 'return' ? 'return' : 'start'
+      };
+    } catch (e) { return null; }
+  }
+  /* Access grace. Requires a NON-NULL uid matching the live session: a marker armed
+     without a checkout-start marker carries uid:null and must never match, which is
+     what closes the hand-typed ?pay=success hole (P2 + G4). Either leg is accepted —
+     the in-app renewal arms on departure and that is what makes its return work (O3). */
+  function isPayPending(userId) {
+    if (!userId) return false;
+    try {
+      var d = readPayPending(global.localStorage.getItem(PAY_PENDING_KEY), Date.now());
+      return !!(d && d.uid && d.uid === String(userId));
     } catch (e) { return false; }
   }
-  // Arm the durable pay-window marker (mirrors onboarding.js handlePaySuccess) so an
-  // in-app renewal returning to /app/?pay=success gets grace via isPayPending() —
-  // lets auth-guard drop the forgeable ?pay=success URL check.
-  function armPayPending() {
-    try { global.localStorage.setItem(PAY_PENDING_KEY, String(Date.now())); } catch (e) {}
+  /* "The acquirer reported a payment on its return leg." Used ONLY to suppress a
+     second charge. A departure-leg marker must not qualify, or a customer who
+     abandoned a checkout would be refused a retry for 30 minutes (P6/I2). */
+  function isPayReported(userId) {
+    if (!userId) return false;
+    try {
+      var d = readPayPending(global.localStorage.getItem(PAY_PENDING_KEY), Date.now());
+      return !!(d && d.src === 'return' && d.uid && d.uid === String(userId));
+    } catch (e) { return false; }
+  }
+  function armPayPending(userId, src) {
+    try {
+      global.localStorage.setItem(PAY_PENDING_KEY, JSON.stringify({
+        uid: userId == null ? null : String(userId),
+        ts: Date.now(),
+        src: src === 'return' ? 'return' : 'start'
+      }));
+    } catch (e) {}
+  }
+  /* Proof that THIS device actually began a checkout. Armed immediately before the
+     redirect to the acquirer, consumed on the ?pay=success return. Without it the
+     return leg mints no access grace. */
+  function armCheckoutStarted(userId) {
+    try {
+      global.localStorage.setItem(CHECKOUT_STARTED_KEY, JSON.stringify({
+        uid: userId == null ? null : String(userId), ts: Date.now()
+      }));
+    } catch (e) {}
+  }
+  /* Read-and-delete: one checkout start mints at most one grace window. */
+  function consumeCheckoutStarted() {
+    var uid = null;
+    try {
+      var d = JSON.parse(global.localStorage.getItem(CHECKOUT_STARTED_KEY));
+      if (d && typeof d === 'object') {
+        var ts = +d.ts;
+        if (isFinite(ts) && (Date.now() - ts) < PAY_PENDING_TTL_MS && d.uid) uid = String(d.uid);
+      }
+    } catch (e) {}
+    try { global.localStorage.removeItem(CHECKOUT_STARTED_KEY); } catch (e2) {}
+    return uid;
   }
 
   // Authoritative entitlement check via the check-access edge function. functions.invoke attaches
@@ -582,8 +644,12 @@
     checkAccess,
     recordAccessConfirmed,
     readConfirmedActive,
+    readPayPending,
     isPayPending,
+    isPayReported,
     armPayPending,
+    armCheckoutStarted,
+    consumeCheckoutStarted,
     routeAfterAuth,
     getOnboarding,
     readProfileCache,
