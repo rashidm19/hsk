@@ -45,6 +45,9 @@ test('P6: a failed read falls through to the charge (never block a real renewal)
   const App = loadMore();
   assert.equal(App.util.planChargeDecision(false, { error: true, sub: null }, NOW), 'charge');
   assert.equal(App.util.planChargeDecision(false, null, NOW), 'charge');
+  // The error flag must be honoured even when the failed response carries a stale sub:
+  // trusting it would refuse a legitimate renewal on a transient read failure.
+  assert.equal(App.util.planChargeDecision(false, { error: true, sub: ACTIVE }, NOW), 'charge');
 });
 
 test('P6: a sub with no expires_at counts as ACTIVE (matches auth.js and check-access)', () => {

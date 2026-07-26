@@ -183,3 +183,13 @@ test('C1/I1: a uid-less marker still suppresses a charge while granting no acces
   // Access half:
   assert.equal(g.HSKAuth.isPayPending('u1'), false, 'but it grants no access grace');
 });
+
+test('P2: a non-string session uid still matches (readPayPending normalizes to String)', () => {
+  const g = loadAuth(sessionClient());
+  // Supabase uids are UUID strings today, but isPayPending must not depend on that:
+  // readPayPending stores String(uid), so the comparison has to coerce the caller's too.
+  g.HSKAuth.armPayPending(4242, 'return');
+  assert.equal(g.HSKAuth.isPayPending(4242), true, 'numeric uid must still match its own marker');
+  assert.equal(g.HSKAuth.isPayPending('4242'), true, 'and match the string form');
+  assert.equal(g.HSKAuth.isPayPending(9999), false, 'but not a different account');
+});
