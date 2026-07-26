@@ -423,6 +423,10 @@
       '<button type="button" class="hv" data-a="openLang" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:12px 0;border:0;border-top:1px solid var(--border-subtle);background:transparent;cursor:pointer;font:inherit"><span style="font-weight:600;color:var(--ink);font-size:var(--fs-md)">Interface language</span><span style="display:flex;align-items:center;gap:5px;font-size:var(--fs-sm);color:var(--stone);font-weight:600">' + esc(pv.langLabel) + CHEV_R + '</span></button>' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--border-subtle)"><span style="font-weight:600;color:var(--ink);font-size:var(--fs-md)">Daily reminder <span class="chinese" style="font-weight:400;color:var(--stone);font-size:.85em">提醒</span></span>' +
       '<button type="button" data-a="toggleNotif" aria-label="Toggle daily reminder" style="display:flex;align-items:center;gap:11px;border:0;background:transparent;cursor:pointer;font:inherit"><span style="font-size:var(--fs-sm);color:var(--stone);font-weight:600">' + notifSub + '</span><span style="position:relative;width:42px;height:24px;flex:none;background:' + notifTrackBg + ';border-radius:99px;transition:background .2s"><span style="position:absolute;top:2px;left:' + notifKnobX + ';width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s"></span></span></button></div>' +
+      '<div style="border-top:1px solid var(--border-subtle);padding-top:14px;margin-top:14px">' +
+      '<a href="' + App.util.supportHref + '" style="display:inline-flex;align-items:center;gap:8px;color:var(--accent);text-decoration:none;font-size:var(--fs-md);font-weight:600">' +
+      '<span class="chinese">帮</span><span>Help &amp; support — ' + App.util.supportEmail + '</span></a>' +
+      '</div>' +
       '<div style="border-top:1px solid var(--border-subtle);margin-top:auto;padding-top:16px"><button type="button" class="hv" data-a="signOut" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--border-subtle);background:var(--surface);color:var(--bad-ink);border-radius:11px;padding:12px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">' + SVG_SIGNOUT + 'Sign out</button></div>' +
       '</div>' +
       '</div>' +
@@ -477,7 +481,7 @@
       '<input type="text" id="pe-name" class="field ym-disable-keys ym-hide-content" value="' + esc(d.name || '') + '" data-in="onDraftName" placeholder="Your name" style="' + fieldCss + '"></label>' +
       '<label style="display:block;margin-top:16px"><span style="display:block;font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:7px">Email address</span>' +
       '<input type="email" class="ym-hide-content" value="' + esc(p.email || '') + '" disabled style="' + fieldCss + ';color:var(--stone);opacity:.7">' +
-      '<span style="display:block;font-size:var(--fs-xs);color:var(--stone);margin-top:5px">Contact support to change email</span></label>' +
+      '<span style="display:block;font-size:var(--fs-xs);color:var(--stone);margin-top:5px"><a href="' + App.util.supportHref + '" style="color:var(--accent);text-decoration:underline">Contact support</a> to change email</span></label>' +
       '<label style="display:block;margin-top:16px"><span style="display:block;font-size:var(--fs-sm);font-weight:600;color:var(--ink);margin-bottom:7px">Country / Region</span>' +
       '<input type="text" id="pe-country" class="field ym-disable-keys ym-hide-content" value="' + esc(d.country || '') + '" data-in="onDraftCountry" placeholder="Country" style="' + fieldCss + '"></label>' +
       '</div>' +

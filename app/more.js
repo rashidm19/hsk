@@ -87,6 +87,15 @@
     { view: 'guide', icon: '南', cn: '指南', label: 'Study Guide', desc: 'Exam format &amp; tips', color: 'var(--accent)', soft: 'var(--accent-soft)' }
   ];
 
+  /* The only inbound support channel for a paying customer. Subject is fixed and
+     carries NO personal data — putting a user's email/uid in a URL is exactly what
+     the M3 privacy pass removed elsewhere. Both are published on App.util because
+     desktop-more.js renders its own support row and must not re-hard-code the address. */
+  var SUPPORT_EMAIL = 'info@hskprep.cc';
+  var SUPPORT_HREF = 'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('HSK Prep support');
+  App.util.supportEmail = SUPPORT_EMAIL;
+  App.util.supportHref = SUPPORT_HREF;
+
   /* PLANS ported from prototype (2114-2118); ids = real StudyBox tier ids, `until` computed live */
   var PLANS = [
     { id: '1mo', name: '1-month access', price: '7,990 ₸', per: '7,990 ₸ / month', months: 1, tagline: 'A short, focused sprint to exam day.' },
@@ -159,7 +168,12 @@
       '<span style="width:52px;height:52px;display:grid;place-items:center;background:var(--jade);color:#f3fbf6;border-radius:14px;font-weight:700;font-size:1.3rem">' + esc(pv.initial) + '</span>' + star + '</span>' +
       '<div style="flex:1;min-width:0"><div class="ym-hide-content" style="font-weight:700;color:var(--ink);font-size:1.05rem">' + esc(pv.name) + '</div><div class="ym-hide-content" style="font-size:.82rem;color:var(--stone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(pv.email) + '</div></div>' +
       CHEV_R + '</button>' +
-      '<div style="display:flex;flex-direction:column;gap:10px">' + items + '</div>';
+      '<div style="display:flex;flex-direction:column;gap:10px">' + items +
+      '<a href="' + SUPPORT_HREF + '" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border-subtle);border-radius:15px;box-shadow:var(--shadow);padding:15px;cursor:pointer;text-decoration:none">' +
+      '<span class="chinese" style="width:44px;height:44px;flex:none;display:grid;place-items:center;background:var(--jade-soft);color:var(--jade);border-radius:12px;font-size:19px">帮</span>' +
+      '<div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--ink);font-size:.98rem">Help &amp; support <span class="chinese" style="color:var(--stone);font-weight:400;font-size:.85em">帮助</span></div><div style="font-size:.8rem;color:var(--stone)">' + SUPPORT_EMAIL + '</div></div>' +
+      CHEV_R + '</a>' +
+      '</div>';
   }
 
   /* ============================ CHARACTERS ============================ */
@@ -755,7 +769,7 @@
       '<div style="width:40px;height:4px;border-radius:99px;background:var(--mist);margin:6px auto 16px"></div>' +
       '<h3 style="margin:0 0 16px;font-size:1.2rem;font-weight:700;color:var(--ink)">Edit profile <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.68em">编辑</span></h3>' +
       '<label style="display:block;margin-bottom:14px"><span style="display:block;font-size:.78rem;font-weight:600;color:var(--ink);margin-bottom:7px">Name</span><input type="text" class="ym-disable-keys ym-hide-content" value="' + esc(draft.name) + '" data-in="onDraftName" style="width:100%;box-sizing:border-box;border:1px solid var(--border-subtle);background:var(--surface-sunken);border-radius:12px;padding:13px 14px;font-size:.95rem;color:var(--ink);outline:none"></label>' +
-      '<label style="display:block;margin-bottom:14px"><span style="display:block;font-size:.78rem;font-weight:600;color:var(--ink);margin-bottom:7px">Email</span><input type="email" class="ym-hide-content" value="' + esc(draft.email) + '" disabled style="width:100%;box-sizing:border-box;border:1px solid var(--border-subtle);background:var(--surface-sunken);border-radius:12px;padding:13px 14px;font-size:.95rem;color:var(--stone);outline:none;opacity:.7"><span style="display:block;font-size:.72rem;color:var(--stone);margin-top:5px">Contact support to change email</span></label>' +
+      '<label style="display:block;margin-bottom:14px"><span style="display:block;font-size:.78rem;font-weight:600;color:var(--ink);margin-bottom:7px">Email</span><input type="email" class="ym-hide-content" value="' + esc(draft.email) + '" disabled style="width:100%;box-sizing:border-box;border:1px solid var(--border-subtle);background:var(--surface-sunken);border-radius:12px;padding:13px 14px;font-size:.95rem;color:var(--stone);outline:none;opacity:.7"><span style="display:block;font-size:.72rem;color:var(--stone);margin-top:5px"><a href="' + SUPPORT_HREF + '" style="color:var(--accent);text-decoration:underline">Contact support</a> to change email</span></label>' +
       '<label style="display:block;margin-bottom:20px"><span style="display:block;font-size:.78rem;font-weight:600;color:var(--ink);margin-bottom:7px">Country</span><input type="text" class="ym-disable-keys ym-hide-content" value="' + esc(draft.country) + '" data-in="onDraftCountry" style="width:100%;box-sizing:border-box;border:1px solid var(--border-subtle);background:var(--surface-sunken);border-radius:12px;padding:13px 14px;font-size:.95rem;color:var(--ink);outline:none"></label>' +
       '<div style="display:flex;gap:10px"><button type="button" class="pa" data-a="closeEdit" style="flex:none;border:1px solid var(--border-subtle);background:var(--surface);color:var(--ink);border-radius:13px;padding:14px 20px;font-weight:700;font-size:.9rem;cursor:pointer">Cancel</button><button type="button" class="pa" data-a="saveProfile" style="flex:1;border:0;background:var(--accent);color:#fff8f1;border-radius:13px;padding:14px;font-weight:700;font-size:.9rem;cursor:pointer">Save changes</button></div>' +
       '</div></div>';
