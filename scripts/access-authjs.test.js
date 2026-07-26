@@ -167,3 +167,19 @@ test('P2: sign-out clears the checkout-start marker too', async () => {
   assert.equal(g.__ls.get(CS), undefined, 'checkout marker cleared');
   assert.equal(g.__ls.get(PP), undefined, 'pay marker cleared');
 });
+
+test('C1/I1: a uid-less marker still suppresses a charge while granting no access', () => {
+  const g = loadAuth(sessionClient());
+  const now = Date.now();
+  // What handlePaySuccess writes when there is no checkout-start marker to inherit from.
+  g.HSKAuth.armPayPending(null, 'return');
+  const raw = g.__ls.get('hsk_pay_pending');
+
+  // Charge-suppression half (onboarding.js payPendingFresh delegates to this):
+  const parsed = g.HSKAuth.readPayPending(raw, now);
+  assert.ok(parsed, 'a fresh marker parses, so a second charge is still blocked');
+  assert.equal(parsed.uid, null);
+
+  // Access half:
+  assert.equal(g.HSKAuth.isPayPending('u1'), false, 'but it grants no access grace');
+});

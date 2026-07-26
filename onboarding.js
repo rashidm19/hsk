@@ -79,9 +79,19 @@
   function warmSubCache(userId, sub) {
     try { sessionStorage.setItem('hsk_sub_cache', JSON.stringify({ userId: userId, sub: sub, cachedAt: Date.now() })); } catch (e) {}
   }
+  /* Charge suppression ONLY — deliberately ignores the marker's uid. This grants
+     nothing; it merely refuses to start a second charge while a webhook is in
+     flight, so gating it on anything could only cause double charges (I1).
+     Delegates to auth.js so the {uid,ts,src} format has exactly one parser (C1);
+     startCheckout has already returned via simulatePayment if HSKAuth is absent,
+     so the fallback below is only reachable with a stale cached auth.js. */
   function payPendingFresh() {
-    var t = parseInt(lsGet(LS_PAY_PENDING) || '', 10);
-    return isFinite(t) && Date.now() - t < PAY_PENDING_TTL_MS;
+    try {
+      if (window.HSKAuth && HSKAuth.readPayPending) {
+        return !!HSKAuth.readPayPending(lsGet(LS_PAY_PENDING), Date.now());
+      }
+    } catch (e) {}
+    return false;
   }
   // Confirmed server entitlement — persist every local trace of it in one place.
   function recordEntitlement(userId, sub) {
