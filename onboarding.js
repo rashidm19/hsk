@@ -32,6 +32,9 @@
   // supabase/schema.sql), so a slipped-through second charge is never lost.
   var LS_PAY_PENDING = 'hsk_pay_pending';
   var PAY_PENDING_TTL_MS = 30 * 60 * 1000;
+  // Proof that a checkout really started on this device — without it a hand-typed
+  // /quiz/?pay=success mints no access grace (P2). Armed in proceed(), consumed on return.
+  var LS_CHECKOUT_STARTED = 'hsk_checkout_started';
 
   var HANDOFF = CFG.handoffUrl || '/app/';
 
@@ -1138,6 +1141,7 @@
           '&email=' + encodeURIComponent(user.email || A.email || '') +
           '&return=' + encodeURIComponent(base + '/quiz/?pay=success') +
           '&cancel=' + encodeURIComponent(base + '/quiz/?pay=cancel');
+        try { if (window.HSKAuth && HSKAuth.armCheckoutStarted) HSKAuth.armCheckoutStarted(user.id); } catch (e) {}
         closeOverlay();
         clearTimer();
         location.href = url;
@@ -1252,6 +1256,7 @@
   function handlePayCancel() {
     stripParam('pay');
     lsDel(LS_PAY_PENDING); // the acquiring reported a cancel — nothing in flight
+    lsDel(LS_CHECKOUT_STARTED); // …and the start marker, so a later crafted ?pay=success finds nothing
     obTrack('payment_cancelled', {});
     state.idx = indexOfId('s22');   // back to the paywall…
     gateIdx();                      // …unless the state doesn't actually allow it (crafted URL)
@@ -1260,9 +1265,15 @@
   }
   function handlePaySuccess() {
     stripParam('pay');
-    // A real payment was just reported; until the webhook writes the entitlement,
-    // startCheckout must refuse to begin a second charge.
-    lsSet(LS_PAY_PENDING, String(Date.now()));
+    /* Two different jobs ride on this marker, and only one of them may be gated (I1):
+       - charge suppression grants nothing, so it is UNCONDITIONAL — a genuine payer
+         whose return leg lands in a different storage context (bank-app deep link,
+         webview handoff) keeps the protection they have today;
+       - access grace IS gated: the uid is inherited from a real checkout-start marker
+         and auth-guard requires it to match the live session, so a hand-typed
+         ?pay=success inherits uid:null and unlocks nothing (P2). */
+    var graceUid = (window.HSKAuth && HSKAuth.consumeCheckoutStarted) ? HSKAuth.consumeCheckoutStarted() : null;
+    try { if (window.HSKAuth && HSKAuth.armPayPending) HSKAuth.armPayPending(graceUid, 'return'); } catch (e) {}
     clearTimer();
     pollActive = true;    // CTA renders as "Setting up your access…" until confirmed
     goById('s25');        // show success optimistically (content is ungated)
