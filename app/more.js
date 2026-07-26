@@ -943,10 +943,67 @@
   A.closePlans = function () { set({ planSheet: false }); };
   A.setPlan = function (id) { if (PLAN_MONTHS[id]) set({ selPlan: id }); };
   var PLAN_PRICE_NUM = { '1mo': 7990, '3mo': 13990, '12mo': 19990 };
+  /* Pure duplicate-charge decision, mirroring onboarding.js startCheckout's two guards
+     (onboarding.js:1137-1155). Exposed on App.util for tests.
+       payReported — HSKAuth.isPayReported(uid): a payment the acquirer REPORTED on a
+                     return leg. A merely started checkout must not qualify, or an
+                     abandoned attempt would block the retry for 30 minutes (I2).
+       subRead     — {error, sub} from getSubscriptionStatus; a failed read charges,
+                     matching the funnel's .catch(proceed). */
+  function planChargeDecision(payReported, subRead, now) {
+    if (payReported) return 'skip-pending';
+    var access = window.HSKAccess;
+    if (subRead && !subRead.error && access && access.subActiveOf &&
+        access.subActiveOf(subRead.sub, now)) return 'skip-active';
+    return 'charge';
+  }
+  App.util.planChargeDecision = planChargeDecision;
+
+  /* Monotonic token for the plan sheet. A bare `!!S().planSheet` is NOT enough: openPlans
+     sets it true again, so a dismiss-then-reopen inside the async window would still
+     redirect — carrying the plan selected BEFORE the dismissal. The funnel gets this for
+     free by comparing overlay identity (onboarding.js:1109-1110); the SPA has no such
+     object, so we count instead. payInFlight doubles as the double-tap latch. */
+  var planSeq = 0;
+  var payInFlight = false;
+
   A.confirmPlan = function () {
-    if (!canPay()) return;
+    if (!canPay() || payInFlight) return;   /* no double-tap: the async read takes 100-500 ms */
     var s = S();
     var sel = PLANS.filter(function (p) { return p.id === (s.selPlan || '3mo'); })[0] || PLANS[1];
+    var seq = ++planSeq;
+    /* Guard 2 is async, so a sheet the user has since dismissed — or dismissed and
+       reopened — must never redirect them to the acquirer behind their back. */
+    function live() { return seq === planSeq && !!S().planSheet; }
+
+    var reported = false;
+    try { reported = !!(window.HSKAuth && HSKAuth.isPayReported && HSKAuth.isPayReported(authUid)); } catch (e0) {}
+
+    var read = (!reported && window.HSKAuth && HSKAuth.getSubscriptionStatus)
+      ? HSKAuth.getSubscriptionStatus(authUid).catch(function () { return { error: true, sub: null }; })
+      : Promise.resolve(null);
+
+    payInFlight = true;
+    read.then(function (subRead) {
+      payInFlight = false;
+      if (!live()) return;
+      var d = planChargeDecision(reported, subRead, Date.now());
+      if (d === 'skip-pending') {
+        App.toast('Payment received — setting up your access');
+        try { if (App.actions.refreshSubscription) App.actions.refreshSubscription(true); } catch (e1) {}
+        return;
+      }
+      if (d === 'skip-active') {
+        App.toast('You already have an active plan');
+        try { if (App.actions.refreshSubscription) App.actions.refreshSubscription(false); } catch (e2) {}
+        return;
+      }
+      doCharge(sel);
+    });
+  };
+
+  function doCharge(sel) {
+    var s = S();
     var email = authEmail || (s.profile && s.profile.email) || '';
     var base = location.origin;
     /* funnel-parity analytics (onboarding.js fires the same goal pre-redirect;
@@ -972,7 +1029,7 @@
       if (window.HSKAuth && HSKAuth.armPayPending) HSKAuth.armPayPending(authUid, 'start');
     } catch (e2) {}
     try { location.href = url; } catch (e) {}
-  };
+  }
 
   /* ============================ auth hookup (contract §Profile) ============================ */
   var authArmed = false;
