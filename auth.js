@@ -288,7 +288,7 @@
   var ACCESS_OK_KEY = 'hsk_access_ok';
   var ACCESS_OK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   var PAY_PENDING_KEY = 'hsk_pay_pending';       // {uid,ts,src}: onboarding.js handlePaySuccess (src 'return') + armPayPending() (in-app renewal departure, src 'start')
-  var PAY_PENDING_TTL_MS = 30 * 60 * 1000;       // must match onboarding.js PAY_PENDING_TTL_MS
+  var PAY_PENDING_TTL_MS = 30 * 60 * 1000;       // THE pay-window TTL; onboarding.js reads it via readPayPending
   var CHECKOUT_STARTED_KEY = 'hsk_checkout_started';
 
   function recordAccessConfirmed(userId, sub) {
@@ -315,6 +315,12 @@
   function readPayPending(raw, now) {
     try {
       var d = JSON.parse(raw);
+      /* A bare timestamp is the format the CURRENTLY LIVE /quiz/ writes (origin/main
+         onboarding.js), so markers in that shape exist in the wild on deploy day.
+         Honour them for the charge-suppression half — dropping them would disable the
+         funnel's guard 1 for anyone mid-payment-window at the moment we ship — but give
+         them no uid, so they can never confer access grace. */
+      if (typeof d === 'number') d = { ts: d, uid: null, src: 'return' };
       if (!d || typeof d !== 'object') return null;
       var ts = +d.ts;
       if (!isFinite(ts) || (now - ts) >= PAY_PENDING_TTL_MS) return null;
@@ -377,6 +383,25 @@
     } catch (e) {}
     try { global.localStorage.removeItem(CHECKOUT_STARTED_KEY); } catch (e2) {}
     return uid;
+  }
+  /* THE uid a `?pay=success` return leg should grant grace to. Used by BOTH legs —
+     onboarding.js (funnel return) and app/core.js (in-app renewal return) — because both
+     ask the same question and both must answer it the same way.
+       1. the consumed checkout-start proof, when this device really began a checkout;
+       2. else whatever a still-live marker already carries, so a ?pay=success REPLAY
+          inside the window cannot downgrade a genuine payer to uid:null and revoke their
+          access, and so an /app/ departure marker (src:'start') can be PROMOTED to
+          src:'return' on its own return leg — without which P6's guard 1 could never fire
+          for an in-app renewal and a webhook lag would allow a second real charge;
+       3. else null — no proof, no grace (the hand-typed-URL case). */
+  function returnGraceUid() {
+    var uid = consumeCheckoutStarted();
+    if (uid) return uid;
+    try {
+      var cur = readPayPending(global.localStorage.getItem(PAY_PENDING_KEY), Date.now());
+      if (cur && cur.uid) return cur.uid;
+    } catch (e) {}
+    return null;
   }
 
   // Authoritative entitlement check via the check-access edge function. functions.invoke attaches
@@ -650,6 +675,7 @@
     armPayPending,
     armCheckoutStarted,
     consumeCheckoutStarted,
+    returnGraceUid,
     routeAfterAuth,
     getOnboarding,
     readProfileCache,

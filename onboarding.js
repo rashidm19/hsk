@@ -31,7 +31,6 @@
   // existing term and flags it for refund review (apply_hsk_entitlement in
   // supabase/schema.sql), so a slipped-through second charge is never lost.
   var LS_PAY_PENDING = 'hsk_pay_pending';
-  var PAY_PENDING_TTL_MS = 30 * 60 * 1000;
   // Proof that a checkout really started on this device — without it a hand-typed
   // /quiz/?pay=success mints no access grace (P2). Armed in proceed(), consumed on return.
   var LS_CHECKOUT_STARTED = 'hsk_checkout_started';
@@ -1272,7 +1271,7 @@
        - access grace IS gated: the uid is inherited from a real checkout-start marker
          and auth-guard requires it to match the live session, so a hand-typed
          ?pay=success inherits uid:null and unlocks nothing (P2). */
-    var graceUid = (window.HSKAuth && HSKAuth.consumeCheckoutStarted) ? HSKAuth.consumeCheckoutStarted() : null;
+    var graceUid = (window.HSKAuth && HSKAuth.returnGraceUid) ? HSKAuth.returnGraceUid() : null;
     try { if (window.HSKAuth && HSKAuth.armPayPending) HSKAuth.armPayPending(graceUid, 'return'); } catch (e) {}
     clearTimer();
     pollActive = true;    // CTA renders as "Setting up your access…" until confirmed

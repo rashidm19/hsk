@@ -834,7 +834,21 @@
         usp.delete('pay');
         var qs = usp.toString();
         history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
-        if (pay === 'success') { try { sessionStorage.removeItem('hsk_sub_cache'); } catch (e0) {} }
+        if (pay === 'success') {
+          try { sessionStorage.removeItem('hsk_sub_cache'); } catch (e0) {}
+          /* Promote this device's departure-leg marker (src:'start', armed by doCharge)
+             into a REPORTED one, preserving its uid. Without this, isPayReported() is
+             false for every in-app renewal — the only kind of purchase /app/ starts — so
+             P6's guard 1 could never fire and a lagging webhook would let a second tap of
+             "Extend access" run a second real charge. returnGraceUid() also consumes the
+             now-spent checkout proof, and is the same helper the funnel's return leg uses. */
+          try {
+            if (window.HSKAuth && HSKAuth.armPayPending && HSKAuth.returnGraceUid) {
+              var gu = HSKAuth.returnGraceUid();
+              if (gu) HSKAuth.armPayPending(gu, 'return');
+            }
+          } catch (e1) {}
+        }
         if (pay === 'cancel') {
           /* The acquirer reported a cancel — nothing is in flight. /app/ arms its
              markers on the DEPARTURE leg, so unlike the funnel it must clear them

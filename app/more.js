@@ -949,12 +949,23 @@
   };
 
   /* plan sheet */
+  /* Monotonic token for the plan-sheet identity. A bare `!!S().planSheet` is NOT enough:
+     openPlans sets it true again, so a dismiss-then-reopen inside the async window would
+     still redirect — carrying the plan selected BEFORE the dismissal, while the sheet in
+     front of the user shows a different one. The funnel gets this free by comparing overlay
+     identity (onboarding.js:1109-1110); the SPA has no such object, so we count instead —
+     which only works if EVERY open/close bumps the counter, not just confirmPlan.
+     payInFlight is the separate double-tap latch. */
+  var planSeq = 0;
+  var payInFlight = false;
+
   A.openPlans = function () {
+    planSeq++;
     var sub = S().sub;
     var selPlan = (sub && PLAN_MONTHS[sub.plan]) ? sub.plan : '3mo';
     set({ planSheet: true, selPlan: selPlan });
   };
-  A.closePlans = function () { set({ planSheet: false }); };
+  A.closePlans = function () { planSeq++; set({ planSheet: false }); };
   A.setPlan = function (id) { if (PLAN_MONTHS[id]) set({ selPlan: id }); };
   var PLAN_PRICE_NUM = { '1mo': 7990, '3mo': 13990, '12mo': 19990 };
   /* Pure duplicate-charge decision, mirroring onboarding.js startCheckout's two guards
@@ -972,14 +983,6 @@
     return 'charge';
   }
   App.util.planChargeDecision = planChargeDecision;
-
-  /* Monotonic token for the plan sheet. A bare `!!S().planSheet` is NOT enough: openPlans
-     sets it true again, so a dismiss-then-reopen inside the async window would still
-     redirect — carrying the plan selected BEFORE the dismissal. The funnel gets this for
-     free by comparing overlay identity (onboarding.js:1109-1110); the SPA has no such
-     object, so we count instead. payInFlight doubles as the double-tap latch. */
-  var planSeq = 0;
-  var payInFlight = false;
 
   A.confirmPlan = function () {
     if (!canPay() || payInFlight) return;   /* no double-tap: the async read takes 100-500 ms */
@@ -1012,7 +1015,9 @@
         try { if (App.actions.refreshSubscription) App.actions.refreshSubscription(false); } catch (e2) {}
         return;
       }
-      doCharge(sel);
+      /* re-resolve from live state: the charge must match what the sheet shows now */
+      var live_sel = PLANS.filter(function (p) { return p.id === (S().selPlan || '3mo'); })[0] || sel;
+      doCharge(live_sel);
     });
   };
 

@@ -109,8 +109,12 @@
 
   /* P7 — 书写 has two different tasks sharing one `writing_construction` type, and
      correct_answer_index does NOT tell them apart (all 126 multi-option items carry one):
-       造句 / 看图造句  — every option is a valid model sentence (test-02 Q96's stem says
-                          so outright: 下面每个选项都是对的). Reveal them all.
+       造句 / 看图造句  — the options are alternative model sentences, so reveal them all
+                          (test-02 Q96's stem says so outright: 下面每个选项都是对的). Caveat:
+                          on the 20 picture-prompt items test-08..11 Q96-100 some options
+                          contradict the picture rather than the language; that is a known
+                          deferred content gap, outside this classifier's scope, and no
+                          ungrammatical Chinese is shown.
        word-scramble    — reorder a given word list; the distractors are deliberate
                           ungrammatical permutations. Revealing them teaches wrong Chinese
                           in the one section where self-assessment IS the grading.
@@ -185,9 +189,7 @@
       out.typeLabel = '阅读理解';
       passageSplit(out, text);
     } else if (type === 'writing_construction') {
-      /* Free-response writing: 看图造句 carries many equally-valid model sentences,
-         完成句子 supplies the one finished sentence — and the source has no
-         correct_answer_index. It is NOT auto-gradable as multiple-choice (the old
+      /* Free-response writing: NOT auto-gradable as multiple-choice (the old
          /exams/ pages self-check it). Mark self-check, keep the model answer(s) for
          a reveal, and drop options so scoring skips it and never marks a valid
          sentence wrong. The band is derived from the auto-scored sections. */

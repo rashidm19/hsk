@@ -155,8 +155,12 @@ surface: `/quiz/` runs on `origin/main` today with the identical `:82` reader.
 **Therefore:** both readers move to the `{uid,ts}` shape in the same commit, and the parse lives in exactly
 one place. Export `readPayPending(raw, now) -> {uid, ts} | null` from `auth.js` (already loaded on `/quiz/`
 before `onboarding.js`) and have `payPendingFresh()` delegate to it, ignoring `uid` and checking only `ts`.
-A legacy bare number parses to `null` for both readers — the safe direction, and nothing is live that holds
-one.
+A legacy bare number is parsed as `{uid:null, ts}`: it still suppresses a charge but grants no access.
+**Correction, applied after the implementation review:** an earlier draft of this paragraph said such a
+marker parses to `null` "and nothing is live that holds one". That was FALSE — `origin/main`'s live
+`/quiz/` writes `String(Date.now())` at `onboarding.js:1255`, so bare markers exist in the wild on deploy
+day, and rejecting them outright would have disabled the funnel's guard 1 for every user mid-payment-window
+at the moment we ship.
 
 `armPayPending(userId)` gains the uid parameter; its only caller is `app/more.js:969`, which holds
 `authUid`. **The call site must actually pass it** — a forgotten argument silently breaks in-app renewal
@@ -561,7 +565,7 @@ New and extended `node --test` cases, zero npm deps, following the existing harn
   assert that `null` does not match a `null`/absent session uid either
 - `isPayPending(uid)` is true only for a fresh matching marker, and false past the TTL
 - `armPayPending(uid)` writes a uid-scoped marker
-- `readPayPending` returns `{uid,ts}` for both `src` values and `null` for a legacy bare number
+- `readPayPending` returns `{uid,ts,src}` for both `src` values, and `{uid:null,ts,src:'return'}` for a legacy bare number (charge suppression survives deploy day; no grace)
 
 ⚠️ **Two existing cases encode the pre-G4 contract and must be rewritten, not preserved:**
 `scripts/access-authjs.test.js:90-95` and `:105-110` both call `isPayPending()` with no argument against a
@@ -639,3 +643,45 @@ genuine renewals and still pass a negative-only check.
 | P7 misclassifies a future compose item as scramble, hiding valid models | Union rule has 0 false positives on all 126 shipped items; the fallback direction is today's behaviour. Test asserts the compose family stays intact. |
 | P4 ships a link to a mailbox that expires 2026-07-31 | Blocking runbook item: owner moves the mail order off trial and confirms someone reads it. |
 | P5 leaves the funnel report reading a stale goal | Runbook item: owner renames 579203316 and re-points the report after the new goals exist. |
+
+---
+
+## Post-implementation corrections (adversarial impl review `wf_5c934f3e-4c4`, 26 raw → 12 verified)
+
+Zero CRITICAL. Three findings changed shipped behaviour and are now part of the design:
+
+**1. The `/app/` return leg must PROMOTE its own marker (I2's blind spot).** `/app/` arms on the departure
+leg with `src:'start'`, and nothing converted it on the return — so `isPayReported()` was false for the only
+kind of purchase `/app/` starts, and P6's guard 1 could never fire for an in-app renewal. A lagging webhook
+plus a second tap of "Extend access" would have run a second real KZT charge. Note the spec's own
+problem-statement scenario (a *funnel* purchase observed in `/app/`) was always guarded, since that marker
+carries `src:'return'`; the gap was in-app-originated checkouts specifically.
+
+**2. A `?pay=success` replay must not downgrade a genuine payer.** `consumeCheckoutStarted()` is
+read-and-delete, so a second run of `handlePaySuccess` armed `uid:null` over a live `{uid,src:'return'}`
+marker and revoked that payer's grace.
+
+**Both are fixed by ONE new helper, `HSKAuth.returnGraceUid()`**, because both legs ask the same question —
+"which uid should this return leg grant grace to?":
+
+1. the consumed checkout-start proof, when this device really began a checkout;
+2. else whatever a still-live marker already carries — which both prevents the replay downgrade **and**
+   promotes an `/app/` `src:'start'` marker to `src:'return'`;
+3. else `null` — no proof, no grace (the hand-typed-URL case).
+
+`onboarding.js handlePaySuccess` and the new `app/core.js` `pay === 'success'` branch both call it. I2 is
+preserved: an *abandoned* checkout never produces a `?pay=success` return, so it still holds only
+`src:'start'` and a retry is never refused.
+
+**3. `planSeq` was inert.** The token meant to guard dismiss-then-reopen was incremented only inside
+`confirmPlan`, and since `payInFlight` already prevents overlapping calls, `seq === planSeq` was always
+true — `live()` degenerated to exactly the `!!S().planSheet` check its own comment called inadequate. A user
+who dismissed the sheet mid-read and reopened it would have been sent to the acquirer with the
+*previously* selected plan while the sheet showed another. `A.openPlans`/`A.closePlans` now bump the token,
+and the plan is re-resolved from live state at charge time so the amount always matches what is on screen.
+
+Also corrected: two false comment clauses in `app/exam.js` (the "source has no `correct_answer_index`"
+claim, and the over-broad "every compose option is valid" claim — 20 picture-prompt items in
+`test-08..11` Q96-100 have options that contradict the picture; grammatical, so no wrong Chinese is taught,
+recorded as a **deferred content gap** outside P7's scope), and `onboarding.js`'s now-dead
+`PAY_PENDING_TTL_MS` was removed since `payPendingFresh` delegates to `auth.js`'s copy.

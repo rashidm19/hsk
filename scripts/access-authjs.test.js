@@ -116,11 +116,15 @@ test('P2: a marker with uid:null never grants grace (the no-checkout-marker case
   assert.equal(g.HSKAuth.isPayPending(undefined), false, 'undefined must not match either');
 });
 
-test('P2: a legacy bare-number marker is not honoured', () => {
+test('P2: a legacy bare-number marker grants no ACCESS (but see the C1 case: it still suppresses a charge)', () => {
   const g = loadAuth(sessionClient());
   g.__ls.set(PP, String(Date.now()));
-  assert.equal(g.HSKAuth.isPayPending('u1'), false);
-  assert.equal(g.HSKAuth.readPayPending(String(Date.now()), Date.now()), null);
+  assert.equal(g.HSKAuth.isPayPending('u1'), false, 'no uid -> no grace, for any account');
+  assert.equal(g.HSKAuth.isPayReported('u1'), false, 'and it cannot satisfy guard 1 either');
+  // NOTE: readPayPending deliberately PARSES this shape — origin/main's live /quiz/ writes
+  // String(Date.now()), so rejecting it would disable the funnel's duplicate-charge guard for
+  // anyone mid-payment-window on deploy day. It just carries uid:null. See the C1 case below.
+  assert.equal(g.HSKAuth.readPayPending(String(Date.now()), Date.now()).uid, null);
 });
 
 test('P2: the marker expires at the 30-minute TTL', () => {
@@ -192,4 +196,54 @@ test('P2: a non-string session uid still matches (readPayPending normalizes to S
   assert.equal(g.HSKAuth.isPayPending(4242), true, 'numeric uid must still match its own marker');
   assert.equal(g.HSKAuth.isPayPending('4242'), true, 'and match the string form');
   assert.equal(g.HSKAuth.isPayPending(9999), false, 'but not a different account');
+});
+
+/* ---- post-review fixes: return-leg promotion + replay safety + live-format tolerance ---- */
+
+test('P6 fix: returnGraceUid consumes the checkout proof (both legs use this)', () => {
+  const g = loadAuth(sessionClient());
+  g.HSKAuth.armCheckoutStarted('u1');
+  assert.equal(g.HSKAuth.returnGraceUid(), 'u1', 'the consumed proof wins');
+  assert.equal(g.__ls.get(CS), undefined, 'and is consumed');
+});
+
+test('P6 fix: an /app/ departure marker is promoted to a REPORTED marker on its return leg', () => {
+  const g = loadAuth(sessionClient());
+  // what app/more.js doCharge() does before redirecting to the acquirer
+  g.HSKAuth.armCheckoutStarted('u1');
+  g.HSKAuth.armPayPending('u1', 'start');
+  assert.equal(g.HSKAuth.isPayReported('u1'), false, 'departure leg is not a reported payment yet');
+  // what app/core.js must now do on ?pay=success
+  g.HSKAuth.armPayPending(g.HSKAuth.returnGraceUid(), 'return');
+  assert.equal(g.HSKAuth.isPayReported('u1'), true, 'now guard 1 can suppress a second charge');
+  assert.equal(g.HSKAuth.isPayPending('u1'), true, 'and access grace still holds');
+});
+
+test('P2 fix: a ?pay=success replay does not downgrade a genuine payer to uid:null', () => {
+  const g = loadAuth(sessionClient());
+  g.HSKAuth.armCheckoutStarted('u1');
+  g.HSKAuth.armPayPending(g.HSKAuth.returnGraceUid(), 'return');  // first return: grace for u1
+  assert.equal(g.HSKAuth.isPayPending('u1'), true);
+  // replay inside the window: the checkout proof is already consumed
+  g.HSKAuth.armPayPending(g.HSKAuth.returnGraceUid(), 'return');
+  assert.equal(g.HSKAuth.isPayPending('u1'), true, 'replay must not revoke the payer access');
+});
+
+test('P2 fix: returnGraceUid grants nothing when no checkout ever started', () => {
+  const g = loadAuth(sessionClient());
+  assert.equal(g.HSKAuth.returnGraceUid(), null, 'no proof, no live marker -> nothing');
+  g.HSKAuth.armPayPending(null, 'return');   // the hand-typed-URL state
+  assert.equal(g.HSKAuth.returnGraceUid(), null, 'a uid-less marker confers no uid either');
+});
+
+test('C1 fix: the LIVE bare-timestamp marker still suppresses a charge but grants no access', () => {
+  const g = loadAuth(sessionClient());
+  const now = Date.now();
+  // origin/main's onboarding.js writes String(Date.now()); those markers exist in the wild at deploy.
+  const parsed = g.HSKAuth.readPayPending(String(now - 60000), now);
+  assert.ok(parsed, 'a fresh legacy marker must parse, or the funnel guard dies on deploy day');
+  assert.equal(parsed.uid, null, 'but it carries no uid, so it grants no grace');
+  g.__ls.set(PP, String(now - 60000));
+  assert.equal(g.HSKAuth.isPayPending('u1'), false, 'no access from a legacy marker');
+  assert.equal(g.HSKAuth.readPayPending(String(now - 31 * 60 * 1000), now), null, 'and it still expires');
 });
