@@ -107,6 +107,41 @@
     }
   }
 
+  /* P7 — 书写 has two different tasks sharing one `writing_construction` type, and
+     correct_answer_index does NOT tell them apart (all 126 multi-option items carry one):
+       造句 / 看图造句  — every option is a valid model sentence (test-02 Q96's stem says
+                          so outright: 下面每个选项都是对的). Reveal them all.
+       word-scramble    — reorder a given word list; the distractors are deliberate
+                          ungrammatical permutations. Revealing them teaches wrong Chinese
+                          in the one section where self-assessment IS the grading.
+     Two signals, and their UNION covers all 66 scramble items with zero false positives
+     across the 60 造句 items:
+       1. every option is a permutation of the same character multiset;
+       2. the stem carries a scramble marker.
+     Signal 1 alone misses two items with a one-character irregularity (test-02 Q89 drops
+     的; test-11 Q87 substitutes 许多人 for 很多人) — signal 2 catches both. Signal 2 alone
+     misses test-12's 完成句子 block and test-05 Q94's bare word list — signal 1 catches those.
+     The >= 2 arity check is load-bearing: a 1-element array vacuously satisfies signal 1,
+     which would sweep in all 84 single-option items.
+     A future item matching neither signal falls through to today's behaviour (show all) —
+     a known, bounded gap, and the safe direction: the inverse would hide valid models. */
+  var SCRAMBLE_STEM = /连词成句|组句|组成[\s\S]*句子/;
+  function scrambleCanon(s) {
+    return String(s).replace(/[\s　，。？！、；：,.?!;:]/g, '').split('').sort().join('');
+  }
+  function isScrambleItem(q) {
+    q = q || {};
+    if (String(q.type || '') !== 'writing_construction') return false;
+    var opts = q.options || [];
+    if (opts.length < 2) return false;
+    if (SCRAMBLE_STEM.test(String(q.text || ''))) return true;
+    var base = scrambleCanon(opts[0]);
+    for (var i = 1; i < opts.length; i++) {
+      if (scrambleCanon(opts[i]) !== base) return false;
+    }
+    return true;
+  }
+
   function normalizeQ(q, sharedSrc) {
     q = q || {};
     var type = String(q.type || '');
@@ -157,7 +192,12 @@
          a reveal, and drop options so scoring skips it and never marks a valid
          sentence wrong. The band is derived from the auto-scored sections. */
       out.selfCheck = true;
-      out.modelAnswers = options.slice();
+      /* Read the RAW index, not the local `correct` — line 118 already coerces an
+         absent index to 0, which would make "missing" indistinguishable from "the
+         first option is the answer". */
+      var rawKey = q.correct_answer_index;
+      var keyed = (rawKey != null && isFinite(+rawKey) && options[+rawKey] != null) ? +rawKey : -1;
+      out.modelAnswers = (isScrambleItem(q) && keyed >= 0) ? [options[keyed]] : options.slice();
       out.options = [];
       if (out.image) {
         out.typeLabel = '看图造句';
@@ -1461,6 +1501,7 @@
   ex.updateTimerDom = updateTimerDom;
   ex.writeModelHtml = writeModelHtml;
   ex.normalizeTest = normalizeTest; /* pure; exposed for regression tests (F2 pair-audio) */
+  ex.isScrambleItem = isScrambleItem; /* pure; exposed for regression tests (P7) */
   ex.gradeSections = gradeSections; /* pure; shared grader (M5) + exposed for tests */
   App.exam = ex;
 
