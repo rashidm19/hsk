@@ -835,6 +835,14 @@
         var qs = usp.toString();
         history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
         if (pay === 'success') { try { sessionStorage.removeItem('hsk_sub_cache'); } catch (e0) {} }
+        if (pay === 'cancel') {
+          /* The acquirer reported a cancel — nothing is in flight. /app/ arms its
+             markers on the DEPARTURE leg, so unlike the funnel it must clear them
+             itself; otherwise a stale marker refuses the customer's retry for up to
+             30 minutes (I2). Mirrors onboarding.js handlePayCancel. */
+          try { localStorage.removeItem('hsk_pay_pending'); } catch (e1) {}
+          try { localStorage.removeItem('hsk_checkout_started'); } catch (e2) {}
+        }
       }
     } catch (e) {}
     return pay;

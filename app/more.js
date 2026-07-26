@@ -963,10 +963,14 @@
       '&email=' + encodeURIComponent(email) +
       '&return=' + encodeURIComponent(base + '/app/?pay=success') +
       '&cancel=' + encodeURIComponent(base + '/app/?pay=cancel');
-    /* arm the durable pay-pending marker so the /app/?pay=success return gets grace
-       via HSKAuth.isPayPending() — mirrors onboarding.js handlePaySuccess; lets
-       auth-guard drop the forgeable ?pay=success param (O3) */
-    try { if (window.HSKAuth && HSKAuth.armPayPending) HSKAuth.armPayPending(authUid, 'start'); } catch (e2) {}
+    /* Departure-leg arming: the /app/?pay=success return needs grace from
+       HSKAuth.isPayPending() and auth-guard runs before core.js, so this must happen
+       here and not on the return (O3). The checkout-start marker is what lets the
+       funnel's ?pay=success return inherit a uid if the user lands there instead. */
+    try {
+      if (window.HSKAuth && HSKAuth.armCheckoutStarted) HSKAuth.armCheckoutStarted(authUid);
+      if (window.HSKAuth && HSKAuth.armPayPending) HSKAuth.armPayPending(authUid, 'start');
+    } catch (e2) {}
     try { location.href = url; } catch (e) {}
   };
 
