@@ -579,10 +579,9 @@
         '</div>' +
       '</div></div>';
     }
-    /* weakest section: lowest ratio, Writing wins ties (mobile resultsGoNext canon) */
-    var withR = sections.map(function (x) { return { name: x.name, r: x.tot ? x.ok / x.tot : 0 }; });
-    withR.sort(function (a, b) { return (a.r - b.r) || (a.name === 'Writing' ? -1 : b.name === 'Writing' ? 1 : 0); });
-    var wName = (withR[0] || { name: 'Writing' }).name;
+    /* weakest section: ONE rule, App.exam.weakestSection (F14). Writing is
+       self-assessed and excluded there, so it can never win by scoring 0. */
+    var wName = App.exam.weakestSection(qs, answers).name;
     var tier;
     if (passed) tier = { cn: '恭喜通过!', en: 'Passed — you cleared the bar', gap: '+' + (band - pass) + ' above the pass line (' + pass + ')', next: 'Lock it in — sit the next paper to confirm', bg: 'linear-gradient(150deg,#2f6349,color-mix(in oklab,#2f6349,black 42%))', ring: '#2f6349' };
     else if (r >= 0.85) tier = { cn: '就差一点!', en: 'So close — almost at the pass line', gap: (pass - band) + ' points to the pass line (' + pass + ')', next: 'One focused ' + wName + ' session could get you there', bg: 'linear-gradient(140deg,#8a6420,color-mix(in oklab,#8a6420,black 34%))', ring: '#8a6420' };

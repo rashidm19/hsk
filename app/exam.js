@@ -761,21 +761,7 @@
 
   App.actions.resultsGoNext = function () {
     var s = stateOf();
-    var qs = activeQuestions();
-    var secMap = {};
-    qs.forEach(function (q, i) {
-      var a = (s.answers || {})[i];
-      var ok = a != null && a === q.correct;
-      secMap[q.section] = secMap[q.section] || { name: q.section, tot: 0, ok: 0 };
-      secMap[q.section].tot++;
-      if (ok) secMap[q.section].ok++;
-    });
-    var withR = Object.keys(secMap).map(function (k) {
-      var x = secMap[k];
-      return { name: x.name, r: x.tot ? x.ok / x.tot : 0 };
-    });
-    withR.sort(function (a, b) { return (a.r - b.r) || (a.name === 'Writing' ? -1 : b.name === 'Writing' ? 1 : 0); });
-    var weak = withR[0] || { name: 'Writing' };
+    var weak = weakestSection(activeQuestions(), s.answers);
     var nextSub = weak.name === 'Writing' ? 'sentences' : 'strategies';
     App.setState({ examView: 'list', tab: 'more', moreView: 'study', studySub: nextSub, curGrammar: null, curPair: null, curTopic: null });
     scrollTop();
@@ -1157,10 +1143,8 @@
     else if (rBand >= 0.85) { verdict = '就差一点!'; verdictEn = 'So close — almost at the pass line'; heroBg = 'linear-gradient(140deg,#8a6420,#6b4d17)'; }
     else if (rBand >= 0.55) { verdict = '稳步提升'; verdictEn = 'Building up — keep going'; heroBg = 'linear-gradient(140deg,#8a6420,#6b4d17)'; }
     else { verdict = '打好基础'; verdictEn = 'Early days — build the fundamentals'; heroBg = 'linear-gradient(135deg,var(--accent),var(--accent-hover))'; }
-    var withR = secList.map(function (x) { return { name: x.name, cn: x.cn, r: x.tot ? x.ok / x.tot : 0 }; });
-    withR.sort(function (a, b) { return (a.r - b.r) || (a.name === 'Writing' ? -1 : b.name === 'Writing' ? 1 : 0); });
-    var weak = withR[0] || { name: 'Writing', cn: '书写', r: 0 };
-    var weakR = weak.r != null ? weak.r : 0;
+    var weak = weakestSection(qs, answers);
+    var weakR = weak.r;
     /* ring reflects the /300 band (same basis as the pass verdict) so they never
        disagree; raw counts live in the stat cards below */
     var ringOffset = 339 - (339 * Math.max(0, Math.min(300, band)) / 300);
@@ -1491,6 +1475,31 @@
     return { band: band, pass: pass, passed: band >= pass, ratio: ratio, tierKey: tierKey };
   }
 
+  /* Weakest auto-scored section — the ONE rule, shared by the mobile results
+     card, its "Focus next → Go" route and the desktop results copy.
+     Writing (q.selfCheck) is self-assessed and never auto-scored, so it MUST be
+     excluded: counting it scored a permanent 0/N, which made it weakest on every
+     paper and routed "Go" to Sentences (F14). Sections are ranked in first-
+     appearance order, so ties are deterministic; Writing wins a tie only when it
+     genuinely carries auto-scored questions (legacy MC-graded papers).
+     Pure: takes questions + the answer map, touches no state. */
+  function weakestSection(qs, answers) {
+    var a = answers || {}, secMap = {}, order = [];
+    (qs || []).forEach(function (q, i) {
+      if (!q || q.selfCheck) return;          /* self-assessed: not auto-scored */
+      var name = q.section;
+      if (!secMap[name]) { secMap[name] = { name: name, cn: q.sectionCn, tot: 0, ok: 0 }; order.push(name); }
+      secMap[name].tot++;
+      if (a[i] != null && a[i] === q.correct) secMap[name].ok++;
+    });
+    var withR = order.map(function (k) {
+      var x = secMap[k];
+      return { name: x.name, cn: x.cn, r: x.tot ? x.ok / x.tot : 0 };
+    });
+    withR.sort(function (x, y) { return (x.r - y.r) || (x.name === 'Writing' ? -1 : y.name === 'Writing' ? 1 : 0); });
+    return withR[0] || { name: 'Writing', cn: '书写', r: 0 };
+  }
+
   /* public surface (CONTRACT names App.exam.audioEl) */
   ex.stopTimer = stopTimer;
   ex.stopClip = stopClip;
@@ -1505,6 +1514,7 @@
   ex.normalizeTest = normalizeTest; /* pure; exposed for regression tests (F2 pair-audio) */
   ex.isScrambleItem = isScrambleItem; /* pure; exposed for regression tests (P7) */
   ex.gradeSections = gradeSections; /* pure; shared grader (M5) + exposed for tests */
+  ex.weakestSection = weakestSection; /* pure; ONE weakest-section rule (F14) + exposed for tests */
   App.exam = ex;
 
 })();
