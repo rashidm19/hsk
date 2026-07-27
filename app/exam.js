@@ -329,7 +329,13 @@
        'track' — official 13/14 shared listening track: play/pause toggle, position
                  preserved across question navigation, no play cap. */
 
-  var ex = { audioEl: null, _mode: null, _trackTest: null, _clipQ: null };
+  /* _clipStarted: did this clip ever produce audible playback ('playing' fired)?
+     _clipDebit:   one-shot marker for the play debited on start, consumed by the
+                   refund. clipFail runs TWICE for one bad clip (the media error
+                   event AND the rejected play() promise), so a refund gated only
+                   on _clipStarted would fire twice and claw back an earlier,
+                   legitimately-spent listen. (F4) */
+  var ex = { audioEl: null, _mode: null, _trackTest: null, _clipQ: null, _clipStarted: false, _clipDebit: null };
 
   function ensureAudio() {
     if (ex.audioEl) return ex.audioEl;
@@ -339,6 +345,7 @@
       el.preload = 'auto';
       el.addEventListener('timeupdate', onAudioTime);
       el.addEventListener('ended', onAudioEnded);
+      el.addEventListener('playing', onAudioPlaying);
       el.addEventListener('error', onAudioError);
     } catch (e) { el = null; }
     ex.audioEl = el;
@@ -357,9 +364,37 @@
     } catch (e) {}
   }
 
+  /* A clip that never became audible must not burn one of the exam-mode 2 plays.
+     Refund the debit recorded on start — ONCE (see ex._clipDebit above) — and only
+     when 'playing' never fired, so a mid-clip stall (waiting -> playing) keeps its
+     debit. Keyed to the debit's own question index, never the live curQ, which may
+     have changed. Persisted, because the debit itself was. (F4) */
   function clipFail() {
+    var patch = { audioPlaying: false, audioProg: 0, audioErr: true };
+    var d = ex._clipDebit;
+    ex._clipDebit = null;                       /* one-shot: consumed on the FIRST call */
+    /* Refund ONLY a genuine media failure. A DELIBERATE stop — navigating away
+       mid-load — also rejects the pending play() promise, and that rejection
+       reaches the same unguarded p.catch. stopClip() nulls ex._mode, so a live
+       'clip' mode still pointing at the debited question is what distinguishes
+       "the clip died" from "the user left": without this, starting a clip and
+       tapping Next would hand the play back, and the 2-play cap would be
+       farmable — the very invariant the start-side debit exists to protect. */
+    var refund = !!d && !ex._clipStarted && ex._mode === 'clip' && ex._clipQ === d.q;
+    if (refund) {
+      var s = stateOf();
+      var plays = assign({}, s.audioPlays);
+      var n = (plays[d.q] || 0) - 1;
+      if (n > 0) plays[d.q] = n; else delete plays[d.q];
+      patch.audioPlays = plays;
+    }
     stopClip({ full: true });
-    App.setState({ audioPlaying: false, audioProg: 0, audioErr: true });
+    App.setState(patch);
+    if (refund) persistLive();                  /* the refund must survive a reload */
+  }
+
+  function onAudioPlaying() {
+    if (ex._mode === 'clip') ex._clipStarted = true;
   }
 
   function onAudioTime() {
@@ -736,6 +771,7 @@
     if (!el) { App.setState({ audioErr: true }); return; }
     stopClip({ full: true });
     ex._mode = 'clip'; ex._clipQ = i;
+    ex._clipStarted = false; ex._clipDebit = null;
     try {
       el.src = q.audio;
       try { el.currentTime = 0; } catch (e) {}
@@ -745,6 +781,7 @@
     /* Debit a play on START (not on 'ended') so navigating away mid-clip can't
        reset the exam-mode 2-play cap. */
     var plays = assign({}, s.audioPlays); plays[i] = (plays[i] || 0) + 1;
+    ex._clipDebit = { q: i };                   /* refundable by clipFail if it never plays (F4) */
     App.setState({ audioPlaying: true, audioProg: 0, audioErr: false, audioPlays: plays });
     persistLive();
   };
