@@ -373,7 +373,8 @@
     var pv = profVals(s);
     var notifTrackBg = pv.notif ? 'var(--jade)' : 'var(--mist)';
     var notifKnobX = pv.notif ? '20px' : '2px';
-    var notifSub = pv.notif ? 'On' : 'Off';
+    /* B3a: mirrors mobile more.js — the ON string must not name a cadence */
+    var notifSub = pv.notif ? 'On · reminders coming soon' : 'Off';
     var daysBlock = pv.sub
       ? '<div style="margin-top:12px">' +
         '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px"><span style="font-size:var(--fs-sm);font-weight:700;color:' + pv.daysLeftColor + '">' + pv.daysLeft + ' days of access left</span><span style="font-size:var(--fs-xs);color:var(--stone);font-weight:600">until ' + esc(pv.planUntil) + '</span></div>' +
@@ -421,8 +422,8 @@
       themeTab('dark', '☾ Dark', s.theme === 'dark') +
       '</div></div>' +
       '<button type="button" class="hv" data-a="openLang" style="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:12px 0;border:0;border-top:1px solid var(--border-subtle);background:transparent;cursor:pointer;font:inherit"><span style="font-weight:600;color:var(--ink);font-size:var(--fs-md)">Interface language</span><span style="display:flex;align-items:center;gap:5px;font-size:var(--fs-sm);color:var(--stone);font-weight:600">' + esc(pv.langLabel) + CHEV_R + '</span></button>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--border-subtle)"><span style="font-weight:600;color:var(--ink);font-size:var(--fs-md)">Daily reminder <span class="chinese" style="font-weight:400;color:var(--stone);font-size:.85em">提醒</span></span>' +
-      '<button type="button" data-a="toggleNotif" aria-label="Toggle daily reminder" style="display:flex;align-items:center;gap:11px;border:0;background:transparent;cursor:pointer;font:inherit"><span style="font-size:var(--fs-sm);color:var(--stone);font-weight:600">' + notifSub + '</span><span style="position:relative;width:42px;height:24px;flex:none;background:' + notifTrackBg + ';border-radius:99px;transition:background .2s"><span style="position:absolute;top:2px;left:' + notifKnobX + ';width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s"></span></span></button></div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--border-subtle)"><span style="font-weight:600;color:var(--ink);font-size:var(--fs-md)">Notifications <span class="chinese" style="font-weight:400;color:var(--stone);font-size:.85em">提醒</span></span>' +
+      '<button type="button" data-a="toggleNotif" aria-label="Toggle notifications" style="display:flex;align-items:center;gap:11px;border:0;background:transparent;cursor:pointer;font:inherit"><span style="font-size:var(--fs-sm);color:var(--stone);font-weight:600">' + notifSub + '</span><span style="position:relative;width:42px;height:24px;flex:none;background:' + notifTrackBg + ';border-radius:99px;transition:background .2s"><span style="position:absolute;top:2px;left:' + notifKnobX + ';width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s"></span></span></button></div>' +
       '<div style="border-top:1px solid var(--border-subtle);padding-top:14px;margin-top:14px">' +
       '<a href="' + App.util.supportHref + '" style="display:inline-flex;align-items:center;gap:8px;color:var(--accent);text-decoration:none;font-size:var(--fs-md);font-weight:600">' +
       '<span class="chinese">帮</span><span>Help &amp; support — ' + App.util.supportEmail + '</span></a>' +

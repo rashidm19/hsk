@@ -728,7 +728,8 @@
     }
     var notifTrackBg = pv.notif ? 'var(--jade)' : 'var(--mist)';
     var notifKnobX = pv.notif ? '18px' : '2px';
-    var notifSub = pv.notif ? 'Daily reminder' : 'Off';
+    /* B3a: the ON string must not name a cadence — no reminder delivery exists yet */
+    var notifSub = pv.notif ? 'On · reminders coming soon' : 'Off';
     return backBtn('backToMore', 'More') +
       '<h1 style="margin:0 0 16px;font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--ink)">Profile <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.62em">账户</span></h1>' +
       '<div style="display:flex;align-items:center;gap:15px;background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px">' +

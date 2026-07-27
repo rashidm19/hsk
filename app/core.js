@@ -124,7 +124,7 @@
     gqChoice: null, gqIdx: 0, pIdx: 0, pChoice: null, pScore: 0, sRecall: true,
     sRevealed: {}, trapChoice: {}, wrText: '', wrModel: false,
     selPlan: '3mo', guideDone: [],
-    profileSheet: false, planSheet: false, langSheet: false, uiLang: 'en', notif: true,
+    profileSheet: false, planSheet: false, langSheet: false, uiLang: 'en', notif: false, /* B3a: OFF until a delivery mechanism exists — nobody is opted in without asking */
     profile: { name: '', email: '', country: '' },
     profileDraft: { name: '', email: '', country: '' },
     sub: null, dataReady: false, dataReadyFull: false, dataFullError: false, dataCharsError: false, dataStudyError: false,
