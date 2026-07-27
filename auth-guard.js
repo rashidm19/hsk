@@ -120,6 +120,17 @@
           window.location.replace('/login/?next=' + encodeURIComponent(window.location.pathname + window.location.search));
           return;
         }
+        /* F7: honour the SAME two positive signals decideAccess() short-circuits on
+           (access-decision.js:41-42), so the contract above actually holds — a known
+           subscriber (fresh 15-min uid-scoped cache) or a just-paid user (30-min
+           uid-matched pay marker) is shown the app, not a retry card.
+           confirmedActive is DELIBERATELY not consulted: access-decision.js only reaches
+           'grace-show' AFTER both the edge function and the RLS read were attempted and
+           failed, and this branch attempts neither — admitting it here would turn its
+           7-day marker into a week-long offline pass and re-open what L3 closed. */
+        var freshSub = userId ? ((readSubCache(userId) || {}).sub || null) : null;
+        var paying = !!(userId && HSKAuth.isPayPending && HSKAuth.isPayPending(userId));
+        if (freshSub || paying) { unveil(); return; }
         showAccessFail(); return;
       }
       return decide({

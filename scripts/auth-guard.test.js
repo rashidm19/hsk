@@ -44,7 +44,10 @@ function loadGuard(o) {
   global.window = win;
   global.HSKAuth = HSKAuth;
   global.document = doc;
-  global.sessionStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  global.sessionStorage = {
+    getItem: () => (o.subCache ? JSON.stringify(o.subCache) : null),
+    setItem() {}, removeItem() {},
+  };
   const p = path.resolve(__dirname, '../auth-guard.js');
   delete require.cache[require.resolve(p)];
   require(p);
@@ -66,4 +69,36 @@ test('L3: NO session + access-decision.js missing -> redirect to /login/', async
   assert.equal(g.replaced.length, 1, 'unauthenticated visitor is bounced');
   assert.ok(g.replaced[0].startsWith('/login/?next='), 'to the /login/ funnel');
   assert.equal(g.getById('hsk-access-fail'), null, 'no fail-closed overlay for the unauthenticated');
+});
+
+test('F7: a known subscriber (fresh uid-scoped cache) is shown the app, not the retry card', async () => {
+  const g = loadGuard({
+    session: { user: { id: 'u1' } },
+    HSKAccess: undefined,                       // access-decision.js failed to load
+    subCache: { userId: 'u1', sub: { status: 'active', expires_at: '2099-01-01T00:00:00Z' }, cachedAt: Date.now() },
+  });
+  await tick();
+  assert.equal(g.getById('hsk-access-fail'), null, 'no retry card for someone we can already identify');
+  assert.equal(g.replaced.length, 0, 'and no redirect');
+});
+
+test('F7: a just-paid user (uid-matched pay marker) is shown the app', async () => {
+  const g = loadGuard({
+    session: { user: { id: 'u1' } },
+    HSKAccess: undefined,
+    authOver: { isPayPending: (uid) => uid === 'u1' },
+  });
+  await tick();
+  assert.equal(g.getById('hsk-access-fail'), null, 'the 30-minute pay window still counts here');
+  assert.equal(g.replaced.length, 0);
+});
+
+test("F7: another account's cache does NOT open the app", async () => {
+  const g = loadGuard({
+    session: { user: { id: 'u1' } },
+    HSKAccess: undefined,
+    subCache: { userId: 'u2', sub: { status: 'active', expires_at: '2099-01-01T00:00:00Z' }, cachedAt: Date.now() },
+  });
+  await tick();
+  assert.ok(g.getById('hsk-access-fail'), 'uid mismatch -> still fail closed');
 });
