@@ -170,6 +170,12 @@
     preOrder: 'hsk4m-pre-order' /* sessionStorage checkout marker (more.js) — name shared with any in-flight checkout, kept stable */
   };
 
+  /* ONE source of truth for the flashcard/quiz session size (F3). The vocabulary
+     heroes print the deck the user is about to receive and vocab.js builds that
+     deck from this same constant, so the promised number and the delivered deck
+     can never drift apart again. Read at call time, like App.keys.*. */
+  App.DECK_SIZE = 20;
+
   /* Theme persistence seam: single canonical write. App.keys.theme IS the
      site's hsk4_theme, which index.html's pre-paint script + the theme toggle
      also read/write — so all stay consistent. */

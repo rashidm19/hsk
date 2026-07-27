@@ -58,6 +58,10 @@
 
   function words() { return (App.data && App.data.WORDS) || []; }
 
+  /* Session size — resolved at call time from App.DECK_SIZE (core.js), the same
+     way App.keys.* is, so there is exactly ONE literal 20 in the codebase. */
+  function DECK() { return App.DECK_SIZE; }
+
   var _mapRef = null, _map = null;
   function wordById(id) {
     var ws = words();
@@ -168,14 +172,36 @@
   function startDeck(extra) {
     var s = S(), mset = masteredSet();
     var pool = sortWords(words().slice(), s.vSort, mset).filter(function (w) { return !mset.has(Number(w.id)); });
-    var ids = pool.slice(0, 20).map(function (w) { return Number(w.id); });
+    var ids = pool.slice(0, DECK()).map(function (w) { return Number(w.id); });
     if (!ids.length) {
       if (Array.isArray(s.deckIds) && s.deckIds.length) ids = s.deckIds.slice();
-      else ids = words().slice(0, 20).map(function (w) { return Number(w.id); });
+      else ids = words().slice(0, DECK()).map(function (w) { return Number(w.id); });
     }
     var patch = { deckIds: ids, flashIdx: 0, flashFlipped: false, fcKnown: 0 };
     if (extra) { for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) patch[k] = extra[k]; } }
     setSt(patch);
+  }
+
+  /* The number the heroes print. Mirrors startDeck EXACTLY — including its
+     all-mastered branch, which re-deals the FROZEN deck when one exists — so
+     the hero can never promise more cards than the next tap hands over.
+     Pure: reads state + data, writes nothing. */
+  function deckPreview() {
+    var s = S(), mset = masteredSet(), ws = words();
+    var un = 0;
+    for (var i = 0; i < ws.length; i++) { if (!mset.has(Number(ws[i].id))) un++; }
+    if (un > 0) return { n: Math.min(DECK(), un), allMastered: false };
+    var prev = Array.isArray(s.deckIds) ? s.deckIds.length : 0;
+    return { n: prev || Math.min(DECK(), ws.length), allMastered: true };
+  }
+
+  /* Hero copy for BOTH clients. The WHOLE phrase lives inside [data-live="vDue"]
+     so syncMasteredLive can swap the all-mastered state, not just the digits. */
+  function deckLabel() {
+    var p = deckPreview();
+    if (!p.n) return 'No cards yet';
+    if (p.allMastered) return 'Review ' + fmtNum(p.n) + ' mastered ' + (p.n === 1 ? 'word' : 'words');
+    return fmtNum(p.n) + ' ' + (p.n === 1 ? 'card' : 'cards') + ' to review';
   }
 
   function deckIds() { var d = S().deckIds; return Array.isArray(d) ? d : []; }
@@ -280,8 +306,8 @@
       (mset.has(Number(ws[i].id)) ? ma : un).push(Number(ws[i].id));
     }
     shuffleArr(un); shuffleArr(ma);
-    var ids = un.slice(0, 20);
-    if (ids.length < 20) ids = ids.concat(ma.slice(0, 20 - ids.length));
+    var ids = un.slice(0, DECK());
+    if (ids.length < DECK()) ids = ids.concat(ma.slice(0, DECK() - ids.length));
     var patch = {
       quizIds: ids, quizSeed: Math.floor(Math.random() * 997),
       quizIdx: 0, quizChoice: null, quizCorrect: false, quizScore: 0
@@ -737,6 +763,8 @@
   App.vocab.startDeck = startDeck;
   App.vocab.startQuiz = startQuiz;
   App.vocab.setFcEl = setFcEl;
+  App.vocab.deckPreview = deckPreview; /* pure; the F3 hero==deck invariant */
+  App.vocab.deckLabel = deckLabel;
   App.vocab.dueCount = function () { return Math.max(0, words().length - countMastered(masteredSet())); };
   App.vocab.masteredCount = function () { return countMastered(masteredSet()); };
   /* filter/quiz engine — pure exports consumed by the desktop client
