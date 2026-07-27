@@ -323,9 +323,9 @@
       '<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,#8a6420,color-mix(in oklab,#8a6420,black 40%));color:var(--invert-fg);border-radius:20px;padding:24px 28px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:22px">' +
         '<span class="serif-cn" aria-hidden="true" style="position:absolute;right:10px;bottom:-46px;font-size:150px;line-height:1;opacity:.16;color:var(--invert-fg)">复</span>' +
         '<div style="flex:1;min-width:220px;position:relative;z-index:1">' +
-          '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Daily review · <span class="chinese">每日复习</span></div>' +
+          '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Flashcard review · <span class="chinese">复习</span></div>' +
           '<div style="font-size:var(--fs-2xl);font-weight:700;margin-top:6px"><span data-live="vDue">' + fmtNum(due) + '</span> cards due today</div>' +
-          '<div style="opacity:.9;margin-top:3px;font-size:var(--fs-md)">Spaced repetition keeps words in long-term memory</div>' +
+          '<div style="opacity:.9;margin-top:3px;font-size:var(--fs-md)">Mark what you know — mastered words leave the deck</div>' +
         '</div>' +
         '<div style="display:flex;gap:10px;position:relative;z-index:1;flex-wrap:wrap">' +
           '<button type="button" class="hv" data-a="goCards" style="background:var(--invert-fg);color:#8a6420;border:0;border-radius:12px;padding:12px 20px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">Start review →</button>' +
