@@ -924,7 +924,9 @@
   A.openChar = function (c) { hw = null; set({ curChar: String(c || '') }); scrollTop(); scheduleWriter(); };
   A.closeChar = function () { hw = null; set({ curChar: null }); scrollTop(); };
   A.hwAnimate = function () {
-    if (hwDataErr !== null && hwDataErr === S().curChar) return;   /* engine unavailable (F5) */
+    /* redundant with initWriter's known-bad early return and with the buttons
+       being disabled; kept in case either is bypassed (F5) */
+    if (hwDataErr !== null && hwDataErr === S().curChar) return;
     try { hw ? hw.animateCharacter() : initWriter(); } catch (e) {}
   };
   A.hwQuiz = function () {

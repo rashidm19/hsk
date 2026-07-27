@@ -30,7 +30,7 @@ function makeAudio(store) {
       play() {
         el.paused = false;
         if (!store.pendingPlay) return store.playResult();
-        return new Promise(function (_, rej) { store._rej = rej; });
+        return new Promise(function (_, rej) { store._rej = rej; store.rejectors.push(rej); });
       },
       fire(k) { (el._h[k] || []).slice().forEach((fn) => fn()); },
     };
@@ -43,7 +43,7 @@ function boot(opts) {
   opts = opts || {};
   const store = {
     playResult: opts.playResult || (() => Promise.resolve()),
-    pendingPlay: !!opts.pendingPlay, _rej: null, el: null, written: {},
+    pendingPlay: !!opts.pendingPlay, _rej: null, rejectors: [], el: null, written: {},
     interrupt() { if (store._rej) { const r = store._rej; store._rej = null; r(new Error('interrupted')); } },
   };
   const savedSI = global.setInterval, savedCI = global.clearInterval, savedAudio = global.Audio;
@@ -212,5 +212,28 @@ test('F4 REGRESSION: repeated start-then-navigate cannot farm the cap', async ()
     await Promise.resolve(); await Promise.resolve();
   }
   assert.ok(plays(App) >= 2, 'the 2-play cap still binds; got ' + plays(App));
+  App._restore();
+});
+
+test('F4 REGRESSION: a STALE clip rejection cannot refund the NEXT clip', async () => {
+  /* A rejected play() is queued on the media element's TASK source, not as a
+     microtask, so it can land AFTER the user has started a different clip.
+     Without a per-clip serial the stale rejection refunds — and marks failed —
+     a clip that is fine: the cap is farmable with Play, Next, Play. */
+  const App = boot({ pendingPlay: true });
+  App.actions.playClip();                        // Q0 debited
+  assert.equal((App.state.audioPlays || {})[0], 1);
+  App.state.audioPlaying = false;
+  App.actions.nextQ();                           // stops Q0; its rejection is now pending
+  App.state.audioPlaying = false;
+  App.actions.playClip();                        // Q1 debited
+  assert.equal((App.state.audioPlays || {})[1], 1, 'Q1 debited');
+
+  App._store.rejectors[0](new Error('interrupted'));   // the STALE one lands late
+  await new Promise(function (r) { setTimeout(r, 0); });
+
+  assert.equal((App.state.audioPlays || {})[0] || 0, 1, 'Q0 keeps its debit (user navigated away)');
+  assert.equal((App.state.audioPlays || {})[1] || 0, 1, "Q1 is NOT refunded by Q0's stale rejection");
+  assert.equal(App.state.audioErr, false, 'and Q1 is not marked failed');
   App._restore();
 });

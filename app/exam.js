@@ -368,12 +368,20 @@
                  preserved across question navigation, no play cap. */
 
   /* _clipStarted: did this clip ever produce audible playback ('playing' fired)?
-     _clipDebit:   one-shot marker for the play debited on start, consumed by the
-                   refund. clipFail runs TWICE for one bad clip (the media error
-                   event AND the rejected play() promise), so a refund gated only
-                   on _clipStarted would fire twice and claw back an earlier,
-                   legitimately-spent listen. (F4) */
-  var ex = { audioEl: null, _mode: null, _trackTest: null, _clipQ: null, _clipStarted: false, _clipDebit: null };
+     _clipDebit:   marker for the play debited on start, consumed by the refund.
+                   clipFail can run twice for one bad clip (the media error event
+                   AND the rejected play() promise). The _mode/_clipQ guard in
+                   clipFail already makes the refund one-shot on every reachable
+                   path, since stopClip() nulls _mode first; clearing the marker
+                   is belt-and-braces for the case where stopClip itself throws.
+     _clipSeq:     serial per playClip — see clipSeq below. (F4) */
+  var ex = { audioEl: null, _mode: null, _trackTest: null, _clipQ: null, _clipStarted: false, _clipDebit: null, _clipSeq: 0 };
+  /* Every playClip gets a serial number. A rejected play() promise is queued on
+     the media element's TASK source, not as a microtask, so a stale rejection
+     can land AFTER the user has started a different clip — and would otherwise
+     refund THAT clip's debit and mark it failed. The catch below only acts while
+     its own clip is still the current one. */
+  var clipSeq = 0;
 
   function ensureAudio() {
     if (ex.audioEl) return ex.audioEl;
@@ -799,11 +807,12 @@
     stopClip({ full: true });
     ex._mode = 'clip'; ex._clipQ = i;
     ex._clipStarted = false; ex._clipDebit = null;
+    var myClip = ++clipSeq; ex._clipSeq = myClip;   /* see clipSeq above */
     try {
       el.src = q.audio;
       try { el.currentTime = 0; } catch (e) {}
       var p = el.play();
-      if (p && typeof p.catch === 'function') p.catch(function () { clipFail(); });
+      if (p && typeof p.catch === 'function') p.catch(function () { if (ex._clipSeq === myClip) clipFail(); });
     } catch (e) { clipFail(); return; }
     /* Debit a play on START (not on 'ended') so navigating away mid-clip can't
        reset the exam-mode 2-play cap. */

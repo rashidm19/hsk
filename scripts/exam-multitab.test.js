@@ -162,4 +162,17 @@ test('F12: the flashcard "I know it" path merges the same way', () => {
   const disk = store.getJSON(KEYS.mastered, []);
   assert.ok(disk.indexOf(7) !== -1, "the other tab's word survived the flashcard write");
   assert.ok(disk.length >= 2, 'and this tab added its own');
+  assert.ok(t.state.vMastered.indexOf(7) !== -1,
+    'and this tab ADOPTED the merged set — using `next` here would hide the other tab\'s word');
+});
+
+test('F12: a corrupt stored set does not invent word id 0', () => {
+  /* Number(null) is 0, not NaN. Without the explicit skip a corrupt entry
+     becomes the phantom word 0, which then syncs to profiles.progress. */
+  const store = makeStore({ [KEYS.mastered]: [1, null, '', false, 'x', 2] });
+  const t = vocabTab(store, [1, 2]);
+  t.actions.toggleMastered(3);
+  const disk = store.getJSON(KEYS.mastered, []);
+  assert.ok(disk.indexOf(0) === -1, 'no phantom word 0');
+  assert.deepEqual(disk.slice().sort(function (a, b) { return a - b; }), [1, 2, 3], 'only real ids survive');
 });

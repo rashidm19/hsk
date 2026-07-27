@@ -103,8 +103,11 @@
     for (i = 0; i < next.length; i++) { n = Number(next[i]); if (!isNaN(n)) nSet[n] = 1; }
     if (Array.isArray(cur)) { for (i = 0; i < cur.length; i++) { n = Number(cur[i]); if (!isNaN(n)) cSet[n] = 1; } }
     for (i = 0; i < base.length; i++) {
+      /* Number(null) is 0, not NaN — a corrupt stored entry must not become
+         the phantom word id 0 and then sync to profiles.progress */
+      if (base[i] == null || base[i] === '' || base[i] === false) continue;
       n = Number(base[i]);
-      if (isNaN(n) || seen[n]) continue;
+      if (!isFinite(n) || seen[n]) continue;
       if (cSet[n] && !nSet[n]) continue;      /* THIS tab un-mastered it — honour that */
       seen[n] = 1; out.push(n);
     }

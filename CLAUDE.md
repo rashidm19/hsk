@@ -24,7 +24,7 @@ deno test supabase/functions/*/lib.test.ts   # Run the Deno edge-function tests 
 
 There is **no linter** (no ESLint/Prettier config, no `package.json`). There **is** a small
 unit-test suite with zero npm deps — Node's built-in `node:test` for the pure client logic
-(`scripts/*.test.js`: auth-guard/access/routing/sync/exam-audio/exam-resume/data-phase2/band-score/grade-sections/skills/plan-charge/writing-models/vocab-session/weakest-section/focus-restore/focus-hooks/toggle-a11y/exam-playcap/hanzi-fallback/boot-seams/exam-multitab — 22 files, 187 tests) plus Deno for the edge functions
+(`scripts/*.test.js`: auth-guard/access/routing/sync/exam-audio/exam-resume/data-phase2/band-score/grade-sections/skills/plan-charge/writing-models/vocab-session/weakest-section/focus-restore/focus-hooks/toggle-a11y/exam-playcap/hanzi-fallback/boot-seams/exam-multitab — 22 files, 191 tests) plus Deno for the edge functions
 (`supabase/functions/*/lib.test.ts`); run both via the test commands above. Note: the `test/`
 directory is **generated exam pages**, not that suite.
 

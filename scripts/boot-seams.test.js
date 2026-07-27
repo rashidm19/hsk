@@ -88,11 +88,6 @@ test('F11: <meta charset> stays inside the 1024-byte encoding-sniffing window', 
   assert.ok(at < 1024, 'charset at byte ' + at + ' — a browser only sniffs the first 1024');
 });
 
-test('F11: the error boundary is registered with capture (resource errors do not bubble)', () => {
-  const m = HTML.match(/addEventListener\('error'[\s\S]{0,600}?\},\s*true\s*\)/);
-  assert.ok(m, "the 'error' listener must pass capture:true, or a 404'd <script> is never seen");
-});
-
 test('F11: the boundary runs BEFORE the app modules and the vendor/auth scripts', () => {
   const boundary = HTML.indexOf('__hskFlushErrors');
   assert.ok(boundary >= 0, 'boundary present');
@@ -101,22 +96,76 @@ test('F11: the boundary runs BEFORE the app modules and the vendor/auth scripts'
   });
 });
 
-test('F11: reports are buffered until ymGoal exists, and the buffer is flushed', () => {
-  assert.ok(/if\(!window\.ymGoal\)\{\s*if\(buf\.length</.test(HTML.replace(/\s+/g, ' ').replace(/ /g, '')) ||
-            /!window\.ymGoal/.test(HTML), 'buffers when ymGoal is not yet defined');
-  const goalAt = HTML.indexOf('window.ymGoal=function');
-  const flushAt = HTML.indexOf('window.__hskFlushErrors()');
-  assert.ok(flushAt > goalAt, 'the flush call comes after ymGoal is defined');
+/* ---- the boundary block is inline HTML too: execute it, don't grep it ---- */
+function runBoundary() {
+  const m = HTML.match(/<script>\n\(function\(\)\{\s*\n?\s*var CAP=[\s\S]*?\}\)\(\);\n<\/script>/);
+  assert.ok(m, 'boundary IIFE found in app/index.html');
+  const code = m[0].replace(/^<script>\n/, '').replace(/\n<\/script>$/, '');
+  const goals = [], warns = [], listeners = {};
+  const sandbox = {
+    console: { warn: (...a) => warns.push(a.join(' ')) },
+    location: { origin: 'https://www.hskprep.cc' },
+  };
+  sandbox.window = sandbox;
+  sandbox.addEventListener = (k, fn, capture) => { (listeners[k] = listeners[k] || []).push({ fn, capture }); };
+  vm.createContext(sandbox);
+  vm.runInContext(code, sandbox);
+  return {
+    sandbox, goals, warns, listeners,
+    fireResource(url) {
+      const ev = { target: { src: url } };
+      listeners.error.forEach((l) => l.fn(ev));
+    },
+    fireError(msg) { listeners.error.forEach((l) => l.fn({ message: msg })); },
+    enableGoal() { sandbox.ymGoal = (name, params) => goals.push({ name, params }); },
+    flush() { sandbox.__hskFlushErrors(); },
+  };
+}
+
+test('F11: the error listener is registered with capture (resource errors do not bubble)', () => {
+  const b = runBoundary();
+  assert.ok(b.listeners.error && b.listeners.error.length, "an 'error' listener exists");
+  assert.equal(b.listeners.error[0].capture, true, 'capture:true — else a 404\'d <script> is never seen');
 });
 
-test('F11: third-party resource losses get their own cap, not the 5 reserved for ours', () => {
-  /* string presence is not enough: collapsing the two branches into one cap
-     leaves both identifiers in the file. Assert the SEPARATE budget exists and
-     is actually consulted and incremented. */
-  assert.ok(/res3p/.test(HTML), 'third-party reports carry a distinct kind');
-  assert.match(HTML, /CAP3P\s*=\s*\d+/, 'a third-party cap constant with a value');
-  assert.match(HTML, /sent3p\s*>=\s*CAP3P/, 'consulted on its own budget');
-  assert.match(HTML, /sent3p\+\+/, 'and incremented separately from sent');
+test('F11: reports before ymGoal are BUFFERED, consume no cap, then flush', () => {
+  const b = runBoundary();
+  for (let i = 0; i < 30; i++) b.fireError('boom ' + i);
+  assert.equal(b.goals.length, 0, 'nothing sent while ymGoal is undefined');
+  b.enableGoal();
+  b.flush();
+  assert.equal(b.goals.length, 5, 'the 5-per-session cap is spent on real reports, not burned early');
+});
+
+test('F11: the buffer is BOUNDED (a boot-time error storm cannot grow it without limit)', () => {
+  const b = runBoundary();
+  for (let i = 0; i < 500; i++) b.fireError('storm ' + i);
+  b.enableGoal();
+  b.flush();
+  assert.ok(b.goals.length <= 5, 'still capped after a storm');
+  assert.equal(b.warns.length, 500, 'every one was still consoled');
+});
+
+test('F11: third-party losses have their OWN budget and cannot crowd out ours', () => {
+  const b = runBoundary();
+  b.enableGoal();
+  for (let i = 0; i < 10; i++) b.fireResource('https://fonts.gstatic.com/f' + i + '.woff2');
+  const thirdParty = b.goals.length;
+  assert.ok(thirdParty <= 2, '3P capped low; got ' + thirdParty);
+  for (let i = 0; i < 10; i++) b.fireResource('https://www.hskprep.cc/app/mod' + i + '.js');
+  const ours = b.goals.length - thirdParty;
+  assert.equal(ours, 5, 'OUR five are still fully available after the 3P flood');
+});
+
+test('F11: resource origin classification', () => {
+  const b = runBoundary();
+  b.enableGoal();
+  b.fireResource('https://www.hskprep.cc/app/core.js');
+  b.fireResource('/app/vocab.js');
+  b.fireResource('https://cdn.jsdelivr.net/npm/hanzi-writer@3.7/dist/hanzi-writer.min.js');
+  const kinds = b.goals.map((g) => g.params.kind);
+  assert.deepEqual(kinds, ['resource', 'resource', 'res3p'],
+    'same-origin and relative are OURS; a CDN is third-party');
 });
 
 test('F11: the boot assert goes through App.missingSeams, not a hand-rolled subset', () => {
