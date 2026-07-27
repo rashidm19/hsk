@@ -363,17 +363,10 @@ printf '%s\n' \
 git commit -F /tmp/t3.txt
 ```
 
-- [ ] **Step 8: Deploy and smoke-test the live function**
-
-Deploy `grant-entitlement` (version 5 → 6; `verify_jwt:false` unchanged, no `config.toml` change). Then run the Group C curl matrix against v6 — **no real payment needed**:
-
-| Request | Expected |
-|---|---|
-| unsigned POST | `401` |
-| valid HMAC, stale `ts` | `400` |
-| replay of an existing comp `order_id`, fresh `ts` | `200 {"idempotent":true}` |
-
-Then re-run the Task 4 reconciliation query and confirm coverage is unchanged.
+**Do NOT deploy here.** The deploy is deferred to the end of Task 4 so that the single v6 build carries
+both this 503 change *and* Task 4's `alertGrantFailure`. Deploying now would ship a v6 that the very next
+task supersedes — a money-path function permanently diverging from the repo, with the alert committed but
+inert in production. Task 4 Step 6 does the one deploy.
 
 ---
 
@@ -496,9 +489,28 @@ printf '%s\n' \
 git commit -F /tmp/t4.txt
 ```
 
-- [ ] **Step 6: Owner action — set the secrets**
+- [ ] **Step 6: Deploy the single v6 (carrying BOTH the 503 and the alert) and smoke-test**
 
-`HSK_ALERT_RESEND_KEY` and `HSK_ALERT_TO` must be set in the Supabase dashboard before the alert can fire. Until they are, `alertGrantFailure` returns immediately and the 503 + reconciliation query carry detection on their own. Record this on the launch checklist.
+This is the **only** `grant-entitlement` deploy in package A. It happens here, after Task 4, so v6 carries
+Task 3's 503 *and* this task's `alertGrantFailure` — not the 503 alone. It is live at **version 5** today.
+
+Deploy (`version 5 → 6`; `verify_jwt:false` unchanged, no `config.toml` change), then run the Group C curl
+matrix against v6 — **no real payment needed**:
+
+| Request | Expected |
+|---|---|
+| unsigned POST | `401` |
+| valid HMAC, stale `ts` | `400` |
+| replay of an existing comp `order_id`, fresh `ts` | `200 {"idempotent":true}` |
+
+Then re-run the Step 2 reconciliation query and confirm coverage is unchanged.
+
+- [ ] **Step 7: Owner action — set the alert secrets**
+
+`HSK_ALERT_RESEND_KEY` and `HSK_ALERT_TO` must be set in the Supabase dashboard before the alert can fire,
+and `alerts@hskprep.cc` must be a verified Resend sender or the send 401s (harmlessly — the swallow keeps
+the 503 intact, but the alert never arrives). Until then, `alertGrantFailure` returns immediately and the
+503 + reconciliation query carry detection on their own. Record both on the launch checklist.
 
 ---
 
@@ -623,7 +635,7 @@ git commit -F /tmp/t5.txt
 - 103 → **106** node tests, 12 → **14** Deno tests, all green.
 - `grep -rl 'cdn.jsdelivr.net/npm/@supabase' --include='*.html' .` → **0**.
 - All five entry points resolve `window.supabase.createClient` with zero jsdelivr requests.
-- `grant-entitlement` deployed at v6; curl matrix green; reconciliation query returns no rows.
+- `grant-entitlement` deployed **once**, at the end of Task 4, so v6 carries both the 503 and the alert; curl matrix green; reconciliation query returns no rows.
 - `node build.js` idempotent afterwards (only `sitemap.xml` `lastmod` may move).
 
 **Deploy artifacts:** client + generated HTML (git push → DigitalOcean) **and** one edge-function deploy. Package A is the only package in batch 3 that touches surfaces live today — `index.html`, `login/index.html` and `auth/callback.html` go live the moment `main` is pushed, unlike `/app/`, which is still 404 in production.
