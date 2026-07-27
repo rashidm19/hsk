@@ -680,7 +680,7 @@
       var tColor = on ? 'var(--stone)' : 'var(--ink)';
       var deco = on ? 'line-through' : 'none';
       var cls = p.cn ? 'chinese' : '';
-      return '<button type="button" class="pa" data-a="toggleGuide" data-argn="' + i + '" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;padding:10px 4px;cursor:pointer">' +
+      return '<button type="button" class="pa" data-a="toggleGuide" data-argn="' + i + '" aria-pressed="' + (on ? 'true' : 'false') + '" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;padding:10px 4px;cursor:pointer">' +
         '<span style="width:26px;height:26px;flex:none;display:grid;place-items:center;border:2px solid ' + dotBd + ';background:' + dotBg + ';color:' + dotFg + ';border-radius:99px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>' +
         '<span class="' + cls + '" style="flex:1;font-size:.92rem;color:' + tColor + ';text-decoration:' + deco + '">' + esc(p.t) + '</span>' +
         '</button>';

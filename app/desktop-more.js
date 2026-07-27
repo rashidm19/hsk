@@ -927,7 +927,7 @@
       var txt = on ? 'var(--stone)' : 'var(--ink)';
       var strike = on ? 'line-through' : 'none';
       var cls = p.cn ? 'chinese' : '';
-      return '<button type="button" class="hv" data-a="toggleGuide" data-argn="' + i + '" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;background:transparent;border-radius:12px;padding:12px 10px;cursor:pointer">' +
+      return '<button type="button" class="hv" data-a="toggleGuide" data-argn="' + i + '" aria-pressed="' + (on ? 'true' : 'false') + '" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;background:transparent;border-radius:12px;padding:12px 10px;cursor:pointer">' +
         '<span style="width:26px;height:26px;flex:none;display:grid;place-items:center;border:2px solid ' + boxBd + ';background:' + boxBg + ';color:' + tick + ';border-radius:8px;font-size:14px;font-weight:700">✓</span>' +
         '<span style="font-size:var(--fs-xs);color:var(--stone);font-weight:700;min-width:22px">' + (i + 1) + '</span>' +
         '<span class="' + cls + '" style="flex:1;font-size:var(--fs-md);color:' + txt + ';text-decoration:' + strike + '">' + esc(p.t) + '</span>' +

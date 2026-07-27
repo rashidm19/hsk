@@ -477,7 +477,7 @@
           '</span>' +
         '</button>' +
         '<button type="button" class="pa" data-a="vocSpeak" data-arg="' + esc(w.word) + '" aria-label="Pronounce" style="width:36px;height:36px;flex:none;display:grid;place-items:center;border:0;background:var(--surface-sunken);border-radius:10px;cursor:pointer;color:var(--accent)">' + SVG_SPEAK_MD + '</button>' +
-        '<button type="button" class="pa" data-a="toggleMastered" data-argn="' + Number(w.id) + '" aria-label="Toggle mastered" style="width:36px;height:36px;flex:none;display:grid;place-items:center;border:2px solid ' + checkBd + ';background:' + checkBg + ';border-radius:10px;cursor:pointer;color:' + checkFg + '">' + SVG_CHECK + '</button>' +
+        '<button type="button" class="pa" data-a="toggleMastered" data-argn="' + Number(w.id) + '" aria-label="Mastered: ' + esc(w.word) + '" aria-pressed="' + (mastered ? 'true' : 'false') + '" style="width:36px;height:36px;flex:none;display:grid;place-items:center;border:2px solid ' + checkBd + ';background:' + checkBg + ';border-radius:10px;cursor:pointer;color:' + checkFg + '">' + SVG_CHECK + '</button>' +
       '</div>';
   }
 
@@ -730,7 +730,7 @@
             '<div class="chinese" style="font-size:1.2rem;color:var(--ink);font-weight:600;line-height:1.6">' + esc(exCn(w)) + '</div>' +
             '<div style="font-size:.88rem;color:var(--stone);margin-top:5px">' + esc(exEn(w)) + '</div>' +
           '</div>' +
-          '<button type="button" class="pa" data-a="toggleMastered" data-argn="' + Number(w.id) + '" style="display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:16px;border:2px solid var(--jade);background:' + btnBg + ';color:' + btnFg + ';border-radius:14px;padding:15px;font-weight:700;font-size:.95rem;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' + btnLabel + '</button>' +
+          '<button type="button" class="pa" data-a="toggleMastered" data-argn="' + Number(w.id) + '" aria-pressed="' + (mastered ? 'true' : 'false') + '" style="display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:16px;border:2px solid var(--jade);background:' + btnBg + ';color:' + btnFg + ';border-radius:14px;padding:15px;font-weight:700;font-size:.95rem;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>' + btnLabel + '</button>' +
         '</div>' +
       '</div>';
   }

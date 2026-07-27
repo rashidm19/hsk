@@ -475,7 +475,7 @@
         '<div style="background:var(--surface);border:1px solid var(--border-subtle);border-radius:18px;box-shadow:var(--shadow);padding:26px 28px;min-width:0">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px">' +
             '<span style="display:inline-flex;align-items:center;gap:7px;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:var(--fs-xs);padding:5px 12px;border-radius:99px">Q' + esc(cur.n) + ' · <span class="chinese">' + esc(cur.typeLabel) + '</span> · ' + esc(cur.section) + '</span>' +
-            '<button type="button" data-a="toggleFlagCur" class="hv" style="display:inline-flex;align-items:center;gap:7px;border:1px solid ' + flagBd + ';background:' + flagBg + ';color:' + flagFg + ';border-radius:99px;padding:6px 13px;font-weight:600;font-size:var(--fs-xs);cursor:pointer">⚑ ' + flagLabel + '</button>' +
+            '<button type="button" data-a="toggleFlagCur" aria-pressed="' + (flagged ? 'true' : 'false') + '" class="hv" style="display:inline-flex;align-items:center;gap:7px;border:1px solid ' + flagBd + ';background:' + flagBg + ';color:' + flagFg + ';border-radius:99px;padding:6px 13px;font-weight:600;font-size:var(--fs-xs);cursor:pointer">⚑ ' + flagLabel + '</button>' +
           '</div>' +
           blocks +
           optsHtml +

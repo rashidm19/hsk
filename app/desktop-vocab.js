@@ -122,7 +122,10 @@
     /* binary mastery ring (CONTRACT §4: no conic percentage rings) */
     var ring = mastered ? 'var(--jade)' : 'var(--mist)';
     var ringColor = mastered ? 'var(--jade)' : 'var(--stone)';
-    var aria = mastered ? 'Mastered — click to unmark' : 'Mark as mastered';
+    /* F8: a toggle's accessible name must NOT change with state — aria-pressed
+       carries it (W3C ARIA APG, Button/toggle). Also drops "click", which was
+       wrong on the touch client that shares this wording. */
+    var aria = 'Mastered: ' + w.word;
     return '' +
       '<div data-hoverable class="hv" style="display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border-subtle);border-radius:14px;padding:15px 18px">' +
         '<div style="min-width:0;flex:1">' +
@@ -135,7 +138,7 @@
           '<div style="font-size:var(--fs-sm);color:var(--stone);margin-top:4px">' + esc(w.meaning) + '</div>' +
         '</div>' +
         '<button type="button" class="hv" data-a="vocSpeak" data-arg="' + esc(w.word) + '" aria-label="Pronounce" style="width:38px;height:38px;flex:none;display:grid;place-items:center;border:1px solid var(--border-subtle);background:var(--surface);border-radius:10px;cursor:pointer;color:var(--accent)">' + svgSpeak(17) + '</button>' +
-        '<button type="button" class="hv" data-a="toggleMastered" data-argn="' + Number(w.id) + '" aria-label="' + aria + '" title="' + aria + '" style="width:46px;height:46px;flex:none;border-radius:50%;background:' + ring + ';display:grid;place-items:center;border:0;cursor:pointer;padding:0">' +
+        '<button type="button" class="hv" data-a="toggleMastered" data-argn="' + Number(w.id) + '" aria-label="' + esc(aria) + '" title="' + esc(aria) + '" aria-pressed="' + (mastered ? 'true' : 'false') + '" style="width:46px;height:46px;flex:none;border-radius:50%;background:' + ring + ';display:grid;place-items:center;border:0;cursor:pointer;padding:0">' +
           '<span style="width:36px;height:36px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:var(--fs-xs);font-weight:700;color:' + ringColor + '">✓</span>' +
         '</button>' +
       '</div>';
