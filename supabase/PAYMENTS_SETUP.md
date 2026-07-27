@@ -101,7 +101,8 @@ replay convergence, out-of-order arrival, refund shrink, full-refund revoke, mon
 ## Runbook — lost/failed webhook
 1. Read the acquiring order on the StudyBox side; get `order_id`, `uid`, `plan`, `paid_at`.
 2. Re-POST `grant-entitlement` with a fresh `ts`. The function **re-applies the entitlement on replay**
-   (so this reconciles a lost webhook OR a prior `entitlement:false`) and is idempotent for the
-   `payments` ledger. A persisting `entitlement:false` means the `uid`/profile is bad — investigate it.
+   (so this reconciles a lost webhook OR a prior failed grant) and is idempotent for the `payments`
+   ledger. A persisting **503 `entitlement_apply`** means the `uid`/profile or the DB is bad — investigate
+   it rather than re-driving forever.
 3. Verify (service-role SQL): `select subscription from profiles where id = '<uid>';`
 4. Audit: `select * from payments where order_id = '<order_id>';`

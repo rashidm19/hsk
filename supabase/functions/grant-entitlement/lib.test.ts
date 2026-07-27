@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "jsr:@std/assert@1";
-import { hmacHex, verifySig, derivePlan, freshTs, timingSafeEqual } from "./lib.ts";
+import { hmacHex, verifySig, derivePlan, freshTs, timingSafeEqual, GRANT_FAIL_STATUS, grantFailBody } from "./lib.ts";
 
 Deno.test("hmac verifies correct, rejects tampered body/secret", async () => {
   const sig = await hmacHex("secret", "hello");
@@ -37,4 +37,17 @@ Deno.test("freshTs accepts now, rejects stale; handles NaN and clock skew", () =
   assert(!freshTs(NaN, now));                     // non-finite -> rejected
   assert(freshTs(1_700_000_000 + 60, now));       // 1 min future (skew) within window
   assert(!freshTs(1_700_000_000 + 600, now));     // 10 min future -> rejected
+});
+
+Deno.test("B2: a failed entitlement write is reported as a retryable 503, not a success", () => {
+  assertEquals(GRANT_FAIL_STATUS, 503);
+  const body = grantFailBody(false);
+  assertEquals(body.ok, false, "ok:true would tell the acquirer the grant landed");
+  assertEquals(body.retry, true, "the acquirer must know this one is worth re-driving");
+  assertEquals(body.reason, "entitlement_apply");
+});
+
+Deno.test("B2: the replay flag is preserved so a re-drive is still recognisable", () => {
+  assertEquals(grantFailBody(true).idempotent, true);
+  assertEquals(grantFailBody(false).idempotent, false);
 });

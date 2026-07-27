@@ -214,7 +214,7 @@ sig = hmac.new(HSK_GRANT_HMAC_SECRET.encode(), body_str.encode(), hashlib.sha256
 |--------|------|---------|-------------|
 | 200 | `{"ok":true}` | Entitlement granted | Done. |
 | 200 | `{"ok":true,"idempotent":true}` | `order_id` already processed | Treat as success. |
-| 200 | `{"ok":true,"entitlement":false}` | Payment recorded, entitlement write failed | Treat as success but **alert**. A re-drive (same `order_id`, fresh `ts`) **re-applies** the entitlement, so re-POSTing heals a transient failure; if it keeps returning `entitlement:false`, the `uid`/profile is bad — escalate. |
+| 503 | `{"ok":false,"retry":true,"reason":"entitlement_apply"}` | Payment recorded, entitlement write failed | **Retry with backoff** (same `order_id`, fresh `ts`) — idempotent by `order_id`, so a re-drive heals a transient failure. **Give up after 6 attempts over ~2 hours** and contact HSK: a persistent failure means the database is misconfigured and retrying will not fix it. |
 | 401 | `bad signature` | HMAC mismatch | **Do not retry blindly** — fix signing/secret. |
 | 400 | `unknown plan` / `bad currency` / `stale` / `missing fields` / `bad paid_at` / `bad json` | Permanent caller error | **Do not retry as-is.** `stale` → re-send with a fresh `ts`. |
 | 405 | `method not allowed` | Not a POST | Fix the request. |
@@ -272,10 +272,12 @@ they're HSK-internal. `expires_at` is computed on HSK's side from `plan`; you do
   is idempotent by `order_id`. Use one stable `order_id` per acquiring order.
 - **Lost/failed grant call:** make it re-drivable — re-POST the same `order_id` with a **fresh `ts`**.
   It resolves to `{"ok":true,"idempotent":true}` if already applied, or grants if not.
-- **`entitlement:false` (200):** payment is recorded on HSK but the entitlement write didn't land
-  (rare). Alert an operator; a re-drive (same `order_id`, fresh `ts`) **re-applies** the entitlement
-  and reconciles a transient failure. A persistent `entitlement:false` means the `uid`/profile is
-  bad — escalate rather than re-driving forever.
+- **`503` (`reason":"entitlement_apply"`):** payment is recorded on HSK but the entitlement write didn't
+  land (rare). **Retry with backoff** (same `order_id`, fresh `ts`) — a re-drive **re-applies** the
+  entitlement and reconciles a transient failure. **Give up after 6 attempts over ~2 hours** and contact
+  HSK: a persistent 503 means the database is misconfigured (e.g. `apply_hsk_entitlement` missing) and
+  retrying forever will not fix it. (HSK also alerts itself on this branch, so a persistent failure is
+  noticed on both sides.)
 - **Clock:** keep StudyBox's clock in sync (NTP). The ±300 s `ts` window rejects stale/skewed calls;
   don't queue a webhook for more than ~5 minutes before calling without refreshing `ts`.
 

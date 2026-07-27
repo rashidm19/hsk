@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { derivePlan, freshTs, verifySig } from "./lib.ts";
+import { derivePlan, freshTs, verifySig, GRANT_FAIL_STATUS, grantFailBody } from "./lib.ts";
 
 const SECRET = Deno.env.get("HSK_GRANT_HMAC_SECRET") ?? "";
 const SB_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
   const grant = await sb.rpc("apply_hsk_entitlement", { p_uid: p.uid });
   if (grant.error) {
     log({ order_id: p.order_id, uid: p.uid, result: "warn", reject: "entitlement_apply", idempotent: isReplay, msg: grant.error.message });
-    return json(200, { ok: true, idempotent: isReplay, entitlement: false }); // still un-granted; alert + re-drive
+    return json(GRANT_FAIL_STATUS, grantFailBody(isReplay)); // charged, NOT granted -> retryable 503 (B2)
   }
   const g = (grant.data ?? {}) as { expires_at?: string | null; orders?: number; flagged?: string[] };
   const stacked = Array.isArray(g.flagged) && g.flagged.includes(String(p.order_id));

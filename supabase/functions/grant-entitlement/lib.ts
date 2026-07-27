@@ -40,3 +40,14 @@ export async function verifySig(secret: string, body: string, sigHex: string): P
 export function freshTs(ts: number, nowMs: number, windowSec = 300): boolean {
   return Number.isFinite(ts) && Math.abs(nowMs - ts * 1000) <= windowSec * 1000;
 }
+
+// A failed entitlement write is NOT a success. 503 puts the acquirer on the documented
+// retry-with-backoff path; the retry is safe because the `payments` row is keyed by
+// order_id and apply_hsk_entitlement() folds the whole ledger, so re-driving converges on
+// the same coverage instead of stacking a second term. JSON (unlike the plain-text gateway
+// 500s) so StudyBox can tell this apart from an infrastructure failure.
+export const GRANT_FAIL_STATUS = 503;
+
+export function grantFailBody(isReplay: boolean) {
+  return { ok: false, idempotent: isReplay, entitlement: false, retry: true, reason: "entitlement_apply" };
+}
