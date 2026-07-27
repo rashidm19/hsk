@@ -309,6 +309,12 @@
   /* HanziWriter — ported verbatim from prototype initWriter (2006-2016), the ref-callback
      replaced by a post-render sync loop (element may not be in the DOM yet). */
   var hw = null; var hwTries = 0;
+  /* F5: the character whose STROKE DATA failed to load. HanziWriter.create mounts
+     its empty <svg> synchronously and only then fetches the per-character JSON, so
+     a failed fetch left a blank box with live Animate/Practice buttons. Keyed by
+     character so moving to another one retries; cleared by hwReset (the user's
+     retry affordance). */
+  var hwDataErr = null;
   /* CDN fallback: if the HanziWriter script never loads, paint the character
      statically so the stroke box isn't left empty (L4). */
   function glyphFallback(el, ch) {
@@ -316,14 +322,38 @@
     el.innerHTML = '<div style="width:100%;height:100%;display:grid;place-items:center"><span class="serif-cn" style="font-size:118px;line-height:1;color:var(--ink)">' + esc(ch || '') + '</span></div>';
     el.setAttribute('data-hw-char', ch || '');
   }
+  /* Engine unavailable -> the buttons must not look live. Direct DOM, like
+     glyphFallback: a setState here would re-render #hw-target, re-run initWriter
+     and re-fetch the data that just failed — an infinite retry loop. (F5) */
+  function hwSetControls(on) {
+    try {
+      var names = ['hwAnimate', 'hwQuiz'];
+      for (var i = 0; i < names.length; i++) {
+        var list = document.querySelectorAll('[data-a="' + names[i] + '"]');
+        for (var j = 0; j < list.length; j++) {
+          var b = list[j];
+          b.disabled = !on;
+          b.setAttribute('aria-disabled', on ? 'false' : 'true');
+          b.style.opacity = on ? '' : '.45';
+          b.style.cursor = on ? '' : 'not-allowed';
+        }
+      }
+    } catch (e) {}
+  }
+  function hwUnavailable() { return !hw || (hwDataErr !== null && hwDataErr === S().curChar); }
+
   function initWriter() {
     var s = S();
     var el = document.getElementById('hw-target');
     if (!el) { hwTries++; if (hwTries < 40) setTimeout(initWriter, 200); return; }
+    if (hwDataErr !== null && hwDataErr === s.curChar) {   /* already known bad — do not re-fetch */
+      hw = null; glyphFallback(el, s.curChar); hwSetControls(false); return;
+    }
     if (!window.HanziWriter) {
       hwTries++;
       if (hwTries < 40) { setTimeout(initWriter, 200); return; }
       glyphFallback(el, s.curChar);   /* retry budget exhausted → static glyph */
+      hwSetControls(false);
       return;
     }
     var dark = s.theme === 'dark';
@@ -334,8 +364,23 @@
     try {
       el.innerHTML = '';
       el.setAttribute('data-hw-char', s.curChar || '');
-      hw = window.HanziWriter.create(el, s.curChar, Object.assign({ width: 200, height: 200, padding: 8, showCharacter: true, showOutline: true, delayBetweenStrokes: 140 }, col));
-    } catch (e) {}
+      var forChar = s.curChar;
+      hw = window.HanziWriter.create(el, s.curChar, Object.assign({
+        width: 200, height: 200, padding: 8, showCharacter: true, showOutline: true, delayBetweenStrokes: 140,
+        /* F5: the stroke-data XHR fails AFTER the empty <svg> is mounted */
+        onLoadCharDataError: function () {
+          hwDataErr = forChar;
+          /* the fetch is async: the user may have opened ANOTHER character since.
+             Remember this one is bad, but do not paint it over — or disable the
+             controls of — a character that is working. */
+          if (S().curChar !== forChar) return;
+          hw = null;
+          try { glyphFallback(document.getElementById('hw-target'), forChar); } catch (e2) {}
+          hwSetControls(false);
+        }
+      }, col));
+      hwSetControls(true);
+    } catch (e) { hw = null; glyphFallback(el, s.curChar); hwSetControls(false); }
   }
   function syncWriter() {
     var s = S();
@@ -350,6 +395,7 @@
   App.more.syncWriter = syncWriter;
   App.chars = App.chars || {};
   App.chars.initWriter = initWriter;
+  App.chars.unavailable = hwUnavailable;   /* pure-ish; exposed for hanzi-fallback.test.js */
 
   /* ============================ STATISTICS ============================ */
   function attemptsAsc(s) {
@@ -877,9 +923,15 @@
   };
   A.openChar = function (c) { hw = null; set({ curChar: String(c || '') }); scrollTop(); scheduleWriter(); };
   A.closeChar = function () { hw = null; set({ curChar: null }); scrollTop(); };
-  A.hwAnimate = function () { try { hw ? hw.animateCharacter() : initWriter(); } catch (e) {} };
-  A.hwQuiz = function () { try { if (hw) hw.quiz(); } catch (e) {} };
-  A.hwReset = function () { initWriter(); };
+  A.hwAnimate = function () {
+    if (hwDataErr !== null && hwDataErr === S().curChar) return;   /* engine unavailable (F5) */
+    try { hw ? hw.animateCharacter() : initWriter(); } catch (e) {}
+  };
+  A.hwQuiz = function () {
+    if (hwDataErr !== null && hwDataErr === S().curChar) return;
+    try { if (hw) hw.quiz(); } catch (e) {}
+  };
+  A.hwReset = function () { hwDataErr = null; initWriter(); };   /* Reset = the retry affordance */
   A.speakText = function (t) { if (typeof t === 'string') speak(t); };
 
   /* guide */
