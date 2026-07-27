@@ -12,6 +12,33 @@ function json(status: number, obj: unknown) {
   return new Response(JSON.stringify(obj), { status, headers: { "content-type": "application/json" } });
 }
 
+// First outbound call from any function here. Supabase has no alert-on-log-line feature —
+// log export is a Pro-plan Log Drain configured in the dashboard, which cannot ship in a
+// function deploy — so the function raises its own alarm. Awaited with a short timeout
+// because Edge Functions can be torn down the moment the response is returned; wrapped so
+// an alert failure NEVER changes what the acquirer sees.
+async function alertGrantFailure(orderId: string, uid: string, msg: string) {
+  const key = Deno.env.get("HSK_ALERT_RESEND_KEY") ?? "";
+  const to = Deno.env.get("HSK_ALERT_TO") ?? "";
+  if (!key || !to) return;
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 2000);
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        from: "alerts@hskprep.cc",
+        to: [to],
+        subject: `[HSK] entitlement grant FAILED — order ${orderId}`,
+        text: `apply_hsk_entitlement failed.\norder_id: ${orderId}\nuid: ${uid}\nerror: ${msg}\n\nThe customer is charged and NOT granted. Runbook: supabase/PAYMENTS_SETUP.md.`,
+      }),
+      signal: ctl.signal,
+    });
+    clearTimeout(t);
+  } catch (_e) { /* alerting is best-effort; the 503 is the contract */ }
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("method not allowed", { status: 405 });
 
@@ -70,6 +97,7 @@ Deno.serve(async (req) => {
   const grant = await sb.rpc("apply_hsk_entitlement", { p_uid: p.uid });
   if (grant.error) {
     log({ order_id: p.order_id, uid: p.uid, result: "warn", reject: "entitlement_apply", idempotent: isReplay, msg: grant.error.message });
+    await alertGrantFailure(String(p.order_id), String(p.uid), grant.error.message);
     return json(GRANT_FAIL_STATUS, grantFailBody(isReplay)); // charged, NOT granted -> retryable 503 (B2)
   }
   const g = (grant.data ?? {}) as { expires_at?: string | null; orders?: number; flagged?: string[] };

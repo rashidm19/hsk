@@ -97,6 +97,28 @@ replay convergence, out-of-order arrival, refund shrink, full-refund revoke, mon
 - [ ] End-to-end test order flips `profiles.subscription.status` to `active`.
 - [ ] Double-charge e2e: two test orders for one uid → `expires_at` stacks (2× term) and the second
       `payments` row carries `review_status = 'double_charge'`.
+- [ ] Reconciliation query (below) returns no rows, and is scheduled to run after launch.
+- [ ] `HSK_ALERT_RESEND_KEY` + `HSK_ALERT_TO` set, and `alerts@hskprep.cc` verified in Resend.
+
+## Reconciliation — run before launch, then on a schedule
+
+Paid orders whose coverage does not reflect the ledger. Any row here needs the
+lost/failed-webhook runbook below. Expected result: **no rows**.
+
+```sql
+select p.order_id, p.user_id, p.plan, p.amount, p.months, p.paid_at,
+       pr.subscription->>'status'     as sub_status,
+       pr.subscription->>'expires_at' as sub_expires_at
+  from public.payments p
+  join public.profiles pr on pr.id = p.user_id
+ where p.status = 'paid'
+   and p.paid_at is not null
+   and coalesce(p.months, 0) > 0
+   and (pr.subscription is null
+        or coalesce(pr.subscription->>'status', '') <> 'active'
+        or (pr.subscription->>'expires_at') is null
+        or (pr.subscription->>'expires_at')::timestamptz < now());
+```
 
 ## Runbook — lost/failed webhook
 1. Read the acquiring order on the StudyBox side; get `order_id`, `uid`, `plan`, `paid_at`.
