@@ -507,8 +507,7 @@
   function syncMasteredLive() {
     try {
       var mc = countMastered(masteredSet());
-      var due = Math.max(0, words().length - mc);
-      if (App.live) { App.live('vMastered', String(mc)); App.live('vDue', fmtNum(due)); }
+      if (App.live) { App.live('vMastered', String(mc)); App.live('vDue', deckLabel()); }
     } catch (e) {}
   }
 
@@ -677,7 +676,6 @@
     var mset = masteredSet();
     var total = words().length;
     var masteredCount = countMastered(mset);
-    var dueCount = Math.max(0, total - masteredCount);
     var mode = s.vMode || 'list';
     var body = mode === 'cards' ? cardsBlock() : mode === 'quiz' ? quizBlock() : listBlock();
     return '' +
@@ -687,7 +685,7 @@
         '<button type="button" class="pa" data-a="goCards" style="display:flex;align-items:center;gap:14px;width:100%;text-align:left;position:relative;overflow:hidden;background:linear-gradient(140deg,#8a6420,#6b4d17);color:#fdf6e6;border-radius:18px;padding:18px;box-shadow:var(--shadow-lg);border:0;cursor:pointer;margin-bottom:16px">' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;opacity:.9">Flashcard review · <span class="chinese">复习</span></div>' +
-            '<div style="font-size:1.35rem;font-weight:700;margin-top:5px"><span data-live="vDue">' + fmtNum(dueCount) + '</span> cards to review</div>' +
+            '<div style="font-size:1.35rem;font-weight:700;margin-top:5px"><span data-live="vDue">' + esc(deckLabel()) + '</span></div>' +
             '<div style="opacity:.9;margin-top:2px;font-size:.82rem">Swipe through · mark what you know</div>' +
           '</div>' +
           '<span style="width:42px;height:42px;flex:none;display:grid;place-items:center;background:rgba(253,246,230,.18);border:1.5px solid rgba(253,246,230,.4);border-radius:13px">' + SVG_CHEV + '</span>' +

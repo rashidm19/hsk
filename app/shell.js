@@ -185,7 +185,7 @@
     var t1 = n === 0
       ? { title: 'Diagnostic mock', cn: '模拟', sub: 'Take it to set your baseline', icon: '模', iconBg: 'var(--accent-soft)', iconFg: 'var(--accent)', kind: 'mock', testIdx: 0, done: !!todayAttempt, score: todayAttempt ? (todayAttempt.pct + '%') : '' }
       : { title: 'Mock exam', cn: '模拟', sub: 'Paper ' + nextShort, icon: '模', iconBg: 'var(--accent-soft)', iconFg: 'var(--accent)', kind: 'mock', testIdx: nextIdx, done: !!todayAttempt, score: todayAttempt ? (todayAttempt.pct + '%') : '' };
-    var t2 = { title: 'Vocabulary review', cn: '词汇', sub: Math.min(dueCount, 20) + ' cards to review', icon: '词', iconBg: 'var(--jade-soft)', iconFg: 'var(--jade)', kind: 'cards', done: dueCount === 0, score: '' };
+    var t2 = { title: 'Vocabulary review', cn: '词汇', sub: Math.min(dueCount, App.DECK_SIZE) + ' cards to review', icon: '词', iconBg: 'var(--jade-soft)', iconFg: 'var(--jade)', kind: 'cards', done: dueCount === 0, score: '' };
     /* subtitle names patterns that exist in the real 8-pattern catalog */
     var t3 = { title: 'Grammar patterns', cn: '语法', sub: '尽管 · 只有 · 连 structures', icon: '语', iconBg: 'var(--gold-soft)', iconFg: 'var(--gold)', kind: 'grammar', done: false, score: '' };
     var tasks = [t1, t2, t3];

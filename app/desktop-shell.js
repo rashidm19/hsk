@@ -438,7 +438,7 @@
       + card('<div role="heading" aria-level="2" style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--stone);font-weight:700;margin-bottom:8px">Your first steps · <span class="chinese">第一步</span></div>'
         + '<div style="display:flex;flex-direction:column">'
         + firstStepRow('startToday', null, '1', 'var(--accent)', 'var(--invert-fg)', 'Take a full mock exam', 'Calibrate your score · ~' + h.firstMockMin + ' min', false)
-        + firstStepRow('goVocab', null, '2', 'var(--surface-sunken)', 'var(--stone)', 'Start your word bank', Math.min(h.dueCount, 20) + ' cards to begin · <span class="chinese">词汇</span>', true)
+        + firstStepRow('goVocab', null, '2', 'var(--surface-sunken)', 'var(--stone)', 'Start your word bank', Math.min(h.dueCount, App.DECK_SIZE) + ' cards to begin · <span class="chinese">词汇</span>', true)
         + firstStepRow('dNav', 'guide', '3', 'var(--surface-sunken)', 'var(--stone)', 'Learn the 2026 exam format', '5-min read · <span class="chinese">学习指南</span>', true)
         + '</div>', 'padding:20px 22px')
       + '</div>'

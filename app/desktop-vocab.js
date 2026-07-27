@@ -318,13 +318,13 @@
     return '<button type="button" class="hv" data-a="' + action + '" style="border:0;cursor:pointer;padding:9px 20px;border-radius:9px;font-weight:600;font-size:var(--fs-sm);background:' + bg + ';color:' + fg + ';box-shadow:' + sh + '">' + label + '</button>';
   }
 
-  function heroHtml(due) {
+  function heroHtml() {
     return '' +
       '<div style="position:relative;overflow:hidden;background:linear-gradient(135deg,#8a6420,color-mix(in oklab,#8a6420,black 40%));color:var(--invert-fg);border-radius:20px;padding:24px 28px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:22px">' +
         '<span class="serif-cn" aria-hidden="true" style="position:absolute;right:10px;bottom:-46px;font-size:150px;line-height:1;opacity:.16;color:var(--invert-fg)">复</span>' +
         '<div style="flex:1;min-width:220px;position:relative;z-index:1">' +
           '<div style="font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.12em;font-weight:700;opacity:.9">Flashcard review · <span class="chinese">复习</span></div>' +
-          '<div style="font-size:var(--fs-2xl);font-weight:700;margin-top:6px"><span data-live="vDue">' + fmtNum(due) + '</span> cards due today</div>' +
+          '<div style="font-size:var(--fs-2xl);font-weight:700;margin-top:6px"><span data-live="vDue">' + esc(App.vocab.deckLabel()) + '</span></div>' +
           '<div style="opacity:.9;margin-top:3px;font-size:var(--fs-md)">Mark what you know — mastered words leave the deck</div>' +
         '</div>' +
         '<div style="display:flex;gap:10px;position:relative;z-index:1;flex-wrap:wrap">' +
@@ -338,7 +338,6 @@
   App.d.vocab = function (s) {
     var total = words().length;
     var masteredCount = App.vocab.masteredCount ? App.vocab.masteredCount() : 0;
-    var due = App.vocab.dueCount ? App.vocab.dueCount() : Math.max(0, total - masteredCount);
     var mode = s.vMode || 'list';
     var body = mode === 'cards' ? flashBlock(s) : mode === 'quiz' ? quizBlock(s) : listBlock(s);
     return '' +
@@ -347,7 +346,7 @@
           '<h1 style="margin:0;font-size:var(--fs-h1);font-weight:700;letter-spacing:-.025em;color:var(--ink)">Vocabulary <span class="serif-cn" style="color:var(--accent);font-weight:400;font-size:.58em;margin-left:6px">词汇</span></h1>' +
           '<p style="margin:7px 0 0;color:var(--stone);font-size:var(--fs-md)">Your personal HSK 4 word bank · ' + fmtNum(total) + ' of 1,200 HSK 4 words · <span data-live="vMastered">' + masteredCount + '</span> mastered</p>' +
         '</div>' +
-        heroHtml(due) +
+        heroHtml() +
         '<div style="display:flex;background:var(--surface-sunken);border-radius:12px;padding:4px;gap:3px;margin-bottom:20px;width:fit-content">' +
           tabBtn('List', 'vocGoList', mode === 'list') +
           tabBtn('Flashcards', 'goCards', mode === 'cards') +

@@ -703,7 +703,7 @@
     skills += skillCardHtml({
       name: 'Vocabulary', cn: '词汇', icon: '词', color: 'var(--jade)', soft: 'var(--jade-soft)',
       sub: mastered + ' of ' + total + ' mastered', score: mastered,
-      w: vocW + '%', trend: due + ' due', tCol: 'var(--stone)'
+      w: vocW + '%', trend: due + ' left', tCol: 'var(--stone)'
     });
 
     /* trend chart: per-attempt band scores /300, target line at goalScore */

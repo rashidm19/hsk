@@ -113,3 +113,24 @@ test('F3: DECK_SIZE is honoured, not hardcoded — changing it moves the deck', 
   assert.equal(dealt(App), 5);
   assert.equal(App.vocab.deckLabel(), '5 cards to review');
 });
+
+test('F3: the live channel emits the same phrase the hero rendered', () => {
+  /* syncMasteredLive drives [data-live="vDue"]; if it emitted the old
+     total-minus-mastered arithmetic, the first mastery tap would overwrite the
+     corrected hero with "999". */
+  const App = boot(1000, 0);
+  const live = {};
+  App.live = function (name, text) { live[name] = text; };
+  App.actions.toggleMastered(1);              // master one word -> syncMasteredLive
+  assert.equal(live.vDue, App.vocab.deckLabel());
+  assert.equal(live.vDue, '20 cards to review');
+  assert.notEqual(live.vDue, '999');
+  assert.equal(live.vMastered, '1');
+});
+
+test('F3: the mobile hero markup carries the whole phrase inside [data-live="vDue"]', () => {
+  const App = boot(1000, 0);
+  const html = App.vocab.screen();
+  assert.match(html, /<span data-live="vDue">20 cards to review<\/span>/);
+  assert.doesNotMatch(html, /1,000 cards/, 'the catalog count is not the session size');
+});
