@@ -50,6 +50,44 @@
     } catch (e) {}
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
   }
+  function storeGet(key, fb) {
+    try {
+      if (App.store && typeof App.store.getJSON === 'function') return App.store.getJSON(key, fb);
+    } catch (e) {}
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fb : v; }
+    catch (e) { return fb; }
+  }
+
+  /* F12: a second tab may have written since this one booted. Serialising this
+     tab's whole in-memory map would erase the other tab's papers, so every write
+     read-modify-writes the STORED map and touches only its own paper's key.
+     localStorage is synchronously readable, which is why the same-DEVICE case
+     needs no tombstones (unlike the cross-DEVICE merge in app/sync.js).
+     entry === null deletes the slot. Returns the merged map for the state patch. */
+  function writeProgressSlot(idx, entry) {
+    var stored = storeGet(App.keys.progress, null);
+    var merged = (stored && typeof stored === 'object' && !Array.isArray(stored)) ? assign({}, stored) : {};
+    if (entry === null) delete merged[idx]; else merged[idx] = entry;
+    storeSet(App.keys.progress, merged);
+    return merged;
+  }
+
+  /* attempts is APPEND-ONLY: union by (testIdx, ts) against what is stored, so a
+     stale tab can never erase another tab's completed exam result. (F12) */
+  function attemptKey(a) { return String(a && a.testIdx) + '|' + String(a && a.ts); }
+  function appendAttempt(at) {
+    var stored = storeGet(App.keys.attempts, null);
+    var base = Array.isArray(stored) ? stored : [];
+    var seen = {}, out = [];
+    base.concat([at]).forEach(function (a) {
+      var k = attemptKey(a);
+      if (seen[k]) return;
+      seen[k] = 1; out.push(a);
+    });
+    storeSet(App.keys.attempts, out);
+    return out;
+  }
+
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   function stateOf() { return App.state || {}; }
 
@@ -522,16 +560,14 @@
     if (s.examView !== 'player') return;
     if (s.examSection && s.examSection !== 'all') return;
     var answered = Object.keys(s.answers || {}).length;
-    var progress = assign({}, s.progress);
-    var prev = progress[s.testIdx];
-    progress[s.testIdx] = {
+    var prev = (s.progress || {})[s.testIdx];
+    var progress = writeProgressSlot(s.testIdx, {
       answers: assign({}, s.answers), flags: assign({}, s.flags),
       curQ: s.curQ, elapsed: s.elapsed, audioPlays: assign({}, s.audioPlays),
       answered: answered, examMode: s.examMode,
       ts: (prev && prev.ts) || Date.now()   /* "Started {date}" on the history card */
-    };
+    });
     s.progress = progress;   /* silent — exams list is off-screen during play */
-    storeSet(App.keys.progress, progress);
   }
 
   function beginExam(resume) {
@@ -658,16 +694,13 @@
     var patch = { examView: 'list', navOpen: false, audioPlaying: false, audioProg: 0, audioErr: false, examExitConfirm: false };
     if (!s.examSection || s.examSection === 'all') {
       var answered = Object.keys(s.answers || {}).length;
-      var progress = assign({}, s.progress);
-      var prev = progress[s.testIdx];
-      progress[s.testIdx] = {
+      var prev = (s.progress || {})[s.testIdx];
+      patch.progress = writeProgressSlot(s.testIdx, {
         answers: assign({}, s.answers), flags: assign({}, s.flags),
         curQ: s.curQ, elapsed: s.elapsed, audioPlays: assign({}, s.audioPlays),
         answered: answered, examMode: s.examMode,
         ts: (prev && prev.ts) || Date.now()
-      };
-      patch.progress = progress;
-      storeSet(App.keys.progress, progress);
+      });
     }
     App.setState(patch);
     scrollTop();
@@ -679,10 +712,7 @@
     var s = stateOf();
     var patch = { examView: 'list', navOpen: false, audioPlaying: false, audioProg: 0, audioErr: false, examExitConfirm: false };
     if (!s.examSection || s.examSection === 'all') {
-      var progress = assign({}, s.progress);
-      delete progress[s.testIdx];
-      patch.progress = progress;
-      storeSet(App.keys.progress, progress);
+      patch.progress = writeProgressSlot(s.testIdx, null);   /* delete ONLY this paper's slot */
     }
     App.setState(patch);
     scrollTop();
@@ -703,11 +733,8 @@
       return;
     }
     var at = computeAttempt();
-    var attempts = (s.attempts || []).concat([at]);
-    var progress = assign({}, s.progress);
-    delete progress[s.testIdx];
-    storeSet(App.keys.attempts, attempts);
-    storeSet(App.keys.progress, progress);
+    var attempts = appendAttempt(at);                        /* append-only union (F12) */
+    var progress = writeProgressSlot(s.testIdx, null);
     App.setState({ examView: 'results', navOpen: false, examExitConfirm: false, audioPlaying: false, audioProg: 0, attempts: attempts, progress: progress });
     scrollTop();
   };

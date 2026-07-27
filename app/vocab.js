@@ -90,8 +90,31 @@
     return c;
   }
 
-  function persistMastered(next) {
-    App.store.setJSON(App.keys.mastered, next);
+  /* F12: another tab may have changed the set since this one booted, so persist a
+     DELTA against what is stored rather than overwriting with this tab's copy.
+     A plain union would be wrong in the other direction — it would resurrect the
+     word the user just un-mastered — so this keeps the stored set, drops what THIS
+     tab removed, and adds what THIS tab has. Returns the merged array so the
+     caller's in-memory state matches storage. */
+  function persistMastered(next, cur) {
+    var stored = App.store.getJSON(App.keys.mastered, null);
+    var base = Array.isArray(stored) ? stored : (Array.isArray(cur) ? cur : []);
+    var nSet = {}, cSet = {}, seen = {}, out = [], i, n;
+    for (i = 0; i < next.length; i++) { n = Number(next[i]); if (!isNaN(n)) nSet[n] = 1; }
+    if (Array.isArray(cur)) { for (i = 0; i < cur.length; i++) { n = Number(cur[i]); if (!isNaN(n)) cSet[n] = 1; } }
+    for (i = 0; i < base.length; i++) {
+      n = Number(base[i]);
+      if (isNaN(n) || seen[n]) continue;
+      if (cSet[n] && !nSet[n]) continue;      /* THIS tab un-mastered it — honour that */
+      seen[n] = 1; out.push(n);
+    }
+    for (i = 0; i < next.length; i++) {
+      n = Number(next[i]);
+      if (isNaN(n) || seen[n]) continue;
+      seen[n] = 1; out.push(n);
+    }
+    App.store.setJSON(App.keys.mastered, out);
+    return out;
   }
 
   /* POS bucket helpers — chip filter matches ANY bucket the pos string carries
@@ -217,7 +240,7 @@
       var cur = Array.isArray(s.vMastered) ? s.vMastered : [];
       var id = Number(fc.id), has = false;
       for (var i = 0; i < cur.length; i++) { if (Number(cur[i]) === id) { has = true; break; } }
-      if (!has) { var next = cur.concat([id]); persistMastered(next); patch.vMastered = next; }
+      if (!has) { var next = cur.concat([id]); patch.vMastered = persistMastered(next, cur); }
     }
     setSt(patch);
     syncMasteredLive();
@@ -405,8 +428,8 @@
     var has = false;
     for (var i = 0; i < cur.length; i++) { if (Number(cur[i]) === id) { has = true; break; } }
     var next = has ? cur.filter(function (x) { return Number(x) !== id; }) : cur.concat([id]);
-    persistMastered(next);
-    setSt({ vMastered: next });   /* shell skips vMastered — #vocab-list subregion + word sheet re-render */
+    var merged = persistMastered(next, cur);
+    setSt({ vMastered: merged });   /* shell skips vMastered — #vocab-list subregion + word sheet re-render */
     syncMasteredLive();
   };
 
