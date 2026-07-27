@@ -5421,7 +5421,7 @@ function buildQuizFunnel() {
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/common.css">
 <link rel="stylesheet" href="/onboarding.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/vendor/supabase-js-2.110.8.min.js"></script>
 <script src="/config/auth.js"></script>
 <script src="/auth.js"></script>
 </head>
