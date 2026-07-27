@@ -362,6 +362,7 @@
   App.render = function () {
     var s = App.state;
     var sel = captureSel();
+    captureSwapFocus();
     var swapped = [];
 
     /* main regions */
@@ -407,6 +408,7 @@
     }
 
     restoreFocus(sel);
+    restoreSwapFocus();
   };
 
   /* Force re-render of one region/subregion. Accepts a screen name ('shell',
@@ -419,6 +421,7 @@
     if (!scr || !el) return;
     var sel = captureSel();
     var _fb = null; try { _fb = document.activeElement; } catch (e0) {}
+    captureSwapFocus();
     sigCache[key] = computeSig(scr, s);
     var html = '';
     try { html = scr.html(s) || ''; } catch (e) { warn(e); html = ''; }
@@ -427,6 +430,7 @@
     initRegion(el, scr, s);
     resScroll(el, sc);
     restoreFocus(sel);
+    restoreSwapFocus();
     /* a subregion swap that re-renders an open dialog's container (e.g. the exam
        intro's r-sheet refresh when its paper finishes loading) destroys the
        focused node; mirror setState/reloadProgress so focus stays inside the
@@ -552,6 +556,73 @@
     if (sel) { try { var r = document.querySelector(sel); if (_restorable(r)) return r; } catch (e) {} }
     return null;
   }
+  /* ---------- F1: keyboard focus survives a region re-render ----------
+     render()/update() replace whole regions via innerHTML; a focused control
+     inside one is detached and focus silently falls to <body>. A keyboard or
+     screen-reader user is then thrown back to the top of the document after
+     every activation — worst case the exam results review accordion
+     (App.screens.results deps include reviewOpen), one drop per row opened.
+
+     Three cases, three owners, deliberately kept apart:
+       text inputs     -> state._focus + restoreFocus (which also keeps the caret)
+       dialogs         -> _syncModalFocus / _focusInto (pins focus in the modal)
+       data-a controls -> here.
+     Reuses _restorable / _selectorFor / _resolveReturn; declared as function
+     statements so render() can call them from above. */
+  var _swapDesc = null, _swapEl = null;
+
+  /* A bare data-a is NOT unique: the mobile Vocabulary screen renders
+     data-a="goCards" twice (the hero button and the "Cards" segment), so a
+     selector-only restore would jump focus to the hero when the user was on
+     the tab. Record the index among same-selector matches. */
+  function _describeSwapFocus(el) {
+    try {
+      if (el.id) return { id: el.id };
+      var sel = _selectorFor(el);
+      if (!sel) return null;
+      var all = document.querySelectorAll(sel);
+      for (var i = 0; i < all.length; i++) { if (all[i] === el) return { sel: sel, idx: i }; }
+      return { sel: sel, idx: 0 };
+    } catch (e) { return null; }
+  }
+
+  function captureSwapFocus() {
+    _swapDesc = null; _swapEl = null;
+    try {
+      var ae = document.activeElement;
+      if (!_restorable(ae)) return;
+      if (App.state._focus && ae.id === App.state._focus) return; /* the _focus convention owns this one */
+      var d = _describeSwapFocus(ae);
+      if (d) { _swapDesc = d; _swapEl = ae; }
+    } catch (e) {}
+  }
+
+  function restoreSwapFocus() {
+    var d = _swapDesc, el = _swapEl;
+    _swapDesc = null; _swapEl = null;
+    if (!d) return;
+    try {
+      /* act ONLY when the swap actually dropped focus — never fight
+         restoreFocus, _syncModalFocus, or a deliberate move by the action */
+      var ae = document.activeElement;
+      if (ae && ae !== document.body && ae !== document.documentElement) return;
+      var t = null;
+      if (d.id) t = document.getElementById(d.id);
+      else if (_restorable(el)) t = el;
+      else {
+        var all = document.querySelectorAll(d.sel);
+        t = all[d.idx] || null;   /* fewer matches than before: restore nothing rather than
+                                     force focus onto a control the user was never on */
+      }
+      if (!_restorable(t)) return;
+      /* preventScroll: a restored row deep in a long results list must not
+         jump-scroll the page resScroll has just positioned */
+      try { t.focus({ preventScroll: true }); } catch (e0) { try { t.focus(); } catch (e1) {} }
+    } catch (e) {}
+  }
+  App._captureSwapFocus = captureSwapFocus; /* exposed for scripts/focus-restore.test.js */
+  App._restoreSwapFocus = restoreSwapFocus;
+
   var _modalWasOpen = false, _modalReturnEl = null, _modalReturnSel = null, _modalCurDlg = null;
   App._syncModalFocus = function (focusBefore) {
     var dlg = _topDialog();
