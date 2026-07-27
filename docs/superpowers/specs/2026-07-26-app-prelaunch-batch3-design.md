@@ -14,6 +14,20 @@ launch, per owner instruction.
 **Grounding:** every item below was re-verified against the real code by `wf_2b3f67a6-9c8` (6 parallel
 readers, 19 items, **all 19 STILL_OPEN**). Several audit descriptions were wrong; the corrections are
 called out inline because three of them change the fix.
+**Revised after a full adversarial spec review** (`wf_307cb7ff-428`, 5 lenses; 41 raw findings → 34
+verified — 4 lenses machine-refuted, the 5th's 12 findings hand-verified against code one by one after its
+refutation agent stalled). The substantive corrections: B1 gained the full bump procedure, the
+exact-SB_TAG guard key and the cumulative strip pattern (a literal reading would have recreated the
+swallow bug one version later, and a bump would have stranded the live `/login/`); B2 now updates the
+published StudyBox contract in the same commit and defines a give-up threshold; B2b's alert names its
+mechanism (in-function Resend send — Supabase has no alert-on-log feature and Log Drains cannot ship in a
+deploy); B3a's desktop edit targets the heading and aria-label, where the cadence claim actually lives;
+F3 became `min(DECK_SIZE, unmastered)` with the all-mastered state and the live-update writers specified;
+F4's refund is one-shot because `clipFail` fires twice per failure; F6 grew from 4 sites to the full
+11 + 7 inventory including the MOBILE chrome washes; F11 buffers reports until `ymGoal` exists and
+classifies third-party noise out of the cap; F12 enumerates all five clobber sites with an append-only
+rule for attempts; F8's stale `:669` citation became `:683` + desktop mirror; F14 routes the desktop
+duplicate through the same helper.
 
 ---
 
@@ -69,7 +83,7 @@ Two distinct failures:
 **(a) There are six source locations, not three.** `scripts/inject-auth.js` carries the tag **twice** —
 `:17` in `HEAD_SNIPPET` and `:52` in the stale-block strip list — plus `build.js:5424`, plus **four
 hand-maintained files inject-auth does not rewrite**: root `index.html:1404`, `login/index.html:44`
-(plain `<body>`, fails the `body.app` test), `auth/callback.html:27` (in `SKIP_DIRS`), and
+(plain `<body>`, fails the `body.app` test), `auth/callback.html:27` (in inject-auth's SKIP file set, `scripts/inject-auth.js:12`), and
 `app/index.html:5` (which does get healed once (b) is fixed).
 
 **(b) A freshness guard will silently swallow the change.** `scripts/inject-auth.js:37` reads
@@ -90,11 +104,30 @@ Vendor to **`/vendor/supabase-js-2.110.8.min.js`** at the repo root. No DigitalO
 needed: there is no committed app spec, the static-site component serves the repo root verbatim (the same
 way `/common.css` and `/app/core.js` are served), and `.gitignore` has no `vendor` entry.
 
-The version lives **in the filename**, so a bump is: drop the new file in, edit one constant, rebuild. That
-makes the shipped version visible in `git log` — which is the actual fix for failure mode 2.
+The version lives **in the filename** — its purpose is making the shipped version visible in `git log`
+(the actual fix for failure mode 2), **not** browser-cache longevity: DO static hosting pins
+`max-age=10`, so the file revalidates per navigation via ETag/304 regardless of its name. That tradeoff
+is accepted and recorded here.
 
-Single constant `SB_TAG` in `scripts/inject-auth.js` used by both the snippet and the strip list, mirrored
-in `build.js`; the four hand-maintained files edited directly. `inject-auth.js:37`'s guard re-keyed.
+**The bump procedure — all of it, because "edit one constant" would recreate this very defect.** A future
+version bump is: drop the new file into `/vendor/`, edit `SB_TAG`, **edit the four hand-maintained files**
+(`index.html:1404`, `login/index.html:44`, `auth/callback.html:27`, `app/index.html:5`), run
+`node build.js`, then `grep` the whole tree for the OLD versioned filename (**must be 0**) before deleting
+the old vendor file. Skipping the hand-edits leaves the **live** `/login/` and the OAuth callback pointing
+at a file that no longer exists.
+
+Single constant `SB_TAG` in `scripts/inject-auth.js`, mirrored in `build.js`; the four hand-maintained
+files edited directly (the heal path is **not** relied on for this migration). Two details are
+load-bearing:
+
+- **The `:37` guard keys on the FULL versioned `SB_TAG` string** —
+  `includes('/vendor/supabase-js-2.110.8.min.js')` — never on a bare `'/vendor/'` substring. A bare marker
+  would match a page carrying the *previous* version's tag on the next bump and return early: the exact
+  silent swallow this spec diagnoses in correction (b), recreated one version later.
+- **The strip list keeps the old jsdelivr literal permanently AND strips prior vendor versions by
+  pattern** (`/<script src="\/vendor\/supabase-js-[^"]+"><\/script>/`), so a bump heals a page holding
+  the previous tag instead of accumulating a stale duplicate alongside the new one.
+
 Verification: checksum the vendored file against the digest above before committing.
 
 SRI is **not** added. Same-origin removes the threat SRI addresses (a third party altering the bytes), and
@@ -109,9 +142,16 @@ injected pages, one-line diff each) and therefore a large but mechanical commit.
 
 ### Verification
 
-`grep -c cdn.jsdelivr.net/npm/@supabase` across all `.html` must go 602 → **0**. Boot `/app/`, `/login/`
-and `/quiz/` locally and confirm `window.supabase.createClient` resolves and no request leaves the origin
-for the client. Confirm the served file is 207,904 B with the expected digest.
+`grep -c cdn.jsdelivr.net/npm/@supabase` across all `.html` must go 602 → **0**. Boot **all five**
+hand-touched entry points — `/app/`, `/login/`, `/quiz/`, the root landing, and `/auth/callback.html`
+(or one full local Google sign-in round trip) — and confirm `window.supabase.createClient` resolves from
+`/vendor/` on each with no request leaving the origin for the client. Confirm the served file is
+207,904 B with the expected digest.
+
+**Deliberately out of scope, stated so the Problem section is not over-read:** `hanzi-writer` (and its
+stroke-data fetches) stay on jsdelivr. In the China scenario the character section degrades gracefully —
+`glyphFallback` (`app/more.js:314`) plus F5's `onLoadCharDataError` — rather than blocking anything;
+vendoring its per-character data set is a much larger job with a working fallback already in place.
 
 ---
 
@@ -146,11 +186,26 @@ stack a second term. It does not: the `payments` row is keyed by `order_id` and 
 **fold of the ledger**, so re-driving converges on the same coverage rather than adding to it. This is the
 same idempotency the double-charge policy already relies on.
 
+**The response is part of a published wire contract, so the contract changes in the same commit.**
+`docs/studybox-payment-integration.md:216` documents the `200 {ok:true, entitlement:false}` row this
+change removes, and §8 (`:275-278`) builds the acquirer's escalation on it — after B2 that row never
+occurs, so left unedited the doc would instruct StudyBox to handle a response that no longer exists and
+its escalation trigger would be dead. The row is replaced with the new 5xx semantics: exact body
+`503 {ok:false, retry:true, reason:"entitlement_apply"}` (JSON, unlike the plain-text gateway 500s, so the
+acquirer can distinguish them), action "retry with backoff, fresh `ts` — idempotent by `order_id`", plus a
+**give-up threshold**: after N retries over M hours, stop and contact HSK — a *permanent* RPC failure
+(schema not applied, the exact case `PAYMENTS_SETUP.md:14-17` warns about) must not retry forever.
+`PAYMENTS_SETUP.md`'s runbook references to `entitlement:false` are updated to match.
+
 Deployment: function version 5 → 6, `verify_jwt:false` unchanged, no `config.toml` change.
+**Post-deploy verification (no real payment needed):** the Group C curl matrix against v6 — unsigned
+POST → 401; valid HMAC + stale `ts` → 400; replay of an existing comp `order_id` with fresh `ts` →
+200 `idempotent:true` with no coverage change, re-checked by the B2b Part-1 query.
 
 ### Files
 
-`supabase/functions/grant-entitlement/lib.ts`, `index.ts`, `lib.test.ts`. No client code, no build, no
+`supabase/functions/grant-entitlement/lib.ts`, `index.ts`, `lib.test.ts`,
+`docs/studybox-payment-integration.md`, `supabase/PAYMENTS_SETUP.md`. No client code, no build, no
 `inject-auth`.
 
 ---
@@ -171,8 +226,14 @@ is therefore a query on the launch checklist, not a new runbook.
 rows whose user's `profiles.subscription` does not reflect the ledger. Run before launch, then on a
 schedule. *Already run against prod during grounding: 0 discrepancies today.*
 
-**Part 2 (ships in B2's deploy):** an alert on the `reject:"entitlement_apply"` log line, so a failed grant
-pages someone instead of waiting for a customer email.
+**Part 2 (ships in B2's deploy):** the function itself sends the alert on the failure branch —
+**fire-and-forget email via the Resend API** (already this project's mail transport), authenticated by a
+new `HSK_ALERT_*` secret, with the send wrapped so an alert failure can never change the HTTP response.
+Covered in `lib.test.ts` (the decision, not the I/O). **Named concretely because the obvious alternative
+does not exist:** Supabase has no native alert-on-log-line feature — log export is a Log Drain, a
+Pro-plan dashboard add-on (~$60/mo) that only forwards to an external system which must itself alert, and
+being dashboard configuration it cannot ship in a function deploy. Anything else would repeat B2's own
+diagnosis: an alerting promise with no verified mechanism behind it.
 
 Part 1 is the durable backstop and does not depend on Part 2 existing — which is the point, given that the
 current design already depends on an alert nobody verified.
@@ -240,9 +301,19 @@ asserting a capability:
   var notifSub = pv.notif ? 'On · reminders coming soon' : 'Off';
   ```
 
-  The row's own heading stays "Notifications". The desktop mirror (`app/desktop-more.js:374-376`, `:424-425`)
-  gets the same treatment. Nothing else about the row changes: it remains a real stored preference, so when
-  reminders do ship the user's choice is already there.
+  The row's own heading stays "Notifications" — **on mobile, where the heading already is
+  "Notifications"**. On desktop the dishonest string lives in a different place: the row **heading** at
+  `app/desktop-more.js:424` is literally `Daily reminder 提醒`, the `aria-label` at `:425` is
+  `Toggle daily reminder`, and the ON sub-label at `:376` is already an honest `'On'`. So "the same
+  treatment" is spelled out per client, because the requirement is that the row stops asserting a cadence
+  **anywhere it appears**:
+
+  - desktop heading `:424` → `Notifications 提醒`;
+  - desktop `aria-label` `:425` → `Toggle notifications`;
+  - desktop ON sub-label `:376` → the same `'On · reminders coming soon'` as mobile.
+
+  Nothing else about the row changes: it remains a real stored preference, so when reminders do ship the
+  user's choice is already there.
 
 `app/sync.js` is untouched: `notif` stays in the synced key list so a user's choice still follows them, and
 the default change affects only accounts that never wrote the key.
@@ -253,9 +324,17 @@ the default change affects only accounts that never wrote the key.
 the only spaced-repetition claim in the entire repo**, and no scheduler exists — no timestamps, no interval,
 no ease factor, no per-word history. The only persisted vocab state is `hsk4-vocab-mastered`, a flat set.
 
-Replaced with what the deck actually does, converging on the wording mobile already ships at
-`app/vocab.js:665`. The "Daily review · 每日复习" eyebrow at `:326` is also reworded, because that is what
-makes "due today" read as a schedule.
+Replaced with what the deck actually does — the exact strings, because copy is a product decision, not an
+implementation detail:
+
+- sub-line `:328` → `Mark what you know — mastered words leave the deck` (converging on mobile's
+  `app/vocab.js:665`);
+- eyebrow `:326` → `Flashcard review · <span class="chinese">复习</span>` — "Daily review" is what makes
+  "due today" read as a schedule. Mobile's `:663` eyebrow is deliberately left alone: its "to review"
+  makes no scheduling claim.
+
+(Precision note: "only SRS claim in the repo" means the product surface — `README.md:119` mentions SRS in
+a dataset-ideas list, which no user sees.)
 
 ## F3 — the vocabulary hero counts
 
@@ -275,6 +354,19 @@ first, so every later module sees it). The deck builder and the copy both read i
 again. This is what makes the item testable as a real invariant rather than a copy assertion: *the number
 the hero shows must equal the number of cards the user receives.*
 
+Three consequences the naive "hero prints DECK_SIZE" reading gets wrong, all specified here so two
+implementers cannot resolve them two ways:
+
+- **The hero shows `min(App.DECK_SIZE, unmasteredCount)`**, not the constant: `app/vocab.js:171` slices
+  the *unmastered* pool, so near the end of the catalog the deck genuinely holds fewer than 20.
+- **The all-mastered fallback is its own copy state.** With 0 unmastered, `:174` deals 20
+  already-mastered cards — the hero must then say so (e.g. "Review 20 mastered words"), not claim 0 or 20
+  due.
+- **Every writer of the number changes, not just the template.** The live-update path
+  (`syncMasteredLive` → `App.live('vDue', …)`) must emit the same derived value, or the first mastery tap
+  overwrites the corrected hero with the old `total - mastered` arithmetic. The quiz round's two
+  hardcoded 20s at `app/vocab.js:283-284` route through `App.DECK_SIZE` in the same commit.
+
 ## F14 — results "Focus next → Go" opens the wrong screen
 
 ### Problem (verified) — both audit line numbers were wrong
@@ -287,8 +379,11 @@ time on a full paper, mobile only, when the weaker of Listening/Reading is below
 ### Design
 
 Take the **recommended** fix rather than the one-line guard: extract a pure `ex.weakestSection` helper and
-route both mobile call sites through it. Same size, kills the fourth duplicate of this logic, and makes it
-unit-testable — the one-line guard would leave four copies of a rule that has already been got wrong once.
+route **all three** live call sites through it — both mobile sites *and* the desktop inline copy at
+`app/desktop-exam.js:582-585`, whose own comment ("mobile resultsGoNext canon") admits it duplicates the
+rule. `exam.js` loads before `desktop-exam.js` in the desktop client, so the helper is available there.
+Desktop's copy is guard-correct today, which is exactly why it should not be left to drift independently
+from a rule that has already been got wrong once. Same size, kills every duplicate, unit-testable.
 
 ---
 
@@ -324,6 +419,16 @@ new step runs **after** the existing `restoreFocus`, and no-ops when focus is al
 region — the same contains-check `_focusInto` uses. That ordering is what stops it stealing the search
 caret, which is the failure the earlier a11y cycle had to fix twice.
 
+Two boundaries stated so the design is not read as a blanket guarantee:
+
+- **Restore always calls `focus({preventScroll: true})`** with the same try/fallback the existing helpers
+  use (`core.js:327`, `:524`, `:569`) — a restored button in a long results list must not jump-scroll the
+  page the moment `resScroll` has positioned it.
+- **The descriptor covers `data-a` elements only** — that is what `_selectorFor` resolves (priority:
+  `id` → `data-a` + `data-arg`/`data-argn` → none). Text inputs wired via `data-in` remain the `_focus`
+  convention's job, deliberately: they already survive re-renders with caret position intact through that
+  path, and duplicating it would race it.
+
 **F1 ships first in the package**, because F8's `aria-pressed` and F9's verdict text are only reachable for
 a keyboard user once focus survives.
 
@@ -333,8 +438,10 @@ a keyboard user once focus survives.
 `role="radiogroup"` from Group D, and is dropped from the list.*
 
 Real targets: the vocabulary row mastery toggle (`app/vocab.js:454`, state conveyed by border and background
-colour only), the word-sheet toggle (`:709`), the exam Flag button (`app/exam.js:1072`), `app/more.js:669`,
-and the desktop mirrors. Where the accessible name is a static `aria-label`, the name becomes state-bearing
+colour only), the word-sheet toggle (`:709`), the exam Flag button (`app/exam.js:1072`), and the guide
+checklist toggle — **`app/more.js:683`** (`data-a="toggleGuide"`; the audit's `:669` is a static info div,
+stale after batch 2's insertions) with its desktop mirror `app/desktop-more.js:929`. The implementation
+plan re-stamps every F8 line number against HEAD, since this file shifts whenever rows are added above. Where the accessible name is a static `aria-label`, the name becomes state-bearing
 too, reusing wording the desktop client already ships so the two clients agree.
 
 ## F9 — quick-check verdicts are colour-only
@@ -373,8 +480,17 @@ listen — strictly worse than the bug.
 
 Instead: keep the debit on start (the anti-reset comment at `:745-746` stays true) and **refund in
 `clipFail` only when the clip never produced audible playback**, tracked by a `_clipStarted` flag set from a
-new `playing` listener. The refund is un-farmable precisely because it requires that `playing` never fired —
-i.e. that no audio was rendered.
+new `playing` listener.
+
+**The refund must be one-shot, because `clipFail` runs TWICE for a single failed clip.** A bad `src` fires
+both the media `error` event (`onAudioError`, `:388-391`, guarded only by `ex._mode`) *and* the rejected
+`el.play()` promise's unconditional `p.catch(function () { clipFail(); })` at `:743` — and `clipFail`
+itself has no re-entry guard. A refund gated only on `_clipStarted === false` would execute in both
+invocations: one debit, two refunds, net **−1** per failed attempt — a farmable cap on a flaky media host,
+the exact thing the risk table below claims impossible. So the debit records a one-shot marker
+(`ex._clipDebit = { q: i }`), the refund consumes it (keyed to `ex._clipQ`, **not** the current `curQ`,
+which may have changed) and no-ops on the second call. `exam-playcap.test.js` gets an explicit
+two-`clipFail`-invocations case.
 
 ## F5 — HanziWriter stroke-data failure leaves a blank box with live buttons
 
@@ -403,6 +519,17 @@ Separately, the global `error` listener at `:62` is registered without capture, 
 Fix: extend the assert to all module seams; move the boundary block to the top of `<head>` and register with
 `capture:true` plus resource classification. An `App.missingSeams` refactor makes the assert unit-testable.
 
+**Two consequences of the move, handled explicitly or the fix eats itself:**
+
+- `report()` currently burns a cap slot **unconditionally** — `if(n<5){n++;if(window.ymGoal)…}` increments
+  even when `ymGoal` is not yet defined, and `ymGoal` only comes into existence at `:48`. Moved to the top
+  of `<head>` with capture, the reporter now sees failures of everything loading before Metrika. So reports
+  are **buffered until `ymGoal` exists** (flushed by the Metrika block), and `n` counts only goals actually
+  sent.
+- Resource failures are **classified by target origin**: third-party losses (fonts, hanzi-writer, Metrika
+  itself — all commonly blocked by adblockers and in China) must not consume the 5-per-session cap that
+  exists to surface **our** errors. They get a separate, lower-priority kind.
+
 ## F12 — a stale second tab clobbers the other tab's data
 
 Verified: `app/exam.js:499` and `app/vocab.js:90` serialize an in-memory map over localStorage, so an
@@ -410,33 +537,66 @@ actively-used stale tab overwrites the other. Concretely: tab 2 answers 20 quest
 returns to tab 1 and answers one question of paper 3; tab 1 writes its boot-time map, which has no key 5, and
 paper 5's answers are erased. For `mastered` the loss is also **pushed to the server**.
 
-Fix: read-modify-write against stored state at every write, touching only the current paper's key, plus a
-`storage` event listener for cross-tab invalidation. Same-device only — localStorage is synchronously
-readable, which is why this needs no tombstones, unlike the cross-**device** case in package F.
+Fix: read-modify-write against stored state at every write, plus a `storage` event listener for cross-tab
+invalidation. Same-device only — localStorage is synchronously readable, which is why this needs no
+tombstones, unlike the cross-**device** case in package F.
+
+**All five write sites, not the two the audit named** — an implementer fixing only `:499` and `vocab.js:90`
+leaves the worst one in place:
+
+| Site | What it writes | Rule |
+|---|---|---|
+| `exam.js:499` (persistLive) | whole progress map | RMW, touch only this paper's key |
+| `exam.js:635` (leave player) | whole progress map | same |
+| `exam.js:650` (exitExam) | whole progress map, deletes this paper | same — delete only this paper's key |
+| `exam.js:674-675` (submitExam) | **the entire attempts array** + progress | attempts is append-only: **read, union by attempt key, append** — mirroring `sync.js`'s union. A stale tab must not erase another tab's *completed exam result* |
+| `vocab.js:90` (mastered) | whole mastered set | RMW union; this one also pushes to the server |
+
+**Listener policy, stated:** for the paper currently open in the player, in-memory state wins (the taker's
+own answers are authoritative); the `storage` listener refreshes list/dashboard surfaces and re-bases the
+next write. It does not yank the active attempt out from under the user.
 
 ---
 
 # Package E — presentation & weight
 
-## F6 — `color-mix()` with no fallback renders invisible text
+## F6 — `color-mix()` and `backdrop-filter` with no fallback
 
-### Problem (verified) — sharper and worse than the audit
+### Problem (verified) — sharper, worse, and wider than the audit
 
 Light theme (the default) on any browser without `color-mix()` — Chrome/Edge < 111, Safari < 16.2,
-Firefox < 113, i.e. **any iOS 15 / 16.1 device** — the whole `linear-gradient(...)` shorthand is invalid and
-dropped, the element inherits `background: var(--paper)` (`#f9f4ec`), and the text is
-`color: var(--invert-fg)` — **the same literal `#f9f4ec`**. Contrast is exactly **1:1**: not "near-white on
-cream", literally invisible. Four desktop surfaces, including the exam results hero.
+Firefox < 113, i.e. **any iOS 15 / 16.1 device** — an invalid declaration is dropped wholesale. Two
+failure classes:
 
-### Design
+1. **Invisible text.** On the four gradient heroes the whole `linear-gradient(...)` shorthand dies, the
+   element inherits `background: var(--paper)` (`#f9f4ec`), and the text is `color: var(--invert-fg)` —
+   **the same literal `#f9f4ec`**. Contrast exactly **1:1**.
+2. **Transparent sticky chrome.** Six header/nav surfaces use
+   `background: color-mix(in srgb, var(--paper) N%, transparent)` as their *only* background — on old
+   browsers content scrolls visibly through the sticky header. **This includes the MOBILE client**
+   (`shell.js` ×3, `exam.js:1050`), whose audience is exactly the older-iOS population — an earlier draft
+   of this spec said "four desktop surfaces", which understated it.
 
-Two mechanical patterns, and notably **no `@supports` needed**: a `style=""` attribute honours a repeated
-property, so the invalid declaration is discarded and the earlier valid one wins.
+### Design — the full inventory, one pattern per class
 
-The four affected gradients are **theme-static** — `desktop-more.js:728`'s own comment says so — so
-`color-mix()` is deleted and the precomputed hex inlined (computed in oklab exactly as the spec defines the
-mix). A zero-dep `scripts/css-fallback.test.js` lint asserts every `color-mix(` in `app/` is preceded by a
-fallback, so this cannot regress.
+**No `@supports` needed** anywhere: both a `style=""` attribute and a CSS rule honour a repeated
+property — the invalid declaration is discarded and the earlier valid one wins.
+
+| Class | Sites (11 `color-mix` total) | Pattern |
+|---|---|---|
+| **Theme-static oklab gradients** | `desktop-exam.js:587`, `:588`, `desktop-more.js:729`, `desktop-vocab.js:323` | delete `color-mix()`, inline the precomputed hex (computed in oklab exactly as specified: `mix(#2f6349, black 42%)` → `#112b1e`; `mix(#8a6420, black 34%)` → `#4c360d`; `mix(#8a6420, black 40%)` → `#422e0a`) — `desktop-more.js:728`'s own comment already calls them "deliberate theme-static gradient" |
+| **srgb chrome washes** | `desktop-exam.js:464`, `desktop-shell.js:194`, `exam.js:1050`, `shell.js:255`, `:286`, `:579` | keep the wash, add a preceding **opaque** fallback: `background:var(--paper);background:color-mix(…)` (`var(--surface)` where that is the base). Old browsers get a solid sticky header; new ones keep the frosted glass |
+| **CSS hover** | `app/desktop.css:88` | preceding plain declaration: `box-shadow:inset 0 0 0 999px rgba(0,0,0,.08);` before the `color-mix` one |
+
+**`backdrop-filter` (7 sites) rides along mechanically:** each `backdrop-filter:blur(12px)` gains a
+`-webkit-backdrop-filter:blur(12px);` twin, which restores the blur on iOS Safari 16.2–17.x (unprefixed
+support landed in 18). On browsers with neither, the opaque background fallback above already makes the
+missing blur invisible — nothing shows through an opaque header.
+
+A zero-dep `scripts/css-fallback.test.js` lint asserts, over **`app/*.js` and `app/*.css`** (its stated
+scope), that every `color-mix(` occurrence is either inside a precomputed-hex-free gradient (class 1,
+gone) or preceded by a plain `background`/`box-shadow` fallback in the same declaration block — so a new
+un-fallbacked site fails the suite the day it is written, not the day an iOS 15 user finds it.
 
 ## F13 — the font stylesheet is heavier than all of the app's own JS
 
@@ -550,7 +710,7 @@ the origin for the Supabase client on `/app/`, `/login/` and `/quiz/`.
 | B2's 5xx causes a duplicate grant on retry | `payments` is keyed by `order_id` and `apply_hsk_entitlement` folds the ledger — re-driving converges. Verified before writing this |
 | F7 re-opens what L3 closed | Only `cacheFresh` and `payPending` are honoured; `confirmedActive` stays excluded, with the reason recorded in-code |
 | F1 steals the search caret, as an earlier a11y cycle twice did | Run after `restoreFocus`, no-op when focus is already inside the region |
-| F4's fix lets a user farm extra plays | Refund requires that `playing` never fired; the `playing`-based debit the audit proposed is explicitly rejected |
+| F4's fix lets a user farm extra plays | The refund is one-shot (a per-debit marker consumed on first `clipFail`), because `clipFail` fires twice per failure — a `_clipStarted`-only gate would net −1 per attempt. The `playing`-based debit the audit proposed is explicitly rejected |
 | F6's precomputed hex drifts from the token | Values are theme-static by the code's own comment; lint asserts a fallback exists |
 | F13's trim drops a weight something uses | Only weight 300 is removed, and `font-weight:300` appears nowhere in the repo |
 | Package F loses user data | Own reviewed cycle; unstamped sides degrade to today's behaviour; prod holds one 266-byte blob |
