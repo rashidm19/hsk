@@ -102,23 +102,38 @@ replay convergence, out-of-order arrival, refund shrink, full-refund revoke, mon
 
 ## Reconciliation — run before launch, then on a schedule
 
-Paid orders whose coverage does not reflect the ledger. Any row here needs the
-lost/failed-webhook runbook below. Expected result: **no rows**.
+A grant that never landed or is stale versus the payments ledger — i.e. a charged-not-granted
+case (`grant-entitlement` returned 503, so the `payments` row exists but `profiles.subscription`
+does not reflect the newest paid order). Any row here needs the lost/failed-webhook runbook
+below. Expected result: **no rows**.
+
+**Do NOT compare `expires_at` against `now()`.** `apply_hsk_entitlement` only ever writes
+`status='active'` or `subscription=null`; nothing downgrades an elapsed term to "expired". A
+customer whose paid month has simply run out is therefore *healthy* — their coverage still
+reflects the ledger — and flagging them would bury real lost grants in a permanently non-empty
+result set. Instead, the check compares the subscription's stored `order_id` against the most
+recently paid order (`apply_hsk_entitlement` sets it to the latest by `paid_at, order_id`):
 
 ```sql
-select p.order_id, p.user_id, p.plan, p.amount, p.months, p.paid_at,
-       pr.subscription->>'status'     as sub_status,
-       pr.subscription->>'expires_at' as sub_expires_at
-  from public.payments p
-  join public.profiles pr on pr.id = p.user_id
- where p.status = 'paid'
-   and p.paid_at is not null
-   and coalesce(p.months, 0) > 0
-   and (pr.subscription is null
-        or coalesce(pr.subscription->>'status', '') <> 'active'
-        or (pr.subscription->>'expires_at') is null
-        or (pr.subscription->>'expires_at')::timestamptz < now());
+with latest as (
+  select distinct on (user_id) user_id, order_id, paid_at
+    from public.payments
+   where status = 'paid' and paid_at is not null and coalesce(months, 0) > 0
+   order by user_id, paid_at desc, order_id desc
+)
+select l.user_id, l.order_id as latest_paid_order, l.paid_at,
+       pr.subscription->>'order_id' as sub_order_id,
+       case when pr.subscription is null then 'grant_never_landed'
+            else 'subscription_stale_vs_ledger' end as issue
+  from latest l
+  join public.profiles pr on pr.id = l.user_id
+ where pr.subscription is null
+    or (pr.subscription->>'order_id') is distinct from l.order_id;
 ```
+
+`grant_never_landed` = a paid order with no subscription at all. `subscription_stale_vs_ledger`
+= a newer paid order (e.g. a stacking renewal) whose grant failed, so the subscription still
+points at an older order. Both are the runbook's job; a naturally-expired term is neither.
 
 ## Runbook — lost/failed webhook
 1. Read the acquiring order on the StudyBox side; get `order_id`, `uid`, `plan`, `paid_at`.
