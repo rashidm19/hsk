@@ -353,8 +353,10 @@
         var c = optColors(picked, i === q.correct, picked === i);
         return '<button type="button" data-a="gquiz" data-argn="' + i + '" class="chinese pa" style="text-align:left;background:' + c.bg + ';border:2px solid ' + c.bd + ';border-radius:12px;padding:13px 15px;cursor:pointer;font-size:1rem;color:var(--ink)">' + esc(o) + '</button>';
       }).join('');
+      var vOk = picked === q.correct;
+      var vLabel = '<b style="color:' + (vOk ? 'var(--ok-ink)' : 'var(--bad-ink)') + '">' + (vOk ? '✓ Correct' : '✗ Not quite') + '</b> · ';
       var noteBlock = picked != null
-        ? '<div class="chinese" style="margin-top:12px;background:var(--surface-sunken);border-radius:11px;padding:12px 14px;font-size:.85rem;color:var(--stone);line-height:1.6">' + esc(q.note) + '</div>' +
+        ? '<div class="chinese" style="margin-top:12px;background:var(--surface-sunken);border-radius:11px;padding:12px 14px;font-size:.85rem;color:var(--stone);line-height:1.6">' + vLabel + esc(q.note) + '</div>' +
           (gi < quizAll.length - 1
             ? '<button type="button" data-a="gNext" class="pa" style="width:100%;margin-top:11px;border:0;background:var(--accent);color:#fff8f1;border-radius:12px;padding:13px;font-weight:700;font-size:.9rem;cursor:pointer">Next question →</button>'
             : '')
@@ -480,7 +482,7 @@
         '<div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--stone);margin-bottom:10px">Quick check · <span class="chinese">小测</span></div>' +
         '<p class="chinese" style="margin:0 0 12px;font-size:1.05rem;font-weight:600;color:var(--ink);line-height:1.6">' + esc(q.q) + '</p>' +
         '<div style="display:flex;flex-direction:column;gap:9px">' + opts + '</div>' +
-        (picked != null ? '<div class="chinese" style="margin-top:12px;background:var(--surface-sunken);border-radius:11px;padding:12px 14px;font-size:.86rem;color:var(--stone);line-height:1.6">' + esc(q.note) + '</div>' : '') +
+        (picked != null ? '<div class="chinese" style="margin-top:12px;background:var(--surface-sunken);border-radius:11px;padding:12px 14px;font-size:.86rem;color:var(--stone);line-height:1.6"><b style="color:' + (picked === q.correct ? 'var(--ok-ink)' : 'var(--bad-ink)') + '">' + (picked === q.correct ? '✓ Correct' : '✗ Not quite') + '</b> · ' + esc(q.note) + '</div>' : '') +
       '</div>';
     }
     return backBtn('backTopic', 'Tasks') +

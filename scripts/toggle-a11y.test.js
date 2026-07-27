@@ -99,3 +99,65 @@ test('F8: the DESKTOP vocabulary row toggle — aria-pressed, stable name, escap
   assert.doesNotMatch(quoted, /aria-label="Mastered: a"b"/, 'a quote in the word must not break the attribute');
   assert.match(quoted, /aria-label="Mastered: a&quot;b"/);
 });
+
+/* ---------------- F9: verdicts are not colour-only ---------------- */
+
+const GRAMMAR = [{
+  slug: 'jinguan', en: 'Although', cn: '尽管', structure: '尽管…', desc: 'd',
+  examples: [], wrong: [],
+  quiz: [{ q: '选择正确的句子', opts: ['A', 'B'], correct: 0, note: '尽管 introduces a concession.' }],
+}];
+
+test('F9: the grammar quick-check states the verdict in TEXT, not just colour', () => {
+  const right = boot({ studySub: 'grammar', curGrammar: 'jinguan', gqChoice: 0, gqIdx: 0 });
+  right.data.GRAMMAR = GRAMMAR; load(right, 'app/study.js');
+  const wrong = boot({ studySub: 'grammar', curGrammar: 'jinguan', gqChoice: 1, gqIdx: 0 });
+  wrong.data.GRAMMAR = GRAMMAR; load(wrong, 'app/study.js');
+  const r = right.screens.study(right.state), w = wrong.screens.study(wrong.state);
+  assert.match(r, /✓ Correct/, 'a right pick says so');
+  assert.match(w, /✗ Not quite/, 'a wrong pick says so');
+  assert.doesNotMatch(r, /✗ Not quite/);
+  assert.doesNotMatch(w, /✓ Correct/);
+  assert.notEqual(r, w, 'the two states are no longer byte-identical');
+});
+
+test('F9: the DESKTOP grammar quick-check states the verdict too', () => {
+  const mk = (pick) => {
+    const A = boot({ studySub: 'grammar', curGrammar: 'jinguan', gqChoice: pick, gqIdx: 0 });
+    A.data.GRAMMAR = GRAMMAR; load(A, 'app/study.js'); load(A, 'app/desktop-study.js');
+    return A.d.study(A.state);
+  };
+  assert.match(mk(0), /✓ Correct/);
+  assert.match(mk(1), /✗ Not quite/);
+});
+
+const TASKS = [{
+  slug: 'greet', en: 'Greetings', cn: '问候', cat: 'social', dialogue: [],
+  quiz: { q: '你好', opts: ['hello', 'bye'], correct: 0, note: '你好 is the neutral greeting.' },
+}];
+
+test('F9: the communicative-task quick-check states the verdict on BOTH clients', () => {
+  const mobile = (pick) => {
+    const A = boot({ studySub: 'topics', curTopic: 'greet', tqChoice: pick });
+    A.data.TASKS = TASKS; load(A, 'app/study.js');
+    return A.screens.study(A.state);
+  };
+  assert.match(mobile(0), /✓ Correct/, 'mobile right');
+  assert.match(mobile(1), /✗ Not quite/, 'mobile wrong');
+
+  const desktop = (pick) => {
+    const A = boot({ studySub: 'topics', curTopic: 'greet', tqChoice: pick });
+    A.data.TASKS = TASKS; load(A, 'app/study.js'); load(A, 'app/desktop-study.js');
+    return A.d.study(A.state);
+  };
+  assert.match(desktop(0), /✓ Correct/, 'desktop right');
+  assert.match(desktop(1), /✗ Not quite/, 'desktop wrong');
+});
+
+test('F9: an UNANSWERED quick-check shows no verdict at all', () => {
+  const A = boot({ studySub: 'grammar', curGrammar: 'jinguan', gqChoice: null, gqIdx: 0 });
+  A.data.GRAMMAR = GRAMMAR; load(A, 'app/study.js');
+  const html = A.screens.study(A.state);
+  assert.doesNotMatch(html, /✓ Correct/);
+  assert.doesNotMatch(html, /✗ Not quite/);
+});

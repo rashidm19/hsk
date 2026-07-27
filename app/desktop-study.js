@@ -261,7 +261,8 @@
       }).join('');
       var noteBlock = '';
       if (picked != null) {
-        noteBlock = '<div style="margin-top:14px;background:var(--surface-sunken);border-radius:11px;padding:12px 15px;font-size:var(--fs-sm);color:var(--stone);line-height:1.6">' + esc(q.note) + '</div>' +
+        var vOk = picked === q.correct;
+        noteBlock = '<div style="margin-top:14px;background:var(--surface-sunken);border-radius:11px;padding:12px 15px;font-size:var(--fs-sm);color:var(--stone);line-height:1.6"><b style="color:' + (vOk ? 'var(--ok-ink)' : 'var(--bad-ink)') + '">' + (vOk ? '✓ Correct' : '✗ Not quite') + '</b> · ' + esc(q.note) + '</div>' +
           (gi < quizAll.length - 1
             ? '<button type="button" data-a="gNext" class="hv" style="width:100%;margin-top:12px;border:0;background:var(--accent);color:var(--invert-fg);border-radius:12px;padding:13px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">Next question &rarr;</button>'
             : '');
@@ -551,7 +552,7 @@
           return '<div style="text-align:left;border:2px solid ' + c.bd + ';background:' + c.bg + ';border-radius:12px;padding:13px 15px;font-size:var(--fs-md);color:var(--ink)">' + esc(o) + '</div>';
         }).join('');
         inner = '<div style="display:flex;flex-direction:column;gap:10px">' + optsDone + '</div>' +
-          '<div style="margin-top:14px;background:var(--surface-sunken);border-radius:11px;padding:12px 15px;font-size:var(--fs-sm);color:var(--stone);line-height:1.6">' + esc(q.note) + '</div>' +
+          '<div style="margin-top:14px;background:var(--surface-sunken);border-radius:11px;padding:12px 15px;font-size:var(--fs-sm);color:var(--stone);line-height:1.6"><b style="color:' + (ok ? 'var(--ok-ink)' : 'var(--bad-ink)') + '">' + (ok ? '✓ Correct' : '✗ Not quite') + '</b> · ' + esc(q.note) + '</div>' +
           '<div style="text-align:center;padding:14px 8px 0"><div style="font-size:2.4rem">🎯</div><h3 style="margin:8px 0 2px;font-size:var(--fs-xl);font-weight:700;color:var(--ink)">Quick check done</h3><p style="margin:0;color:var(--stone);font-size:var(--fs-md)">You scored <b style="color:var(--jade)">' + (ok ? 1 : 0) + ' / 1</b></p>' +
           '<button type="button" data-a="dTqRestart" class="hv" style="margin-top:16px;border:0;background:var(--accent);color:var(--invert-fg);border-radius:12px;padding:11px 24px;font-weight:700;font-size:var(--fs-sm);cursor:pointer">Again</button></div>';
       }
