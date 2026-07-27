@@ -176,6 +176,29 @@
      can never drift apart again. Read at call time, like App.keys.*. */
   App.DECK_SIZE = 20;
 
+  /* F11: the module seams the app needs to be usable. index.html's boot assert
+     calls this. A module that silently 404s (partial fetch, CDN blip) does NOT
+     throw — boot succeeds, the shell paints a working header and tab bar, and
+     screenHtml() resolves the missing screen to undefined and returns '': the
+     user taps Exams and gets a blank white area, indistinguishable from "this
+     section is empty". Pure; exported for scripts/boot-seams.test.js.
+     Desktop overrides are deliberately NOT asserted: if desktop-shell.js is lost,
+     App.screens.shell is still shell.js's, so the app degrades to the mobile UI
+     rather than going blank — which is not the failure this guards. */
+  App.missingSeams = function (a) {
+    a = a || App;
+    var miss = [];
+    function need(name, ok) { if (!ok) miss.push(name); }
+    need('core', !!(a.screens && typeof a.setState === 'function' && typeof a.render === 'function'));
+    need('data', !!(a.data && typeof a.data.load === 'function'));
+    need('shell', !!(a.screens && a.screens.shell));
+    need('exam', !!(a.exam && a.screens && a.screens.player && a.screens.results));
+    need('vocab', !!(a.vocab && typeof a.vocab.screen === 'function'));
+    need('more', !!(a.screens && a.screens.more));
+    need('study', !!(a.screens && a.screens.study));
+    return miss;
+  };
+
   /* Theme persistence seam: single canonical write. App.keys.theme IS the
      site's hsk4_theme, which index.html's pre-paint script + the theme toggle
      also read/write — so all stay consistent. */
