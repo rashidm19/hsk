@@ -53,6 +53,16 @@ test('F8: the row toggle name is STABLE across state and names its word (W3C APG
   assert.equal(nameOf(on.vocab.listInner()), nameOf(off.vocab.listInner()),
     'the accessible name must not change with state — aria-pressed carries it');
   assert.match(nameOf(on.vocab.listInner()), /爱情/, 'and it names the word, so rows are distinguishable');
+
+  /* the name now interpolates data, so it must be escaped — same class of edit
+     as the desktop row below, and the only other place this package puts new
+     data inside an HTML attribute */
+  const q = boot({ vMastered: [] });
+  q.data.WORDS = [{ id: 1, word: 'a"b', pinyin: 'p', meaning: 'm', pos: 'n.', freq: 1 }];
+  load(q, 'app/vocab.js');
+  const html = q.vocab.listInner();
+  assert.doesNotMatch(html, /aria-label="Mastered: a"b"/, 'a quote in the word must not break the attribute');
+  assert.match(html, /aria-label="Mastered: a&quot;b"/);
 });
 
 test('F8: the word-sheet mastery toggle exposes aria-pressed', () => {
@@ -154,10 +164,30 @@ test('F9: the communicative-task quick-check states the verdict on BOTH clients'
   assert.match(desktop(1), /✗ Not quite/, 'desktop wrong');
 });
 
-test('F9: an UNANSWERED quick-check shows no verdict at all', () => {
-  const A = boot({ studySub: 'grammar', curGrammar: 'jinguan', gqChoice: null, gqIdx: 0 });
-  A.data.GRAMMAR = GRAMMAR; load(A, 'app/study.js');
-  const html = A.screens.study(A.state);
-  assert.doesNotMatch(html, /✓ Correct/);
-  assert.doesNotMatch(html, /✗ Not quite/);
+/* Leaking a verdict before the user answers also leaks the explanation — the
+   single most damaging way F9 can regress. Each of the four surfaces guards it
+   with a DIFFERENT construct (two ternaries, an if, an else branch), so all
+   four are checked, not just the one the fix was written against. */
+test('F9: an UNANSWERED quick-check shows no verdict on ANY of the four surfaces', () => {
+  const surfaces = [
+    { label: 'mobile grammar', st: { studySub: 'grammar', curGrammar: 'jinguan', gqChoice: null, gqIdx: 0 },
+      key: 'GRAMMAR', fx: GRAMMAR, desktop: false },
+    { label: 'desktop grammar', st: { studySub: 'grammar', curGrammar: 'jinguan', gqChoice: null, gqIdx: 0 },
+      key: 'GRAMMAR', fx: GRAMMAR, desktop: true },
+    { label: 'mobile tasks', st: { studySub: 'topics', curTopic: 'greet', tqChoice: null },
+      key: 'TASKS', fx: TASKS, desktop: false },
+    { label: 'desktop tasks', st: { studySub: 'topics', curTopic: 'greet', tqChoice: null },
+      key: 'TASKS', fx: TASKS, desktop: true },
+  ];
+  surfaces.forEach((sf) => {
+    const A = boot(sf.st);
+    A.data[sf.key] = sf.fx;
+    load(A, 'app/study.js');
+    if (sf.desktop) load(A, 'app/desktop-study.js');
+    const html = sf.desktop ? A.d.study(A.state) : A.screens.study(A.state);
+    assert.doesNotMatch(html, /✓ Correct/, sf.label + ': no verdict before answering');
+    assert.doesNotMatch(html, /✗ Not quite/, sf.label + ': no verdict before answering');
+    assert.doesNotMatch(html, new RegExp(sf.fx[0].quiz ? 'concession|neutral greeting' : 'x', 'i'),
+      sf.label + ': and the explanation itself is not leaked');
+  });
 });
